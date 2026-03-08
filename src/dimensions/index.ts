@@ -1,3 +1,11 @@
 // dimensions module — Generate dimensions from intent via generateObject
-// Will be implemented in Phase 4, Wave 1
-export {};
+// Dimension CRUD operations against PGlite
+
+export { generateDimensions, type GenerateDimensionsOptions } from "./generate";
+
+export {
+  createDimensions,
+  getDimensionsBySession,
+  updateDimension,
+  deleteDimension,
+} from "./crud";
