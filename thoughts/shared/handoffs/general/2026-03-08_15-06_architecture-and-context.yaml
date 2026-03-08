@@ -1,0 +1,77 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: PARTIAL_MINUS
+---
+
+goal: Design textchisel architecture, confirm tech stack, gather all dev context docs
+now: Scaffold the project (Vite + React 19 + Express + TypeScript monorepo) and begin implementation
+
+test: "ls .devcontext/ref-*.md .devcontext/architecture.md | wc -l  # should be 6"
+
+done_this_session:
+  - task: Tech stack interview — locked all decisions through iterative Q&A with founder
+    files: [.devcontext/architecture.md]
+  - task: Full architecture document (8 sections) — system overview, data models, pipeline specs, component tree, state shape, API contracts, latency analysis, extension points
+    files: [.devcontext/architecture.md]
+  - task: Pre-mortem (deep) — found 4 tigers, added mitigations for 3 (provider-aware parallelism, error handling, lock fidelity retry)
+    files: [.devcontext/architecture.md]
+  - task: Researched TanStack DB + PGlite — discovered they're redundant. Replaced TanStack DB with PGlite useLiveQuery + Drizzle ORM
+    files: [.devcontext/architecture.md]
+  - task: Gathered 5 dev reference docs via parallel oracle agents
+    files: [.devcontext/ref-vercel-ai-sdk.md, .devcontext/ref-pglite-drizzle.md, .devcontext/ref-chartjs-radar.md, .devcontext/ref-zustand-zundo.md, .devcontext/ref-project-setup.md]
+
+blockers: []
+
+questions:
+  - Styling approach not yet decided (Tailwind vs CSS modules vs shadcn)
+  - Testing strategy not yet decided
+  - Exact Drizzle+PGlite migration strategy for browser (drizzle-kit is Node-only, need raw SQL on startup or bundled migrations)
+
+decisions:
+  - pglite_over_sqlite: PGlite gives full Postgres, pgvector path for Phase 2, zero-config for localhost
+  - no_tanstack_db: TanStack DB maintainers confirmed PGlite overlap. Replaced with PGlite useLiveQuery for reactivity
+  - no_agentic_framework: Pipeline is deterministic chain (not agent loop). Vercel AI SDK with plain TS orchestration
+  - zustand_for_ui: Zustand + Zundo for undo/redo and ephemeral UI state. PGlite for persistent data
+  - provider_aware_scoring: Ollama N=1 sequential, cloud APIs N=3 parallel (9 concurrent calls)
+  - lock_fidelity_retry: Single grammar layer retry with deviation feedback when locks drift
+  - functional_first_chart: Chart.js + chartjs-plugin-dragdata. Radar drag confirmed radial-only (correct for our use)
+  - vercel_ai_sdk: generateObject() with Zod for structured output, streamText() for grammar layer, multi-provider via @ai-sdk/* packages
+
+findings:
+  - chartjs_dragdata_works: Radar chart dragging is radial-only (constrained to axis). Lock = return false from onDragStart. Compatible with Chart.js v4
+  - tanstack_db_beta: v0.5.31 beta, no official PGlite adapter, maintainers said integration "may not make much sense"
+  - pglite_reactive: useLiveQuery from @electric-sql/pglite-react provides reactive queries without TanStack DB
+  - zustand_middleware_order: Must nest devtools -> persist -> temporal -> immer (outside to inside). Two partialize fns needed
+
+worked:
+  - Iterative tech stack decisions (one at a time with approval)
+  - Parallel oracle agents for context gathering
+  - Pre-mortem before implementation caught real issues
+
+failed:
+  - First 2 oracle agents for vercel-ai-sdk and project-setup didn't write their output files (had to retry)
+  - TanStack DB + PGlite was originally chosen but research revealed redundancy
+
+next:
+  - Scaffold project structure (Vite + React 19 + Express + TS monorepo per ref-project-setup.md)
+  - Set up PGlite + Drizzle schema (sessions, dimensions, prompt_versions, eval_step_cache)
+  - Create Zustand store with Immer + Zundo + persist middlewares
+  - Build SpiderChart component with Chart.js + dragdata
+  - Implement dimension generation pipeline (generateObject with Zod)
+  - Implement evaluation engine (G-Eval style scoring)
+  - Implement grammar layer (streamText meta-prompt)
+  - Wire regeneration loop orchestrator
+  - Decide on styling approach (Tailwind recommended for speed)
+
+files:
+  created:
+    - .devcontext/architecture.md
+    - .devcontext/ref-vercel-ai-sdk.md
+    - .devcontext/ref-pglite-drizzle.md
+    - .devcontext/ref-chartjs-radar.md
+    - .devcontext/ref-zustand-zundo.md
+    - .devcontext/ref-project-setup.md
+    - thoughts/shared/handoffs/general/2026-03-08_15-06_architecture-and-context.yaml
+  modified: []
