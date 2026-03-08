@@ -23,14 +23,14 @@ For: textchisel state management implementation
 ### Basic Typed Store
 
 ```typescript
-import { create } from 'zustand'
+import { create } from "zustand";
 
 // Define state interface
 interface CounterState {
-  count: number
-  increment: () => void
-  decrement: () => void
-  reset: () => void
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+  reset: () => void;
 }
 
 // create<T>()(...) — note the double parentheses for TS inference
@@ -39,10 +39,11 @@ const useCounterStore = create<CounterState>()((set) => ({
   increment: () => set((state) => ({ count: state.count + 1 })),
   decrement: () => set((state) => ({ count: state.count - 1 })),
   reset: () => set({ count: 0 }),
-}))
+}));
 ```
 
 Key points:
+
 - `create<StateType>()` uses curried form for TypeScript generic inference.
 - The double `()()` is required — first call binds the type, second receives the state creator.
 - `set` performs a shallow merge by default. Pass `true` as second arg to replace entire state: `set(newState, true)`.
@@ -52,15 +53,15 @@ Key points:
 
 ```typescript
 // Get current state snapshot (non-reactive)
-const count = useCounterStore.getState().count
+const count = useCounterStore.getState().count;
 
 // Subscribe to changes
-const unsub = useCounterStore.subscribe(
-  (state) => console.log('Count changed:', state.count)
-)
+const unsub = useCounterStore.subscribe((state) =>
+  console.log("Count changed:", state.count),
+);
 
 // Set state externally
-useCounterStore.setState({ count: 42 })
+useCounterStore.setState({ count: 42 });
 ```
 
 ---
@@ -72,54 +73,52 @@ The slices pattern organizes large stores into modular pieces using `StateCreato
 ### Defining a Slice
 
 ```typescript
-import { StateCreator } from 'zustand'
+import { StateCreator } from "zustand";
 
 // Full combined store type (forward-declared)
-type AppStore = PromptSlice & UISlice
+type AppStore = PromptSlice & UISlice;
 
 // --- Prompt Slice ---
 interface PromptSlice {
-  systemPrompt: string
-  userTemplate: string
-  setSystemPrompt: (prompt: string) => void
-  setUserTemplate: (template: string) => void
+  systemPrompt: string;
+  userTemplate: string;
+  setSystemPrompt: (prompt: string) => void;
+  setUserTemplate: (template: string) => void;
 }
 
 const createPromptSlice: StateCreator<
-  AppStore,        // Full store type (enables cross-slice access)
-  [],              // Middleware mutators (empty for basic)
-  [],              // Additional mutators
-  PromptSlice      // This slice's type
+  AppStore, // Full store type (enables cross-slice access)
+  [], // Middleware mutators (empty for basic)
+  [], // Additional mutators
+  PromptSlice // This slice's type
 > = (set) => ({
-  systemPrompt: '',
-  userTemplate: '',
+  systemPrompt: "",
+  userTemplate: "",
   setSystemPrompt: (prompt) => set({ systemPrompt: prompt }),
   setUserTemplate: (template) => set({ userTemplate: template }),
-})
+});
 
 // --- UI Slice ---
 interface UISlice {
-  sidebarOpen: boolean
-  toggleSidebar: () => void
+  sidebarOpen: boolean;
+  toggleSidebar: () => void;
 }
 
-const createUISlice: StateCreator<
-  AppStore, [], [], UISlice
-> = (set) => ({
+const createUISlice: StateCreator<AppStore, [], [], UISlice> = (set) => ({
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
-})
+});
 ```
 
 ### Combining Slices
 
 ```typescript
-import { create } from 'zustand'
+import { create } from "zustand";
 
 const useAppStore = create<AppStore>()((...a) => ({
   ...createPromptSlice(...a),
   ...createUISlice(...a),
-}))
+}));
 ```
 
 ### Slices with Immer Middleware
@@ -127,25 +126,27 @@ const useAppStore = create<AppStore>()((...a) => ({
 When using immer with slices, the `StateCreator` type parameters change:
 
 ```typescript
-import { StateCreator } from 'zustand'
+import { StateCreator } from "zustand";
 
 type ImmerStateCreator<T> = StateCreator<
   AppStore,
-  [['zustand/immer', never]],  // Immer mutator
+  [["zustand/immer", never]], // Immer mutator
   [],
   T
->
+>;
 
 const createPromptSlice: ImmerStateCreator<PromptSlice> = (set) => ({
-  systemPrompt: '',
-  userTemplate: '',
-  setSystemPrompt: (prompt) => set((state) => {
-    state.systemPrompt = prompt  // Direct mutation with immer
-  }),
-  setUserTemplate: (template) => set((state) => {
-    state.userTemplate = template
-  }),
-})
+  systemPrompt: "",
+  userTemplate: "",
+  setSystemPrompt: (prompt) =>
+    set((state) => {
+      state.systemPrompt = prompt; // Direct mutation with immer
+    }),
+  setUserTemplate: (template) =>
+    set((state) => {
+      state.userTemplate = template;
+    }),
+});
 ```
 
 ---
@@ -164,50 +165,53 @@ npm install immer
 ### Import
 
 ```typescript
-import { immer } from 'zustand/middleware/immer'
+import { immer } from "zustand/middleware/immer";
 ```
 
 ### Basic Usage
 
 ```typescript
-import { create } from 'zustand'
-import { immer } from 'zustand/middleware/immer'
+import { create } from "zustand";
+import { immer } from "zustand/middleware/immer";
 
 interface TodoStore {
-  todos: { id: number; title: string; completed: boolean }[]
-  addTodo: (title: string) => void
-  toggleTodo: (id: number) => void
-  removeTodo: (id: number) => void
+  todos: { id: number; title: string; completed: boolean }[];
+  addTodo: (title: string) => void;
+  toggleTodo: (id: number) => void;
+  removeTodo: (id: number) => void;
 }
 
 const useTodoStore = create<TodoStore>()(
   immer((set) => ({
     todos: [],
 
-    addTodo: (title) => set((state) => {
-      // Push directly — immer handles immutability
-      state.todos.push({
-        id: Date.now(),
-        title,
-        completed: false,
-      })
-    }),
+    addTodo: (title) =>
+      set((state) => {
+        // Push directly — immer handles immutability
+        state.todos.push({
+          id: Date.now(),
+          title,
+          completed: false,
+        });
+      }),
 
-    toggleTodo: (id) => set((state) => {
-      const todo = state.todos.find((t) => t.id === id)
-      if (todo) {
-        todo.completed = !todo.completed  // Direct mutation
-      }
-    }),
+    toggleTodo: (id) =>
+      set((state) => {
+        const todo = state.todos.find((t) => t.id === id);
+        if (todo) {
+          todo.completed = !todo.completed; // Direct mutation
+        }
+      }),
 
-    removeTodo: (id) => set((state) => {
-      const index = state.todos.findIndex((t) => t.id === id)
-      if (index !== -1) {
-        state.todos.splice(index, 1)  // Direct splice
-      }
-    }),
-  }))
-)
+    removeTodo: (id) =>
+      set((state) => {
+        const index = state.todos.findIndex((t) => t.id === id);
+        if (index !== -1) {
+          state.todos.splice(index, 1); // Direct splice
+        }
+      }),
+  })),
+);
 ```
 
 ### When to Use Immer
@@ -237,35 +241,35 @@ npm install zundo
 ### Import
 
 ```typescript
-import { temporal } from 'zundo'
+import { temporal } from "zundo";
 ```
 
 ### Basic Setup
 
 ```typescript
-import { create } from 'zustand'
-import { temporal } from 'zundo'
+import { create } from "zustand";
+import { temporal } from "zundo";
 
 interface EditorState {
-  content: string
-  fontSize: number
-  setContent: (content: string) => void
-  setFontSize: (size: number) => void
+  content: string;
+  fontSize: number;
+  setContent: (content: string) => void;
+  setFontSize: (size: number) => void;
 }
 
 const useEditorStore = create<EditorState>()(
   temporal(
     (set) => ({
-      content: '',
+      content: "",
       fontSize: 14,
       setContent: (content) => set({ content }),
       setFontSize: (size) => set({ fontSize: size }),
     }),
     {
       // --- Temporal options (all optional) ---
-    }
-  )
-)
+    },
+  ),
+);
 ```
 
 ### Temporal Options Reference
@@ -284,30 +288,29 @@ temporal(stateCreator, {
   // Debounce/throttle history snapshots
   handleSet: (handleSet) =>
     throttle<typeof handleSet>((state) => {
-      console.log('handleSet called')
-      handleSet(state)
+      console.log("handleSet called");
+      handleSet(state);
     }, 1000),
 
   // Custom equality check — only save when meaningful change occurs
-  equality: (pastState, currentState) =>
-    isEqual(pastState, currentState),
+  equality: (pastState, currentState) => isEqual(pastState, currentState),
 
   // Store diffs instead of full snapshots (performance optimization)
   diff: (pastState, currentState) => {
-    const myDiff: Partial<typeof pastState> = {}
+    const myDiff: Partial<typeof pastState> = {};
     // Compute and return only changed fields
-    return myDiff
+    return myDiff;
   },
 
   // Callback when state is saved to history
   onSave: (pastState, currentState) => {
-    console.log('State saved to history')
+    console.log("State saved to history");
   },
 
   // Wrap the temporal store itself with middleware
   wrapTemporal: (storeInitializer) =>
-    devtools(storeInitializer, { name: 'temporal-store' }),
-})
+    devtools(storeInitializer, { name: "temporal-store" }),
+});
 ```
 
 ### Core API: undo(), redo(), clear()
@@ -325,29 +328,29 @@ const {
   pause,
   resume,
   setOnSave,
-} = useEditorStore.temporal.getState()
+} = useEditorStore.temporal.getState();
 
 // Undo last change
-undo()
+undo();
 
 // Undo 3 steps back
-undo(3)
+undo(3);
 
 // Redo last undone change
-redo()
+redo();
 
 // Redo 2 steps forward
-redo(2)
+redo(2);
 
 // Clear all history
-clear()
+clear();
 
 // Pause/resume tracking
-pause()    // Stop recording history
-resume()   // Resume recording history
+pause(); // Stop recording history
+resume(); // Resume recording history
 
 // Check tracking status
-isTracking // boolean
+isTracking; // boolean
 ```
 
 ### Creating a Reactive useTemporalStore Hook
@@ -390,8 +393,8 @@ function UndoRedoControls() {
 For inputs like sliders that fire rapidly, use `handleSet` with a debounce:
 
 ```typescript
-import { temporal } from 'zundo'
-import { debounce } from 'lodash-es'  // or throttle
+import { temporal } from "zundo";
+import { debounce } from "lodash-es"; // or throttle
 
 const useStore = create<MyState>()(
   temporal(
@@ -402,11 +405,11 @@ const useStore = create<MyState>()(
     {
       handleSet: (handleSet) =>
         debounce<typeof handleSet>((state) => {
-          handleSet(state)
-        }, 500),  // Only record after 500ms of inactivity
-    }
-  )
-)
+          handleSet(state);
+        }, 500), // Only record after 500ms of inactivity
+    },
+  ),
+);
 ```
 
 Alternative: use `throttle` instead of `debounce` to record at regular intervals during continuous input.
@@ -416,17 +419,14 @@ Alternative: use `throttle` instead of `debounce` to record at regular intervals
 For textchisel: track prompt configuration, ignore UI state like sidebar/panel positions.
 
 ```typescript
-temporal(
-  stateCreator,
-  {
-    partialize: (state) => {
-      // Only these fields will be tracked in undo/redo history
-      const { systemPrompt, userTemplate, variables, modelConfig } = state
-      return { systemPrompt, userTemplate, variables, modelConfig }
-      // sidebarOpen, activeTab, etc. are excluded
-    },
-  }
-)
+temporal(stateCreator, {
+  partialize: (state) => {
+    // Only these fields will be tracked in undo/redo history
+    const { systemPrompt, userTemplate, variables, modelConfig } = state;
+    return { systemPrompt, userTemplate, variables, modelConfig };
+    // sidebarOpen, activeTab, etc. are excluded
+  },
+});
 ```
 
 ---
@@ -436,7 +436,7 @@ temporal(
 ### Import
 
 ```typescript
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist, createJSONStorage } from "zustand/middleware";
 ```
 
 ### Basic Setup
@@ -448,10 +448,10 @@ const useStore = create<MyState>()(
       // ... state and actions
     }),
     {
-      name: 'textchisel-storage',  // localStorage key
-    }
-  )
-)
+      name: "textchisel-storage", // localStorage key
+    },
+  ),
+);
 ```
 
 ### Full Options Reference
@@ -459,7 +459,7 @@ const useStore = create<MyState>()(
 ```typescript
 persist(stateCreator, {
   // Required: unique storage key
-  name: 'textchisel-storage',
+  name: "textchisel-storage",
 
   // Storage backend (defaults to localStorage)
   storage: createJSONStorage(() => localStorage),
@@ -479,9 +479,9 @@ persist(stateCreator, {
   migrate: (persistedState, version) => {
     if (version === 0) {
       // Migrate from v0 to v1
-      (persistedState as any).newField = 'default'
+      (persistedState as any).newField = "default";
     }
-    return persistedState as MyState
+    return persistedState as MyState;
   },
 
   // Custom merge strategy (default: shallow merge)
@@ -492,39 +492,39 @@ persist(stateCreator, {
 
   // Lifecycle hook: fires when rehydration starts
   onRehydrateStorage: (state) => {
-    console.log('Hydration starts')
+    console.log("Hydration starts");
     // Return optional post-hydration callback
     return (state, error) => {
       if (error) {
-        console.error('Hydration failed:', error)
+        console.error("Hydration failed:", error);
       } else {
-        console.log('Hydration complete')
+        console.log("Hydration complete");
       }
-    }
+    };
   },
 
   // Skip hydration (for SSR/manual control)
-  skipHydration: true,  // Then call useStore.persist.rehydrate() manually
-})
+  skipHydration: true, // Then call useStore.persist.rehydrate() manually
+});
 ```
 
 ### Persist API (runtime)
 
 ```typescript
 // Check hydration status
-useStore.persist.hasHydrated()    // boolean
-useStore.persist.onHydrate(cb)    // subscribe to hydration start
-useStore.persist.onFinishHydration(cb) // subscribe to hydration end
+useStore.persist.hasHydrated(); // boolean
+useStore.persist.onHydrate(cb); // subscribe to hydration start
+useStore.persist.onFinishHydration(cb); // subscribe to hydration end
 
 // Manual rehydration (when skipHydration: true)
-await useStore.persist.rehydrate()
+await useStore.persist.rehydrate();
 
 // Clear persisted storage
-useStore.persist.clearStorage()
+useStore.persist.clearStorage();
 
 // Get/set storage options
-useStore.persist.getOptions()
-useStore.persist.setOptions(newOptions)
+useStore.persist.getOptions();
+useStore.persist.setOptions(newOptions);
 ```
 
 ### Handling Hydration in Components (SSR / Next.js)
@@ -574,27 +574,27 @@ function Counter() {
 When selecting multiple values, returning a new object causes re-renders on every state change (new reference each time). `useShallow` solves this.
 
 ```typescript
-import { useShallow } from 'zustand/react/shallow'
+import { useShallow } from "zustand/react/shallow";
 
 function PromptEditor() {
   // BAD: Creates new object reference every render cycle
   const { systemPrompt, userTemplate } = useStore((state) => ({
     systemPrompt: state.systemPrompt,
     userTemplate: state.userTemplate,
-  }))
+  }));
 
   // GOOD: useShallow does shallow comparison on object keys
   const { systemPrompt, userTemplate } = useStore(
     useShallow((state) => ({
       systemPrompt: state.systemPrompt,
       userTemplate: state.userTemplate,
-    }))
-  )
+    })),
+  );
 
   // ALSO GOOD: Array form works too
   const [systemPrompt, userTemplate] = useStore(
-    useShallow((state) => [state.systemPrompt, state.userTemplate])
-  )
+    useShallow((state) => [state.systemPrompt, state.userTemplate]),
+  );
 }
 ```
 
@@ -602,36 +602,36 @@ function PromptEditor() {
 
 ```typescript
 // 1. Atomic selectors — one value per selector (best performance)
-const count = useStore((s) => s.count)
-const name = useStore((s) => s.name)
+const count = useStore((s) => s.count);
+const name = useStore((s) => s.name);
 
 // 2. Computed/derived selectors
-const completedCount = useStore((s) =>
-  s.todos.filter((t) => t.completed).length
-)
+const completedCount = useStore(
+  (s) => s.todos.filter((t) => t.completed).length,
+);
 
 // 3. Stable selectors defined outside component (avoids recreation)
-const selectCount = (s: AppState) => s.count
-const selectName = (s: AppState) => s.name
+const selectCount = (s: AppState) => s.count;
+const selectName = (s: AppState) => s.name;
 
 function MyComponent() {
-  const count = useStore(selectCount)
-  const name = useStore(selectName)
+  const count = useStore(selectCount);
+  const name = useStore(selectName);
 }
 
 // 4. useShallow for multiple related values
-const { a, b, c } = useStore(useShallow((s) => ({ a: s.a, b: s.b, c: s.c })))
+const { a, b, c } = useStore(useShallow((s) => ({ a: s.a, b: s.b, c: s.c })));
 ```
 
 ### When to Use Each Pattern
 
-| Pattern | When to Use |
-|---------|-------------|
-| Single selector `(s) => s.field` | Default choice. One value needed. |
-| `useShallow` with object | 2-5 related values from same store. |
-| `useShallow` with array | Destructured positional values. |
-| Computed selector | Derived values (filtered lists, counts). |
-| External selector constant | Hot path components rendered often. |
+| Pattern                          | When to Use                              |
+| -------------------------------- | ---------------------------------------- |
+| Single selector `(s) => s.field` | Default choice. One value needed.        |
+| `useShallow` with object         | 2-5 related values from same store.      |
+| `useShallow` with array          | Destructured positional values.          |
+| Computed selector                | Derived values (filtered lists, counts). |
+| External selector constant       | Hot path components rendered often.      |
 
 ---
 
@@ -647,6 +647,7 @@ outermost → innermost:
 ```
 
 **Rule of thumb:** Outer middleware observes everything inside it.
+
 - `devtools` outermost so it can see all state changes
 - `persist` next so it serializes the final state
 - `temporal` tracks changes for undo/redo
@@ -655,25 +656,25 @@ outermost → innermost:
 ### Full Composition Example
 
 ```typescript
-import { create } from 'zustand'
-import { devtools, persist, createJSONStorage } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
-import { temporal } from 'zundo'
+import { create } from "zustand";
+import { devtools, persist, createJSONStorage } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import { temporal } from "zundo";
 
 interface AppState {
   // Data (tracked by undo/redo + persisted)
-  systemPrompt: string
-  userTemplate: string
-  temperature: number
+  systemPrompt: string;
+  userTemplate: string;
+  temperature: number;
 
   // UI state (not tracked, not persisted)
-  sidebarOpen: boolean
+  sidebarOpen: boolean;
 
   // Actions
-  setSystemPrompt: (prompt: string) => void
-  setUserTemplate: (template: string) => void
-  setTemperature: (temp: number) => void
-  toggleSidebar: () => void
+  setSystemPrompt: (prompt: string) => void;
+  setUserTemplate: (template: string) => void;
+  setTemperature: (temp: number) => void;
+  toggleSidebar: () => void;
 }
 
 const useAppStore = create<AppState>()(
@@ -682,26 +683,30 @@ const useAppStore = create<AppState>()(
       temporal(
         immer((set) => ({
           // Data
-          systemPrompt: '',
-          userTemplate: '',
+          systemPrompt: "",
+          userTemplate: "",
           temperature: 0.7,
 
           // UI
           sidebarOpen: true,
 
           // Actions
-          setSystemPrompt: (prompt) => set((state) => {
-            state.systemPrompt = prompt
-          }),
-          setUserTemplate: (template) => set((state) => {
-            state.userTemplate = template
-          }),
-          setTemperature: (temp) => set((state) => {
-            state.temperature = temp
-          }),
-          toggleSidebar: () => set((state) => {
-            state.sidebarOpen = !state.sidebarOpen
-          }),
+          setSystemPrompt: (prompt) =>
+            set((state) => {
+              state.systemPrompt = prompt;
+            }),
+          setUserTemplate: (template) =>
+            set((state) => {
+              state.userTemplate = template;
+            }),
+          setTemperature: (temp) =>
+            set((state) => {
+              state.temperature = temp;
+            }),
+          toggleSidebar: () =>
+            set((state) => {
+              state.sidebarOpen = !state.sidebarOpen;
+            }),
         })),
         {
           // Temporal options — only track data, not UI
@@ -713,13 +718,13 @@ const useAppStore = create<AppState>()(
           limit: 50,
           handleSet: (handleSet) =>
             debounce<typeof handleSet>((state) => {
-              handleSet(state)
+              handleSet(state);
             }, 500),
-        }
+        },
       ),
       {
         // Persist options
-        name: 'textchisel-storage',
+        name: "textchisel-storage",
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           systemPrompt: state.systemPrompt,
@@ -728,11 +733,11 @@ const useAppStore = create<AppState>()(
           sidebarOpen: state.sidebarOpen,
         }),
         version: 1,
-      }
+      },
     ),
-    { name: 'TextChisel Store' }  // DevTools name
-  )
-)
+    { name: "TextChisel Store" }, // DevTools name
+  ),
+);
 ```
 
 ### TypeScript Mutators for Composed Middleware
@@ -740,30 +745,30 @@ const useAppStore = create<AppState>()(
 When combining middleware, the `StateCreator` type needs all mutator annotations:
 
 ```typescript
-import { StateCreator } from 'zustand'
+import { StateCreator } from "zustand";
 
 // Type for a slice in a store with devtools + persist + temporal + immer
 type AppStateCreator<T> = StateCreator<
   AppState,
   [
-    ['zustand/devtools', never],
-    ['zustand/persist', unknown],
+    ["zustand/devtools", never],
+    ["zustand/persist", unknown],
     // Note: zundo/temporal does not add a mutator type
-    ['zustand/immer', never],
+    ["zustand/immer", never],
   ],
   [],
   T
->
+>;
 ```
 
 ### Middleware Ordering Gotchas
 
-| Issue | Wrong | Right |
-|-------|-------|-------|
-| DevTools does not see persisted state | `persist(devtools(...))` | `devtools(persist(...))` |
-| Immer mutations not resolved | `immer(persist(...))` | `persist(immer(...))` |
-| Undo tracks UI state | No `partialize` on temporal | Add `partialize` to temporal options |
-| Rapid inputs flood history | No debounce | Add `handleSet` with debounce |
+| Issue                                 | Wrong                       | Right                                |
+| ------------------------------------- | --------------------------- | ------------------------------------ |
+| DevTools does not see persisted state | `persist(devtools(...))`    | `devtools(persist(...))`             |
+| Immer mutations not resolved          | `immer(persist(...))`       | `persist(immer(...))`                |
+| Undo tracks UI state                  | No `partialize` on temporal | Add `partialize` to temporal options |
+| Rapid inputs flood history            | No debounce                 | Add `handleSet` with debounce        |
 
 ### Minimal Composition (No DevTools)
 
@@ -777,38 +782,47 @@ const useAppStore = create<AppState>()(
         // ... state and actions
       })),
       {
-        partialize: (state) => ({ /* tracked fields */ }),
+        partialize: (state) => ({
+          /* tracked fields */
+        }),
         limit: 50,
-      }
+      },
     ),
     {
-      name: 'textchisel-storage',
-      partialize: (state) => ({ /* persisted fields */ }),
-    }
-  )
-)
+      name: "textchisel-storage",
+      partialize: (state) => ({
+        /* persisted fields */
+      }),
+    },
+  ),
+);
 ```
 
 ### Conditional DevTools (Dev Only)
 
 ```typescript
 // Wrap conditionally
-const withDevtools = process.env.NODE_ENV === 'development'
-  ? devtools
-  : (fn: any) => fn
+const withDevtools =
+  process.env.NODE_ENV === "development" ? devtools : (fn: any) => fn;
 
 const useAppStore = create<AppState>()(
   withDevtools(
     persist(
       temporal(
-        immer((set) => ({ /* ... */ })),
-        { /* temporal opts */ }
+        immer((set) => ({
+          /* ... */
+        })),
+        {
+          /* temporal opts */
+        },
       ),
-      { /* persist opts */ }
+      {
+        /* persist opts */
+      },
     ),
-    { name: 'TextChisel Store' }
-  )
-)
+    { name: "TextChisel Store" },
+  ),
+);
 ```
 
 ---
@@ -816,6 +830,7 @@ const useAppStore = create<AppState>()(
 ## 8. Sources
 
 ### Official Documentation
+
 - [Zustand GitHub Repository](https://github.com/pmndrs/zustand)
 - [Zustand Persist Middleware Reference](https://zustand.docs.pmnd.rs/reference/middlewares/persist)
 - [Zustand useShallow Reference](https://zustand.docs.pmnd.rs/reference/hooks/use-shallow)
@@ -824,6 +839,7 @@ const useAppStore = create<AppState>()(
 - [Zundo npm Package](https://www.npmjs.com/package/zundo)
 
 ### Deep Reference
+
 - [Zustand TypeScript Integration (DeepWiki)](https://deepwiki.com/pmndrs/zustand/5-typescript-integration)
 - [Zustand Slices Pattern (DeepWiki)](https://deepwiki.com/pmndrs/zustand/7.1-slices-pattern)
 - [Zustand Immer Middleware (DeepWiki)](https://deepwiki.com/pmndrs/zustand/3.6-immer-middleware)
@@ -831,6 +847,7 @@ const useAppStore = create<AppState>()(
 - [Zundo API Reference (DeepWiki)](https://deepwiki.com/charkour/zundo)
 
 ### Community Guides
+
 - [Zustand Middleware Architecture (Medium)](https://beyondthecode.medium.com/zustand-middleware-the-architectural-core-of-scalable-state-management-d8d1053489ac)
 - [Zustand + Immer (zwit.link)](https://zwit.link/posts/20250301173228-building-robust-react-apps-with-zustand-and-immer/)
 - [Slice-Based Store for Next.js + TS (Atlys Engineering)](https://engineering.atlys.com/a-slice-based-zustand-store-for-next-js-14-and-typescript-6b92385a48f5)
@@ -841,6 +858,7 @@ const useAppStore = create<AppState>()(
 - [Zundo Partialize for Nested Objects (#170)](https://github.com/charkour/zundo/issues/170)
 
 ### Package Versions (as of research date)
+
 - zustand: v5.0.10 (Jan 2026) — requires TypeScript 5+
 - zundo: v2.3.0
 - immer: built-in middleware in zustand (requires `immer` package installed)

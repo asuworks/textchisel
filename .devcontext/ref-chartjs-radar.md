@@ -13,11 +13,11 @@ npm install chart.js react-chartjs-2 chartjs-plugin-dragdata
 
 ### Version Compatibility
 
-| Package | Version | Notes |
-|---------|---------|-------|
-| chart.js | ^4.x | Core library, tree-shakable |
-| react-chartjs-2 | ^5.x | React wrapper for Chart.js v4 |
-| chartjs-plugin-dragdata | ^2.3.x | Compatible with Chart.js v4, v3, v2.4+ |
+| Package                 | Version | Notes                                  |
+| ----------------------- | ------- | -------------------------------------- |
+| chart.js                | ^4.x    | Core library, tree-shakable            |
+| react-chartjs-2         | ^5.x    | React wrapper for Chart.js v4          |
+| chartjs-plugin-dragdata | ^2.3.x  | Compatible with Chart.js v4, v3, v2.4+ |
 
 ---
 
@@ -34,8 +34,8 @@ import {
   Filler,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Radar } from 'react-chartjs-2';
+} from "chart.js";
+import { Radar } from "react-chartjs-2";
 
 // Register Chart.js components
 ChartJS.register(
@@ -44,12 +44,12 @@ ChartJS.register(
   LineElement,
   Filler,
   Tooltip,
-  Legend
+  Legend,
 );
 
 // chartjs-plugin-dragdata auto-registers globally on import.
 // Just importing it is enough:
-import 'chartjs-plugin-dragdata';
+import "chartjs-plugin-dragdata";
 ```
 
 ### Disabling Auto-Registration (if needed)
@@ -57,7 +57,7 @@ import 'chartjs-plugin-dragdata';
 If you want explicit control instead of global auto-registration:
 
 ```tsx
-import ChartJSDragDataPlugin from 'chartjs-plugin-dragdata';
+import ChartJSDragDataPlugin from "chartjs-plugin-dragdata";
 ChartJS.register(ChartJSDragDataPlugin);
 ```
 
@@ -66,23 +66,23 @@ ChartJS.register(ChartJSDragDataPlugin);
 ## 3. Basic Radar Chart in React
 
 ```tsx
-import React from 'react';
-import { Radar } from 'react-chartjs-2';
+import React from "react";
+import { Radar } from "react-chartjs-2";
 
 const SpiderChart: React.FC = () => {
   const data = {
-    labels: ['Clarity', 'Structure', 'Evidence', 'Style', 'Grammar', 'Depth'],
+    labels: ["Clarity", "Structure", "Evidence", "Style", "Grammar", "Depth"],
     datasets: [
       {
-        label: 'Current Score',
+        label: "Current Score",
         data: [3, 4, 2, 5, 3, 4],
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: "rgba(54, 162, 235, 0.2)",
+        borderColor: "rgba(54, 162, 235, 1)",
         borderWidth: 2,
-        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-        pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: 'rgba(54, 162, 235, 1)',
+        pointBackgroundColor: "rgba(54, 162, 235, 1)",
+        pointBorderColor: "#fff",
+        pointHoverBackgroundColor: "#fff",
+        pointHoverBorderColor: "rgba(54, 162, 235, 1)",
         pointRadius: 5,
         pointHoverRadius: 7,
         fill: true,
@@ -121,33 +121,33 @@ const options = {
   scales: {
     r: {
       // --- Value range ---
-      min: 0,              // Hard minimum (use suggestedMin for soft)
-      max: 5,              // Hard maximum (use suggestedMax for soft)
+      min: 0, // Hard minimum (use suggestedMin for soft)
+      max: 5, // Hard maximum (use suggestedMax for soft)
       beginAtZero: true,
 
       // --- Tick marks (concentric rings) ---
       ticks: {
-        stepSize: 1,        // Force ticks at 0, 1, 2, 3, 4, 5
-        display: true,       // Show tick labels
-        backdropColor: 'transparent', // Remove grey backdrop behind tick labels
-        color: '#666',
+        stepSize: 1, // Force ticks at 0, 1, 2, 3, 4, 5
+        display: true, // Show tick labels
+        backdropColor: "transparent", // Remove grey backdrop behind tick labels
+        color: "#666",
         font: {
           size: 11,
         },
         // Custom tick label formatting:
-        callback: function(value: number) {
-          const levels = ['', 'Novice', 'Basic', 'Good', 'Strong', 'Expert'];
-          return levels[value] || '';
+        callback: function (value: number) {
+          const levels = ["", "Novice", "Basic", "Good", "Strong", "Expert"];
+          return levels[value] || "";
         },
       },
 
       // --- Point labels (axis labels around perimeter) ---
       pointLabels: {
         display: true,
-        color: '#333',
+        color: "#333",
         font: {
           size: 13,
-          weight: 'bold' as const,
+          weight: "bold" as const,
           family: "'Inter', sans-serif",
         },
         padding: 10,
@@ -158,17 +158,17 @@ const options = {
       // --- Grid lines (concentric polygons) ---
       grid: {
         display: true,
-        color: 'rgba(0, 0, 0, 0.1)',    // Grid line color
+        color: "rgba(0, 0, 0, 0.1)", // Grid line color
         lineWidth: 1,
-        circular: false,  // false = polygon grid, true = circular grid
+        circular: false, // false = polygon grid, true = circular grid
       },
 
       // --- Angle lines (radial spokes from center) ---
       angleLines: {
         display: true,
-        color: 'rgba(0, 0, 0, 0.1)',
+        color: "rgba(0, 0, 0, 0.1)",
         lineWidth: 1,
-        borderDash: [],          // e.g., [5, 5] for dashed
+        borderDash: [], // e.g., [5, 5] for dashed
         borderDashOffset: 0,
       },
     },
@@ -192,34 +192,34 @@ To overlay "current scores" and "target scores", define two dataset objects in t
 
 ```ts
 const data = {
-  labels: ['Clarity', 'Structure', 'Evidence', 'Style', 'Grammar', 'Depth'],
+  labels: ["Clarity", "Structure", "Evidence", "Style", "Grammar", "Depth"],
   datasets: [
     {
-      label: 'Current Score',
+      label: "Current Score",
       data: [3, 4, 2, 5, 3, 4],
-      backgroundColor: 'rgba(54, 162, 235, 0.15)',  // Light blue fill
-      borderColor: 'rgba(54, 162, 235, 1)',
+      backgroundColor: "rgba(54, 162, 235, 0.15)", // Light blue fill
+      borderColor: "rgba(54, 162, 235, 1)",
       borderWidth: 2,
-      pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-      pointBorderColor: '#fff',
+      pointBackgroundColor: "rgba(54, 162, 235, 1)",
+      pointBorderColor: "#fff",
       pointRadius: 6,
       pointHoverRadius: 8,
       fill: true,
-      order: 1,  // Draw order (higher = drawn first / behind)
+      order: 1, // Draw order (higher = drawn first / behind)
     },
     {
-      label: 'Target Score',
+      label: "Target Score",
       data: [4, 5, 4, 5, 4, 5],
-      backgroundColor: 'rgba(255, 99, 132, 0.1)',   // Light red fill
-      borderColor: 'rgba(255, 99, 132, 0.6)',
+      backgroundColor: "rgba(255, 99, 132, 0.1)", // Light red fill
+      borderColor: "rgba(255, 99, 132, 0.6)",
       borderWidth: 2,
-      borderDash: [6, 3],                            // Dashed line
-      pointBackgroundColor: 'rgba(255, 99, 132, 0.6)',
-      pointBorderColor: '#fff',
+      borderDash: [6, 3], // Dashed line
+      pointBackgroundColor: "rgba(255, 99, 132, 0.6)",
+      pointBorderColor: "#fff",
       pointRadius: 4,
-      pointStyle: 'triangle',
+      pointStyle: "triangle",
       fill: true,
-      order: 2,  // Drawn behind current score
+      order: 2, // Drawn behind current score
     },
   ],
 };
@@ -227,23 +227,23 @@ const data = {
 
 ### Dataset Properties Reference
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `label` | string | Legend label |
-| `data` | number[] | One value per axis |
-| `backgroundColor` | string | Fill color (use RGBA for opacity) |
-| `borderColor` | string | Line color |
-| `borderWidth` | number | Line thickness |
-| `borderDash` | number[] | Dash pattern, e.g. `[6, 3]` |
-| `fill` | boolean\|string | Fill area under line |
-| `pointBackgroundColor` | string | Point fill color |
-| `pointBorderColor` | string | Point border color |
-| `pointRadius` | number | Point size in px |
-| `pointHoverRadius` | number | Point size on hover |
-| `pointStyle` | string | 'circle', 'triangle', 'rect', 'star', 'cross', etc. |
-| `pointHitRadius` | number | Invisible hit area (set >= 25 for touch) |
-| `tension` | number | Line curvature (0 = straight) |
-| `order` | number | Draw order (higher = behind) |
+| Property               | Type            | Description                                         |
+| ---------------------- | --------------- | --------------------------------------------------- |
+| `label`                | string          | Legend label                                        |
+| `data`                 | number[]        | One value per axis                                  |
+| `backgroundColor`      | string          | Fill color (use RGBA for opacity)                   |
+| `borderColor`          | string          | Line color                                          |
+| `borderWidth`          | number          | Line thickness                                      |
+| `borderDash`           | number[]        | Dash pattern, e.g. `[6, 3]`                         |
+| `fill`                 | boolean\|string | Fill area under line                                |
+| `pointBackgroundColor` | string          | Point fill color                                    |
+| `pointBorderColor`     | string          | Point border color                                  |
+| `pointRadius`          | number          | Point size in px                                    |
+| `pointHoverRadius`     | number          | Point size on hover                                 |
+| `pointStyle`           | string          | 'circle', 'triangle', 'rect', 'star', 'cross', etc. |
+| `pointHitRadius`       | number          | Invisible hit area (set >= 25 for touch)            |
+| `tension`              | number          | Line curvature (0 = straight)                       |
+| `order`                | number          | Draw order (higher = behind)                        |
 
 ---
 
@@ -265,12 +265,12 @@ const options = {
   elements: {
     line: {
       borderWidth: 2,
-      tension: 0,     // 0 = angular, 0.4 = smooth curves
+      tension: 0, // 0 = angular, 0.4 = smooth curves
     },
     point: {
       radius: 5,
       hoverRadius: 7,
-      hitRadius: 25,   // Important for touch/drag
+      hitRadius: 25, // Important for touch/drag
     },
   },
 };
@@ -283,9 +283,9 @@ const options = {
   plugins: {
     legend: {
       display: true,
-      position: 'top' as const,
+      position: "top" as const,
       labels: {
-        usePointStyle: true,      // Use point icons instead of rectangles
+        usePointStyle: true, // Use point icons instead of rectangles
         padding: 15,
         font: {
           size: 12,
@@ -303,13 +303,13 @@ const options = {
   plugins: {
     tooltip: {
       enabled: true,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
       titleFont: { size: 13 },
       bodyFont: { size: 12 },
       padding: 10,
       cornerRadius: 4,
       callbacks: {
-        label: function(context: any) {
+        label: function (context: any) {
           return `${context.dataset.label}: ${context.parsed.r}/5`;
         },
       },
@@ -328,8 +328,8 @@ const options = {
 const options = {
   plugins: {
     dragData: {
-      round: 0,            // Round dragged values to N decimal places (0 = integers)
-      showTooltip: true,    // Show tooltip while dragging
+      round: 0, // Round dragged values to N decimal places (0 = integers)
+      showTooltip: true, // Show tooltip while dragging
       // dragX: false,      // Not applicable for radar (radar uses radial values)
     },
   },
@@ -344,12 +344,12 @@ const options = {
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `round` | number | undefined | Round dragged value to N decimal places |
-| `showTooltip` | boolean | true | Show tooltip during drag |
-| `dragX` | boolean | false | Allow horizontal dragging (not used for radar) |
-| `magnet.to` | function | undefined | Snap function, e.g. `Math.round` |
+| Option        | Type     | Default   | Description                                    |
+| ------------- | -------- | --------- | ---------------------------------------------- |
+| `round`       | number   | undefined | Round dragged value to N decimal places        |
+| `showTooltip` | boolean  | true      | Show tooltip during drag                       |
+| `dragX`       | boolean  | false     | Allow horizontal dragging (not used for radar) |
+| `magnet.to`   | function | undefined | Snap function, e.g. `Math.round`               |
 
 ### Per-Dataset Enable/Disable
 
@@ -357,14 +357,14 @@ const options = {
 const data = {
   datasets: [
     {
-      label: 'Current Score',
+      label: "Current Score",
       data: [3, 4, 2, 5, 3, 4],
-      dragData: true,          // This dataset IS draggable
+      dragData: true, // This dataset IS draggable
     },
     {
-      label: 'Target Score',
+      label: "Target Score",
       data: [4, 5, 4, 5, 4, 5],
-      dragData: false,         // This dataset is NOT draggable
+      dragData: false, // This dataset is NOT draggable
     },
   ],
 };
@@ -383,11 +383,11 @@ const options = {
 
       // Called when user begins dragging a point.
       // Return false to PREVENT dragging (lock the point).
-      onDragStart: function(
+      onDragStart: function (
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) {
         // Example: lock the "Target Score" dataset (index 1)
         if (datasetIndex === 1) return false;
@@ -401,11 +401,11 @@ const options = {
       // Called continuously while dragging.
       // Return false to cancel the value update for this drag step.
       // Return a number to override the dragged value (clamping).
-      onDrag: function(
+      onDrag: function (
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) {
         // Clamp value to scale bounds
         if (value < 1) return 1;
@@ -417,11 +417,11 @@ const options = {
 
       // Called when user releases the point.
       // Use this to persist the final value.
-      onDragEnd: function(
+      onDragEnd: function (
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) {
         // value is the final rounded value
         console.log(`Axis ${index} updated to ${value}`);
@@ -449,7 +449,7 @@ const options = {
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) => {
         // Only allow dragging on the "current score" dataset (index 0)
         if (datasetIndex !== 0) return false;
@@ -464,7 +464,7 @@ const options = {
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) => {
         // Snap to integers (rubric levels)
         return Math.round(value);
@@ -473,7 +473,7 @@ const options = {
         e: MouseEvent,
         datasetIndex: number,
         index: number,
-        value: number
+        value: number,
       ) => {
         // Update React state with the new score
         handleScoreChange(index, Math.round(value));
@@ -493,7 +493,7 @@ const options = {
     dragData: {
       round: 0,
       magnet: {
-        to: Math.round,   // Snaps to nearest integer on release
+        to: Math.round, // Snaps to nearest integer on release
       },
     },
   },
@@ -511,19 +511,22 @@ react-chartjs-2 automatically re-renders when `data` or `options` props change. 
 ```tsx
 const [scores, setScores] = useState([3, 4, 2, 5, 3, 4]);
 
-const data = useMemo(() => ({
-  labels: ['Clarity', 'Structure', 'Evidence', 'Style', 'Grammar', 'Depth'],
-  datasets: [
-    {
-      label: 'Current Score',
-      data: scores,
-      // ...styling
-    },
-  ],
-}), [scores]);
+const data = useMemo(
+  () => ({
+    labels: ["Clarity", "Structure", "Evidence", "Style", "Grammar", "Depth"],
+    datasets: [
+      {
+        label: "Current Score",
+        data: scores,
+        // ...styling
+      },
+    ],
+  }),
+  [scores],
+);
 
 const handleScoreChange = (axisIndex: number, newValue: number) => {
-  setScores(prev => {
+  setScores((prev) => {
     const next = [...prev];
     next[axisIndex] = newValue;
     return next;
@@ -534,10 +537,10 @@ const handleScoreChange = (axisIndex: number, newValue: number) => {
 ### Accessing the Chart Instance via Ref
 
 ```tsx
-import { useRef } from 'react';
-import type { ChartJS } from 'chart.js';
+import { useRef } from "react";
+import type { ChartJS } from "chart.js";
 
-const chartRef = useRef<ChartJS<'radar'>>(null);
+const chartRef = useRef<ChartJS<"radar">>(null);
 
 // Access the Chart.js instance
 useEffect(() => {
@@ -545,7 +548,7 @@ useEffect(() => {
   if (chart) {
     // Programmatic updates
     chart.data.datasets[0].data[2] = 5;
-    chart.update();       // Re-render with animation
+    chart.update(); // Re-render with animation
     // chart.update('none'); // Re-render without animation
   }
 }, []);
@@ -569,8 +572,8 @@ return <Radar ref={chartRef} data={data} options={options} />;
 ```ts
 const options = {
   animation: {
-    duration: 400,                    // Transition duration in ms
-    easing: 'easeOutQuart' as const,  // Easing function
+    duration: 400, // Transition duration in ms
+    easing: "easeOutQuart" as const, // Easing function
   },
   // Disable animation entirely (for drag responsiveness):
   // animation: false,
@@ -580,18 +583,18 @@ const options = {
     // Animate the polygon fill
     backgroundColor: {
       duration: 300,
-      easing: 'linear',
+      easing: "linear",
     },
     // Animate point positions
-    x: { duration: 0 },  // Instant x movement
-    y: { duration: 0 },  // Instant y movement
+    x: { duration: 0 }, // Instant x movement
+    y: { duration: 0 }, // Instant y movement
   },
 
   // Transition-specific config
   transitions: {
     active: {
       animation: {
-        duration: 200,    // Hover animation speed
+        duration: 200, // Hover animation speed
       },
     },
   },
@@ -607,7 +610,7 @@ const options = {
 ## 10. Complete Example: Textchisel Spider Chart Skeleton
 
 ```tsx
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -616,9 +619,9 @@ import {
   Filler,
   Tooltip,
   Legend,
-} from 'chart.js';
-import { Radar } from 'react-chartjs-2';
-import 'chartjs-plugin-dragdata';
+} from "chart.js";
+import { Radar } from "react-chartjs-2";
+import "chartjs-plugin-dragdata";
 
 ChartJS.register(
   RadialLinearScale,
@@ -626,7 +629,7 @@ ChartJS.register(
   LineElement,
   Filler,
   Tooltip,
-  Legend
+  Legend,
 );
 
 interface SpiderChartProps {
@@ -644,121 +647,127 @@ const SpiderChart: React.FC<SpiderChartProps> = ({
   lockedAxes,
   onScoreChange,
 }) => {
-  const data = useMemo(() => ({
-    labels: axisLabels,
-    datasets: [
-      {
-        label: 'Current Score',
-        data: [...currentScores],
-        backgroundColor: 'rgba(54, 162, 235, 0.15)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-        pointBorderColor: '#fff',
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointHitRadius: 25,
-        fill: true,
-        dragData: true,   // Draggable
-      },
-      {
-        label: 'Target Score',
-        data: [...targetScores],
-        backgroundColor: 'rgba(255, 99, 132, 0.08)',
-        borderColor: 'rgba(255, 99, 132, 0.5)',
-        borderWidth: 2,
-        borderDash: [6, 3],
-        pointBackgroundColor: 'rgba(255, 99, 132, 0.5)',
-        pointBorderColor: '#fff',
-        pointRadius: 4,
-        pointStyle: 'triangle' as const,
-        fill: true,
-        dragData: false,  // Not draggable
-      },
-    ],
-  }), [axisLabels, currentScores, targetScores]);
+  const data = useMemo(
+    () => ({
+      labels: axisLabels,
+      datasets: [
+        {
+          label: "Current Score",
+          data: [...currentScores],
+          backgroundColor: "rgba(54, 162, 235, 0.15)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 2,
+          pointBackgroundColor: "rgba(54, 162, 235, 1)",
+          pointBorderColor: "#fff",
+          pointRadius: 6,
+          pointHoverRadius: 8,
+          pointHitRadius: 25,
+          fill: true,
+          dragData: true, // Draggable
+        },
+        {
+          label: "Target Score",
+          data: [...targetScores],
+          backgroundColor: "rgba(255, 99, 132, 0.08)",
+          borderColor: "rgba(255, 99, 132, 0.5)",
+          borderWidth: 2,
+          borderDash: [6, 3],
+          pointBackgroundColor: "rgba(255, 99, 132, 0.5)",
+          pointBorderColor: "#fff",
+          pointRadius: 4,
+          pointStyle: "triangle" as const,
+          fill: true,
+          dragData: false, // Not draggable
+        },
+      ],
+    }),
+    [axisLabels, currentScores, targetScores],
+  );
 
-  const options = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: true,
-    scales: {
-      r: {
-        min: 0,
-        max: 5,
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1,
-          backdropColor: 'transparent',
-          color: '#888',
-          font: { size: 10 },
-        },
-        pointLabels: {
-          color: '#333',
-          font: { size: 13, weight: 'bold' as const },
-          padding: 10,
-        },
-        grid: {
-          color: 'rgba(0, 0, 0, 0.08)',
-          circular: false,
-        },
-        angleLines: {
-          color: 'rgba(0, 0, 0, 0.08)',
-        },
-      },
-    },
-    elements: {
-      line: { borderWidth: 2, tension: 0 },
-      point: { hitRadius: 25 },
-    },
-    animation: {
-      duration: 300,
-      easing: 'easeOutQuart' as const,
-    },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-        labels: { usePointStyle: true, padding: 15 },
-      },
-      tooltip: {
-        callbacks: {
-          label: (ctx: any) => `${ctx.dataset.label}: ${ctx.parsed.r}/5`,
+  const options = useMemo(
+    () => ({
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: {
+        r: {
+          min: 0,
+          max: 5,
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            backdropColor: "transparent",
+            color: "#888",
+            font: { size: 10 },
+          },
+          pointLabels: {
+            color: "#333",
+            font: { size: 13, weight: "bold" as const },
+            padding: 10,
+          },
+          grid: {
+            color: "rgba(0, 0, 0, 0.08)",
+            circular: false,
+          },
+          angleLines: {
+            color: "rgba(0, 0, 0, 0.08)",
+          },
         },
       },
-      dragData: {
-        round: 0,
-        showTooltip: true,
-        magnet: { to: Math.round },
-        onDragStart: (
-          _e: MouseEvent,
-          datasetIndex: number,
-          index: number,
-          _value: number
-        ) => {
-          if (datasetIndex !== 0) return false;
-          if (lockedAxes.has(index)) return false;
+      elements: {
+        line: { borderWidth: 2, tension: 0 },
+        point: { hitRadius: 25 },
+      },
+      animation: {
+        duration: 300,
+        easing: "easeOutQuart" as const,
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: "top" as const,
+          labels: { usePointStyle: true, padding: 15 },
         },
-        onDrag: (
-          _e: MouseEvent,
-          _datasetIndex: number,
-          _index: number,
-          value: number
-        ) => {
-          if (value < 1) return 1;
-          if (value > 5) return 5;
-          return Math.round(value);
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => `${ctx.dataset.label}: ${ctx.parsed.r}/5`,
+          },
         },
-        onDragEnd: (
-          _e: MouseEvent,
-          _datasetIndex: number,
-          index: number,
-          value: number
-        ) => {
-          onScoreChange(index, Math.round(value));
+        dragData: {
+          round: 0,
+          showTooltip: true,
+          magnet: { to: Math.round },
+          onDragStart: (
+            _e: MouseEvent,
+            datasetIndex: number,
+            index: number,
+            _value: number,
+          ) => {
+            if (datasetIndex !== 0) return false;
+            if (lockedAxes.has(index)) return false;
+          },
+          onDrag: (
+            _e: MouseEvent,
+            _datasetIndex: number,
+            _index: number,
+            value: number,
+          ) => {
+            if (value < 1) return 1;
+            if (value > 5) return 5;
+            return Math.round(value);
+          },
+          onDragEnd: (
+            _e: MouseEvent,
+            _datasetIndex: number,
+            index: number,
+            value: number,
+          ) => {
+            onScoreChange(index, Math.round(value));
+          },
         },
       },
-    },
-  }), [lockedAxes, onScoreChange]);
+    }),
+    [lockedAxes, onScoreChange],
+  );
 
   return <Radar data={data} options={options} />;
 };
@@ -776,18 +785,33 @@ chartjs-plugin-dragdata ships its own type declarations. If TypeScript does not 
 
 ```ts
 // types/chartjs-plugin-dragdata.d.ts
-import 'chart.js';
+import "chart.js";
 
-declare module 'chart.js' {
+declare module "chart.js" {
   interface PluginOptionsByType<TType extends ChartType> {
     dragData?: {
       round?: number;
       showTooltip?: boolean;
       dragX?: boolean;
       magnet?: { to: (value: number) => number };
-      onDragStart?: (e: MouseEvent, datasetIndex: number, index: number, value: number) => boolean | void;
-      onDrag?: (e: MouseEvent, datasetIndex: number, index: number, value: number) => boolean | number | void;
-      onDragEnd?: (e: MouseEvent, datasetIndex: number, index: number, value: number) => void;
+      onDragStart?: (
+        e: MouseEvent,
+        datasetIndex: number,
+        index: number,
+        value: number,
+      ) => boolean | void;
+      onDrag?: (
+        e: MouseEvent,
+        datasetIndex: number,
+        index: number,
+        value: number,
+      ) => boolean | number | void;
+      onDragEnd?: (
+        e: MouseEvent,
+        datasetIndex: number,
+        index: number,
+        value: number,
+      ) => void;
     };
   }
 

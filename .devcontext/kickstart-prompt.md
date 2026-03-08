@@ -11,7 +11,6 @@ You have two reference documents attached to this project. Read them in this ord
 1. **`.devcontext/textchisel-prd.md`** — the Product Requirements Document. Read sections 1–5 carefully. Skim sections 6–7 (examples) for context on difficulty range. Read sections 9 (MVP) and 11 (Design Principles) word for word. These are your constraints.
 
 2. **`.devcontext/technical-reference-guide.md`** — the Technical Reference Guide. This is your implementation toolbox. Do NOT read it front to back. Navigate it as follows:
-
    - **Start with** the "TOP 5 CRITICAL REFERENCES" section. These five entries define your core stack.
    - **Then read** the "IMPLEMENTATION ARCHITECTURE SYNTHESIS" section at the bottom. This gives you a recommended MVP stack, latency budget, and phase plan. **Reconcile these recommendations with the founder's confirmed tech stack choices from the interview — the founder's choices override any recommendation here.**
    - **Then pull from** individual AREA sections only as needed when designing specific components (e.g., read AREA 1 when designing the evaluation engine, AREA 5 when designing the spider chart, etc.)
@@ -30,40 +29,51 @@ Ask these questions in a single, organized message. Wait for answers before cont
 
 **1. Frontend Framework**
 The reference guide suggests React (for Zustand state management, chartjs-plugin-dragdata, React 19 useOptimistic). But the founder may prefer otherwise.
+
 - Ask: "What frontend framework do you want to build in? React, Vue, Svelte, SolidJS, or something else? Do you have an existing project or codebase this needs to integrate with?"
 
 **2. Language & Runtime**
+
 - Ask: "TypeScript or JavaScript? Node.js backend, Python backend, or both? Any preference between a monorepo (frontend + backend together) or separate services?"
 
 **3. LLM Provider & Models**
 This is critical — it determines API patterns, cost structure, latency, and whether features like log-probs (for G-Eval probability-weighted scoring) are available.
+
 - Ask: "Which LLM provider(s) do you want to use? OpenAI, Anthropic, both, or open-source/self-hosted? Do you have a preference for specific models (e.g., GPT-4.1, Claude Sonnet, a smaller model for evaluation)? Should the architecture support swapping providers easily?"
 
 **4. Hosting & Deployment**
+
 - Ask: "Where do you want this deployed? Vercel, AWS, GCP, self-hosted, or local-first for now? Is this a web app, desktop app (Electron/Tauri), or CLI tool? For MVP, would you prefer a single-page app that calls LLM APIs directly from the browser, or a client-server architecture with a backend?"
 
 **5. Database & Persistence**
+
 - Ask: "For version history and session state — do you want a database (SQLite, Postgres, Supabase), local file storage, browser localStorage/IndexedDB, or no persistence for MVP (in-memory only, lost on refresh)?"
 
 **6. State Management**
 The reference guide recommends Zustand + Immer + Zundo for undo/redo. But this is React-specific.
+
 - Ask: "Any preference for state management? The reference guide suggests Zustand with Zundo for undo/redo. Are you comfortable with that, or do you prefer Redux, Jotai, MobX, Pinia (Vue), or something else?"
 
 **7. Visualization**
 The radar/spider chart is the primary UI. Options range from quick-and-dirty to fully custom.
+
 - Ask: "For the spider chart — do you want the fastest path (Chart.js + dragdata plugin), maximum customizability (D3.js), or a component library approach (Recharts, Apache ECharts)? Do you care about the visual polish of the chart for MVP, or is functional-first fine?"
 
 **8. Styling**
+
 - Ask: "CSS approach? Tailwind, CSS modules, styled-components, shadcn/ui, or something else? Any existing design system or brand guidelines?"
 
 **9. Testing**
+
 - Ask: "What level of testing for MVP? None (move fast), unit tests only, or full coverage including E2E? Any preferred testing frameworks?"
 
 **10. Budget & Cost Sensitivity**
 This affects model selection, evaluation strategy (how many scoring calls per regeneration), and caching strategy.
+
 - Ask: "How cost-sensitive is the MVP? Each regeneration cycle involves 1 generation call + 3 scoring calls (one per dimension) × 3 samples for noise reduction = ~10 LLM calls. At GPT-4.1 pricing that's roughly $0.02–0.05 per cycle. Is that acceptable, or should we optimize for cost (smaller models for evaluation, fewer samples)?"
 
 **11. Open Questions**
+
 - Ask: "Anything else about the tech stack that matters to you? Any technologies you love, any you refuse to use? Any infrastructure you already have set up that we should build on?"
 
 ### How to Use the Answers
@@ -147,6 +157,7 @@ When the user types their intent ("Write a cold email to a Series B investor abo
 3. On approval, initialize the spider chart
 
 Design this pipeline. Key decisions:
+
 - What prompt generates good dimensions? (Think: what makes a dimension "good" per the IK analogy — it should correspond to an independent, coherent mode of variation)
 - What prompt generates good rubrics from dimension names? (Reference: DeepEval's G-Eval auto-generates evaluation steps; OpenRubrics' Contrastive Rubric Generation)
 - How do you validate that proposed dimensions are sufficiently independent? (MVP: heuristic check. Phase 2: Jacobian analysis)
@@ -167,6 +178,7 @@ Key reference: G-Eval's probability-weighted scoring. Critical implementation de
 ### 4. The Grammar Layer (IK Solver)
 
 This is the hardest component. It takes:
+
 - Current prompt text
 - Locked dimensions with their scores
 - Target value for the free dimension
@@ -175,6 +187,7 @@ This is the hardest component. It takes:
 And produces: a modified prompt.
 
 Design decisions:
+
 - **MVP approach:** Use a single LLM call with a carefully structured meta-prompt that includes the current prompt, the dimension to change, its rubric, the target direction, and explicit instructions to preserve locked aspects. This is the "rule-based" approach from the reference guide — not true IK, but a working approximation.
 - **The meta-prompt structure:** This is the most important prompt in the entire system. It must communicate: what the prompt currently is, what one specific quality dimension means (via the rubric), which direction to move it, and what must NOT change (locked dimensions, described via their rubrics so the LLM understands what "locked" means in qualitative terms).
 - **Extension point for Phase 2:** The interface should accept a `GrammarInstruction` object so that later phases can swap in TextGrad, CriSPO, or true IK-style optimization without changing the rest of the system.
@@ -184,7 +197,7 @@ Design decisions:
 Design the full loop as a pipeline:
 
 ```
-User adjusts slider → 
+User adjusts slider →
   [Validate: is target within workspace?] →
   Grammar Layer generates modified prompt →
   [Stream prompt to UI for immediate display] →
@@ -194,6 +207,7 @@ User adjusts slider →
 ```
 
 Key decisions:
+
 - Do you stream the regenerated prompt while scoring runs in the background? (Yes — show the text immediately, update scores when ready)
 - How do you handle score deviations on locked dimensions? (Show the deviation, flag if > threshold, offer to revert)
 - What triggers regeneration — slider release, a button, or continuous tracking? (MVP: button. Phase 2: debounced slider release)

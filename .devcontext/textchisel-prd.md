@@ -2,7 +2,7 @@
 
 ## Product Requirements Document
 
-*Inverse Kinematics for Prompt Space*
+_Inverse Kinematics for Prompt Space_
 
 v0.2 — March 2026
 
@@ -12,7 +12,7 @@ v0.2 — March 2026
 
 ## 1. Vision
 
-> *"The sculptor's hand can only break the spell that the marble holds within."*
+> _"The sculptor's hand can only break the spell that the marble holds within."_
 >
 > — attributed to Michelangelo
 
@@ -34,7 +34,7 @@ The consequences are familiar to anyone who has used an LLM seriously:
 
 - **Iteration is unstructured.** There is no record of what was tried, what worked, what the trade-offs were. Each edit is a blind step. Over a long session, users forget why they made earlier choices and often regress.
 
-The core problem is not that users lack skill. It is that the *space itself* is illegible. textchisel makes the space legible.
+The core problem is not that users lack skill. It is that the _space itself_ is illegible. textchisel makes the space legible.
 
 ## 3. The Solution: How It Works
 
@@ -48,7 +48,7 @@ Crucially, the user can **lock** any dimension at its current value. This fixes 
 
 ### 3.2 The Grammar Layer: Hidden Mechanics
 
-Beneath the user-facing dimensions lies a **grammar layer** — a structured vocabulary of prompt mechanics that the system uses internally. This layer understands pragmatic acts (CONSTRAIN, EXEMPLIFY, AUTHORIZE), rhetorical modes (calibrating, mimetic, adversarial), lexical strategies (hedging, specificity, register), and syntactic patterns. When the user drags "scientific rigor" from 0.3 to 0.7, the grammar layer knows *how* to implement that: tighten constraints, add calibrating language, increase domain-specific terminology, shift rhetorical mode from narrative to analytical.
+Beneath the user-facing dimensions lies a **grammar layer** — a structured vocabulary of prompt mechanics that the system uses internally. This layer understands pragmatic acts (CONSTRAIN, EXEMPLIFY, AUTHORIZE), rhetorical modes (calibrating, mimetic, adversarial), lexical strategies (hedging, specificity, register), and syntactic patterns. When the user drags "scientific rigor" from 0.3 to 0.7, the grammar layer knows _how_ to implement that: tighten constraints, add calibrating language, increase domain-specific terminology, shift rhetorical mode from narrative to analytical.
 
 The user never sees this layer. It is the system's internal language for translating slider positions into actual prompt modifications.
 
@@ -62,7 +62,7 @@ The design of textchisel is deeply informed by a single analogy from robotics: *
 
 ### 4.1 The Primary Analogy: Inverse Kinematics
 
-A robot arm has many joints — shoulder, elbow, wrist, each with rotational degrees of freedom. These are the *microscopic variables*, analogous to the grammar layer's lexical choices, rhetorical moves, and syntactic patterns. No operator adjusts joints directly. Instead, they control the **end effector** — the position of the hand in space. This is a small number of meaningful coordinates (x, y, z, and perhaps orientation), analogous to the user's dimensions on the spider chart.
+A robot arm has many joints — shoulder, elbow, wrist, each with rotational degrees of freedom. These are the _microscopic variables_, analogous to the grammar layer's lexical choices, rhetorical moves, and syntactic patterns. No operator adjusts joints directly. Instead, they control the **end effector** — the position of the hand in space. This is a small number of meaningful coordinates (x, y, z, and perhaps orientation), analogous to the user's dimensions on the spider chart.
 
 **Inverse kinematics** is the computational problem of determining which joint angles achieve a given end-effector position. This is exactly what the grammar layer does: given target values on the user's dimensions, find the prompt structure (the "joint configuration") that realizes those targets. The user grabs the hand and moves it; the system figures out how to bend the arm.
 
@@ -88,7 +88,7 @@ The IK framework makes concrete, actionable predictions about the product's beha
 
 ### 4.3 The Supplementary Analogy: Free Energy Landscapes
 
-A second analogy from statistical mechanics complements the IK framework by addressing the *global topology* of prompt space — structure that IK's local vocabulary cannot describe.
+A second analogy from statistical mechanics complements the IK framework by addressing the _global topology_ of prompt space — structure that IK's local vocabulary cannot describe.
 
 In statistical mechanics, a molecular system has thousands of atomic coordinates. Physicists define **collective variables** — low-dimensional projections that capture meaningful degrees of freedom. The **free energy** as a function of a collective variable is computed by integrating out all the microscopic degrees of freedom: for each value of the collective variable, the system searches over all possible configurations that realize it and reports the best achievable energy.
 
@@ -104,9 +104,9 @@ The free energy framework contributes concepts that the IK analogy does not prov
 
 ### 4.4 How the Two Analogies Work Together
 
-The IK analogy governs the *interaction model*: how the user moves, what they feel, what coupling and constraints mean, how the system responds to direct manipulation. It provides the computable quantities (Jacobian, manipulability, null space, workspace boundary) that drive UX decisions.
+The IK analogy governs the _interaction model_: how the user moves, what they feel, what coupling and constraints mean, how the system responds to direct manipulation. It provides the computable quantities (Jacobian, manipulability, null space, workspace boundary) that drive UX decisions.
 
-The free energy analogy governs the *backend architecture*: how the grammar layer searches prompt space, what makes a dimension "good," how the system detects that the user is in a local optimum and could benefit from a structurally different approach. It provides the topological vocabulary (basins, barriers, ruggedness) that drives scoring and optimization decisions.
+The free energy analogy governs the _backend architecture_: how the grammar layer searches prompt space, what makes a dimension "good," how the system detects that the user is in a local optimum and could benefit from a structurally different approach. It provides the topological vocabulary (basins, barriers, ruggedness) that drives scoring and optimization decisions.
 
 In a single sentence: **textchisel is an inverse kinematics solver for prompt space, where the user's dimensions are end-effector coordinates, the grammar layer is the joint mechanism, and sculpting is guiding the hand through the workspace one coordinate at a time — over a free energy landscape that the system navigates on the user's behalf.**
 
@@ -152,7 +152,7 @@ The system generates rubrics automatically when it proposes dimensions, and the 
 
 - **Function topology classification.** Mathematical classification of structural patterns. Example: Temporal Architecture — classify the narrative-order-to-chronology mapping as linear, circular, fractal, or labyrinthine.
 
-This diversity is essential. A system that reduces every dimension to a generic 0–1 score sacrifices exactly the specificity that makes evaluation meaningful. The rubric *is* the dimension's identity.
+This diversity is essential. A system that reduces every dimension to a generic 0–1 score sacrifices exactly the specificity that makes evaluation meaningful. The rubric _is_ the dimension's identity.
 
 ### 5.3 The Spider Chart and Locking Mechanism
 
@@ -194,17 +194,17 @@ The dimensions here are pragmatic and functional — they describe what the text
 
 **Example 1: Cold Investor Email**
 
-**User input:** *Write a cold email to a Series B investor about our AI infrastructure startup.*
+**User input:** _Write a cold email to a Series B investor about our AI infrastructure startup._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Urgency** | Ordinal scale anchored by linguistic markers. Level 1: no temporal language. Level 2: soft framing. Level 3: bounded windows. Level 4: specific deadlines. Level 5: scarcity/loss framing. Score = dominant level. | *Ordinal / linguistic marker* |
-| **Personalization Depth** | Count of verifiable, recipient-specific claims woven into argument structure (not mail-merge tokens). Score = raw integer count (0 = template, 5+ = deeply researched). | *Count-based integer* |
-| **Ask Directness** | Taxonomic ladder of speech act types: implicit suggestion → open question → specific proposal → binary forced choice → presumptive close. Score = which rung the CTA lands on. | *Speech act taxonomy* |
+| Dimension                 | Rubric / Measurement                                                                                                                                                                                               | Rubric Type                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- |
+| **Urgency**               | Ordinal scale anchored by linguistic markers. Level 1: no temporal language. Level 2: soft framing. Level 3: bounded windows. Level 4: specific deadlines. Level 5: scarcity/loss framing. Score = dominant level. | _Ordinal / linguistic marker_ |
+| **Personalization Depth** | Count of verifiable, recipient-specific claims woven into argument structure (not mail-merge tokens). Score = raw integer count (0 = template, 5+ = deeply researched).                                            | _Count-based integer_         |
+| **Ask Directness**        | Taxonomic ladder of speech act types: implicit suggestion → open question → specific proposal → binary forced choice → presumptive close. Score = which rung the CTA lands on.                                     | _Speech act taxonomy_         |
 
-*Why this is easy:* The dimensions are close to the user's existing vocabulary. Someone writing a sales email already thinks in these terms. Rubrics are surface-readable. Dimensions are relatively independent — the Jacobian is nearly diagonal. The evaluator needs no specialized knowledge.
+_Why this is easy:_ The dimensions are close to the user's existing vocabulary. Someone writing a sales email already thinks in these terms. Rubrics are surface-readable. Dimensions are relatively independent — the Jacobian is nearly diagonal. The evaluator needs no specialized knowledge.
 
-*IK behavior:* The workspace is large and obstacle-free. The arm has ample dexterity throughout (high manipulability). No singularities are expected within typical slider ranges. The IK solver will find smooth, intuitive solutions for any target the user sets.
+_IK behavior:_ The workspace is large and obstacle-free. The arm has ample dexterity throughout (high manipulability). No singularities are expected within typical slider ranges. The IK solver will find smooth, intuitive solutions for any target the user sets.
 
 ### 6.2 Easy–Medium: Product Landing Page Copy
 
@@ -212,17 +212,17 @@ The dimensions here are commercial and persuasive — they describe how the text
 
 **Example 2: SaaS Landing Page**
 
-**User input:** *Write landing page copy for a project management tool targeting engineering managers at mid-size companies.*
+**User input:** _Write landing page copy for a project management tool targeting engineering managers at mid-size companies._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Benefit Specificity** | Classification of each value proposition: vague ("save time") → comparative ("2x faster than spreadsheets") → quantified ("reduce sprint planning from 4 hours to 45 minutes") → evidence-backed (quantified + case study or testimonial). Score = lowest-tier claim present. | *Categorical ladder* |
-| **Objection Preemption** | Count of distinct buyer objections implicitly addressed. Each must be a real objection (cost, switching cost, learning curve, integration friction) addressed without naming it as an objection. Score = count. | *Count-based with validation* |
-| **Authority Signaling** | Density ratio: (sentences containing social proof, credentials, or endorsement) / (total sentences). Low = pure assertion. High = densely credentialed. | *Ratio / density* |
+| Dimension                | Rubric / Measurement                                                                                                                                                                                                                                                          | Rubric Type                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **Benefit Specificity**  | Classification of each value proposition: vague ("save time") → comparative ("2x faster than spreadsheets") → quantified ("reduce sprint planning from 4 hours to 45 minutes") → evidence-backed (quantified + case study or testimonial). Score = lowest-tier claim present. | _Categorical ladder_          |
+| **Objection Preemption** | Count of distinct buyer objections implicitly addressed. Each must be a real objection (cost, switching cost, learning curve, integration friction) addressed without naming it as an objection. Score = count.                                                               | _Count-based with validation_ |
+| **Authority Signaling**  | Density ratio: (sentences containing social proof, credentials, or endorsement) / (total sentences). Low = pure assertion. High = densely credentialed.                                                                                                                       | _Ratio / density_             |
 
-*Why easy–medium:* The dimensions require the evaluator to model a buyer's psychology (what counts as a "real objection"?) rather than just scanning for linguistic patterns. But the dimensions are still relatively independent and the domain is familiar.
+_Why easy–medium:_ The dimensions require the evaluator to model a buyer's psychology (what counts as a "real objection"?) rather than just scanning for linguistic patterns. But the dimensions are still relatively independent and the domain is familiar.
 
-*IK behavior:* The Jacobian shows mild off-diagonal terms: increasing Benefit Specificity slightly constrains Authority Signaling (evidence-backed claims demand credible sources, which interacts with the authority dimension). The workspace has soft boundaries — extreme values on all three dimensions simultaneously may be unreachable because a short landing page can't carry maximum evidence, maximum objection coverage, and maximum social proof.
+_IK behavior:_ The Jacobian shows mild off-diagonal terms: increasing Benefit Specificity slightly constrains Authority Signaling (evidence-backed claims demand credible sources, which interacts with the authority dimension). The workspace has soft boundaries — extreme values on all three dimensions simultaneously may be unreachable because a short landing page can't carry maximum evidence, maximum objection coverage, and maximum social proof.
 
 ### 6.3 Medium: Technical Tutorial Article
 
@@ -230,17 +230,17 @@ The dimensions here are cognitive and structural — they describe how knowledge
 
 **Example 3: Vector Database Deep-Dive**
 
-**User input:** *Write a deep-dive blog post for senior engineers explaining how vector databases work.*
+**User input:** _Write a deep-dive blog post for senior engineers explaining how vector databases work._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Abstraction Altitude** | Floor detection: scored by the lowest-level artifact present. Pure analogy → conceptual diagram → pseudocode → real code with named libraries → production-grade implementation. Score = floor, not average. | *Extremum detection* |
-| **Narrative Threading** | Graph-theoretic: model sections as nodes, explicit logical connectors as directed edges. Threading = edge density / maximum possible edges. Chain = 1.0 (every section depends on previous). Disconnected = 0.0 (any section readable independently). | *Graph density metric* |
-| **Epistemic Transparency** | Annotation density ratio: (claims carrying a hedge, simplification flag, citation, or confidence qualifier) / (total factual claims). Textbook voice ≈ 0.05. Deeply honest explainer ≈ 0.35. | *Ratio over classified sentences* |
+| Dimension                  | Rubric / Measurement                                                                                                                                                                                                                                  | Rubric Type                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| **Abstraction Altitude**   | Floor detection: scored by the lowest-level artifact present. Pure analogy → conceptual diagram → pseudocode → real code with named libraries → production-grade implementation. Score = floor, not average.                                          | _Extremum detection_              |
+| **Narrative Threading**    | Graph-theoretic: model sections as nodes, explicit logical connectors as directed edges. Threading = edge density / maximum possible edges. Chain = 1.0 (every section depends on previous). Disconnected = 0.0 (any section readable independently). | _Graph density metric_            |
+| **Epistemic Transparency** | Annotation density ratio: (claims carrying a hedge, simplification flag, citation, or confidence qualifier) / (total factual claims). Textbook voice ≈ 0.05. Deeply honest explainer ≈ 0.35.                                                          | _Ratio over classified sentences_ |
 
-*Why medium:* The dimensions interact non-obviously. High abstraction altitude combined with high narrative threading is difficult to achieve because deep implementation details resist smooth narrative flow. The rubrics require structural analysis and sentence-level classification, not surface pattern-matching. The evaluator needs technical literacy.
+_Why medium:_ The dimensions interact non-obviously. High abstraction altitude combined with high narrative threading is difficult to achieve because deep implementation details resist smooth narrative flow. The rubrics require structural analysis and sentence-level classification, not surface pattern-matching. The evaluator needs technical literacy.
 
-*IK behavior:* The workspace has a genuine boundary: the combination "production-grade code" + "perfect threading" + "high epistemic transparency" may be unreachable because production code resists narrative flow and honest hedging. The Jacobian shows significant off-diagonal coupling between Abstraction Altitude and Narrative Threading. Manipulability drops as all three dimensions approach their maxima simultaneously, meaning the user will feel the sliders become "sticky" near the workspace boundary.
+_IK behavior:_ The workspace has a genuine boundary: the combination "production-grade code" + "perfect threading" + "high epistemic transparency" may be unreachable because production code resists narrative flow and honest hedging. The Jacobian shows significant off-diagonal coupling between Abstraction Altitude and Narrative Threading. Manipulability drops as all three dimensions approach their maxima simultaneously, meaning the user will feel the sliders become "sticky" near the workspace boundary.
 
 ### 6.4 Medium–Hard: Lesson Plan for a Conceptually Difficult Topic
 
@@ -248,17 +248,17 @@ The dimensions here are pedagogical — they describe how a text scaffolds under
 
 **Example 4: Teaching Entropy to High Schoolers**
 
-**User input:** *Create a lesson plan that teaches the concept of entropy to 11th-grade physics students with no prior exposure to thermodynamics.*
+**User input:** _Create a lesson plan that teaches the concept of entropy to 11th-grade physics students with no prior exposure to thermodynamics._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Misconception Inoculation** | Catalog known misconceptions about entropy ("entropy = disorder," "entropy always increases everywhere," "entropy is energy"). For each, check whether the text proactively surfaces and corrects it vs. leaves it unaddressed. Score = fraction of cataloged misconceptions addressed before the learner would naturally encounter them. | *Checklist coverage against external knowledge base* |
-| **Cognitive Load Gradient** | Rate each paragraph's conceptual density (number of new terms, abstract relationships, and non-intuitive claims). Plot density vs. position. Score = smoothness of the gradient. Ideal: monotonically increasing with no spikes. Penalize sudden jumps or early overload. | *Time-series smoothness analysis* |
-| **Transfer Scaffolding** | Count the number of explicit bridges from the taught concept to novel contexts the student hasn't seen (application to biology, to information theory, to everyday life). Each bridge must involve genuine transfer, not just naming another domain. Score = count of valid transfer bridges. | *Count with semantic validation* |
+| Dimension                     | Rubric / Measurement                                                                                                                                                                                                                                                                                                                      | Rubric Type                                          |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| **Misconception Inoculation** | Catalog known misconceptions about entropy ("entropy = disorder," "entropy always increases everywhere," "entropy is energy"). For each, check whether the text proactively surfaces and corrects it vs. leaves it unaddressed. Score = fraction of cataloged misconceptions addressed before the learner would naturally encounter them. | _Checklist coverage against external knowledge base_ |
+| **Cognitive Load Gradient**   | Rate each paragraph's conceptual density (number of new terms, abstract relationships, and non-intuitive claims). Plot density vs. position. Score = smoothness of the gradient. Ideal: monotonically increasing with no spikes. Penalize sudden jumps or early overload.                                                                 | _Time-series smoothness analysis_                    |
+| **Transfer Scaffolding**      | Count the number of explicit bridges from the taught concept to novel contexts the student hasn't seen (application to biology, to information theory, to everyday life). Each bridge must involve genuine transfer, not just naming another domain. Score = count of valid transfer bridges.                                             | _Count with semantic validation_                     |
 
-*Why medium–hard:* Rubrics require modeling a learner's mind (what is "cognitive load" for a specific audience?). The evaluator must reference an external knowledge base of misconceptions. The time-series smoothness rubric introduces a mathematical structure (gradient analysis) over pedagogical content. Dimensions interact: high misconception inoculation early in the text increases cognitive load, potentially violating the gradient constraint.
+_Why medium–hard:_ Rubrics require modeling a learner's mind (what is "cognitive load" for a specific audience?). The evaluator must reference an external knowledge base of misconceptions. The time-series smoothness rubric introduces a mathematical structure (gradient analysis) over pedagogical content. Dimensions interact: high misconception inoculation early in the text increases cognitive load, potentially violating the gradient constraint.
 
-*IK behavior:* The Jacobian reveals a fundamental tension: the Misconception Inoculation and Cognitive Load Gradient columns are anti-correlated. Addressing misconceptions early (which the rubric rewards) front-loads conceptual density (which the gradient penalizes). The IK solver must navigate this coupling carefully, and the app should warn the user when these dimensions are in tension. There may be a singularity — a point where the only way to increase inoculation without spiking cognitive load is to completely restructure the lesson plan.
+_IK behavior:_ The Jacobian reveals a fundamental tension: the Misconception Inoculation and Cognitive Load Gradient columns are anti-correlated. Addressing misconceptions early (which the rubric rewards) front-loads conceptual density (which the gradient penalizes). The IK solver must navigate this coupling carefully, and the app should warn the user when these dimensions are in tension. There may be a singularity — a point where the only way to increase inoculation without spiking cognitive load is to completely restructure the lesson plan.
 
 ### 6.5 Hard: Legal Negotiation Clause
 
@@ -266,17 +266,17 @@ The dimensions here are normative and strategic — they describe the legal and 
 
 **Example 5: Indemnification Clause**
 
-**User input:** *Draft an indemnification clause for a SaaS vendor agreement where we (the vendor) want to limit our liability exposure while keeping the clause palatable to enterprise procurement teams.*
+**User input:** _Draft an indemnification clause for a SaaS vendor agreement where we (the vendor) want to limit our liability exposure while keeping the clause palatable to enterprise procurement teams._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Liability Exposure** | Enumerate all trigger events that would activate the indemnification obligation. For each, classify scope: unlimited, capped at contract value, capped at fees paid in trailing 12 months, or excluded. Score = weighted breadth (more triggers with broader scope = higher exposure). This is an inverse dimension: the user likely wants it low. | *Enumeration with weighted classification* |
-| **Procurement Palatability** | Simulated red-flag analysis: model a conservative enterprise procurement reviewer reading the clause. Count provisions that would trigger a redline request (mutual vs. one-way, carve-outs, cap structure, knowledge qualifiers). Score = expected number of redlines. Lower = more palatable. | *Simulated adversarial review* |
-| **Interpretive Precision** | Ambiguity audit: count terms that could support more than one reasonable interpretation in litigation ("material," "reasonable efforts," "substantially"). For each, check if a definition or qualification narrows the interpretation space. Score = (ambiguous terms – defined terms) / total legal terms. | *Ambiguity ratio with definitional offset* |
+| Dimension                    | Rubric / Measurement                                                                                                                                                                                                                                                                                                                               | Rubric Type                                |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Liability Exposure**       | Enumerate all trigger events that would activate the indemnification obligation. For each, classify scope: unlimited, capped at contract value, capped at fees paid in trailing 12 months, or excluded. Score = weighted breadth (more triggers with broader scope = higher exposure). This is an inverse dimension: the user likely wants it low. | _Enumeration with weighted classification_ |
+| **Procurement Palatability** | Simulated red-flag analysis: model a conservative enterprise procurement reviewer reading the clause. Count provisions that would trigger a redline request (mutual vs. one-way, carve-outs, cap structure, knowledge qualifiers). Score = expected number of redlines. Lower = more palatable.                                                    | _Simulated adversarial review_             |
+| **Interpretive Precision**   | Ambiguity audit: count terms that could support more than one reasonable interpretation in litigation ("material," "reasonable efforts," "substantially"). For each, check if a definition or qualification narrows the interpretation space. Score = (ambiguous terms – defined terms) / total legal terms.                                       | _Ambiguity ratio with definitional offset_ |
 
-*Why hard:* Every dimension is adversarial — it models a counterparty's response. Liability Exposure requires enumerating hypotheticals. Procurement Palatability requires simulating a hostile reader. Interpretive Precision requires legal expertise to identify ambiguity. And the dimensions are deeply coupled: reducing liability exposure (narrower language) often reduces procurement palatability (more redlines) and vice versa.
+_Why hard:_ Every dimension is adversarial — it models a counterparty's response. Liability Exposure requires enumerating hypotheticals. Procurement Palatability requires simulating a hostile reader. Interpretive Precision requires legal expertise to identify ambiguity. And the dimensions are deeply coupled: reducing liability exposure (narrower language) often reduces procurement palatability (more redlines) and vice versa.
 
-*IK behavior:* The workspace is severely constrained. Low Liability Exposure and high Procurement Palatability are nearly opposite directions in prompt space — the Jacobian reveals that their columns point in opposing directions, creating a narrow corridor of feasible positions. Manipulability is low throughout this corridor, meaning every slider adjustment is delicate and high-stakes. The app should automatically increase slider granularity in this region and display the coupling prominently. There are multiple distinct IK solutions — structurally different clause architectures (mutual vs. one-way, cap-and-carve-out vs. aggregate limit) that achieve similar scores through different mechanisms.
+_IK behavior:_ The workspace is severely constrained. Low Liability Exposure and high Procurement Palatability are nearly opposite directions in prompt space — the Jacobian reveals that their columns point in opposing directions, creating a narrow corridor of feasible positions. Manipulability is low throughout this corridor, meaning every slider adjustment is delicate and high-stakes. The app should automatically increase slider granularity in this region and display the coupling prominently. There are multiple distinct IK solutions — structurally different clause architectures (mutual vs. one-way, cap-and-carve-out vs. aggregate limit) that achieve similar scores through different mechanisms.
 
 ### 6.6 Hard: Literary Short Story as Political Allegory
 
@@ -284,18 +284,18 @@ The dimensions here are aesthetic and philosophical — they describe deep meani
 
 **Example 6: Borgesian Surveillance Allegory**
 
-**User input:** *Write a short story that works as a political allegory about surveillance capitalism, in the style of Borges — where the allegorical meaning is present but not obvious.*
+**User input:** _Write a short story that works as a political allegory about surveillance capitalism, in the style of Borges — where the allegorical meaning is present but not obvious._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Allegorical Opacity** | Simulated reader comprehension threshold. Model a naive reader (no knowledge of surveillance capitalism). Estimate: at what percentage of text consumed could this reader identify the real-world parallel? 0% = title gives it away. 100% = allegory invisible without external context. | *Simulation-based threshold* |
-| **Character Interiority** | Narratological mode classification per paragraph: external action only → reported thought → free indirect discourse → direct interior monologue → stream of consciousness. Score = weighted centroid across the ordinal scale. | *Literary-theoretic classification* |
-| **Moral Resolution** | Dialectical completeness taxonomy: thesis only (didactic) → thesis + antithesis with victor (agonal) → synthesis into third position (Hegelian) → sustained genuine ambiguity (aporia). Score = position on this four-point taxonomy. | *Philosophical dialectical analysis* |
-| **Temporal Architecture** | Function topology: classify the mapping from narrative order to story chronology. Linear (monotonic) → Circular (endpoint connects to beginning) → Fractal (self-similar at multiple scales) → Labyrinthine (irreconcilable branching). Score = topological class. | *Mathematical classification* |
+| Dimension                 | Rubric / Measurement                                                                                                                                                                                                                                                                      | Rubric Type                          |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| **Allegorical Opacity**   | Simulated reader comprehension threshold. Model a naive reader (no knowledge of surveillance capitalism). Estimate: at what percentage of text consumed could this reader identify the real-world parallel? 0% = title gives it away. 100% = allegory invisible without external context. | _Simulation-based threshold_         |
+| **Character Interiority** | Narratological mode classification per paragraph: external action only → reported thought → free indirect discourse → direct interior monologue → stream of consciousness. Score = weighted centroid across the ordinal scale.                                                            | _Literary-theoretic classification_  |
+| **Moral Resolution**      | Dialectical completeness taxonomy: thesis only (didactic) → thesis + antithesis with victor (agonal) → synthesis into third position (Hegelian) → sustained genuine ambiguity (aporia). Score = position on this four-point taxonomy.                                                     | _Philosophical dialectical analysis_ |
+| **Temporal Architecture** | Function topology: classify the mapping from narrative order to story chronology. Linear (monotonic) → Circular (endpoint connects to beginning) → Fractal (self-similar at multiple scales) → Labyrinthine (irreconcilable branching). Score = topological class.                        | _Mathematical classification_        |
 
-*Why hard:* Every dimension interacts with every other in deep, non-obvious ways. High allegorical opacity requires specific temporal architectures. Low moral resolution amplifies opacity (no clear moral stance to decode the allegory). Character interiority can accidentally reveal the allegory through a character's inner knowledge. The rubrics require fundamentally different evaluator competencies — reader simulation, narratology, dialectical philosophy, topology — meaning the system likely needs specialized evaluator chains for each dimension.
+_Why hard:_ Every dimension interacts with every other in deep, non-obvious ways. High allegorical opacity requires specific temporal architectures. Low moral resolution amplifies opacity (no clear moral stance to decode the allegory). Character interiority can accidentally reveal the allegory through a character's inner knowledge. The rubrics require fundamentally different evaluator competencies — reader simulation, narratology, dialectical philosophy, topology — meaning the system likely needs specialized evaluator chains for each dimension.
 
-*IK behavior:* This is a 4-DOF end effector controlled by a very-high-DOF arm. The Jacobian is dense — every dimension couples to every other. There are multiple singularities: for instance, increasing Character Interiority past a threshold may force the arm through a singularity where the only way to maintain high Allegorical Opacity is to radically restructure the temporal architecture. The free energy landscape supplements the IK picture here: the prompt space has multiple basins (fundamentally different story architectures), and navigating between them requires barrier-crossing moves that the IK solver alone wouldn't suggest. The app should detect when the user is near a basin boundary and offer to show alternatives from other basins.
+_IK behavior:_ This is a 4-DOF end effector controlled by a very-high-DOF arm. The Jacobian is dense — every dimension couples to every other. There are multiple singularities: for instance, increasing Character Interiority past a threshold may force the arm through a singularity where the only way to maintain high Allegorical Opacity is to radically restructure the temporal architecture. The free energy landscape supplements the IK picture here: the prompt space has multiple basins (fundamentally different story architectures), and navigating between them requires barrier-crossing moves that the IK solver alone wouldn't suggest. The app should detect when the user is near a basin boundary and offer to show alternatives from other basins.
 
 ### 6.7 Very Hard: Therapeutic Conversation Guide
 
@@ -303,17 +303,17 @@ The dimensions here are relational and ethical — they describe properties of a
 
 **Example 7: Motivational Interviewing Script**
 
-**User input:** *Create a guide for a therapist conducting a motivational interviewing session with a client who is ambivalent about reducing alcohol use.*
+**User input:** _Create a guide for a therapist conducting a motivational interviewing session with a client who is ambivalent about reducing alcohol use._
 
-| Dimension | Rubric / Measurement | Rubric Type |
-|---|---|---|
-| **Client Autonomy Preservation** | Scan every therapist utterance for the speech act it performs: reflecting, affirming, asking, informing, directing, warning, prescribing. Map each to an autonomy-support score (reflecting = high, prescribing = low). Aggregate using minimum-weighted-average: the score is pulled toward the most autonomy-violating moment, because a single directive statement can undo a session's worth of reflective work. | *Speech act classification with min-weighted aggregation* |
-| **Ambivalence Elicitation** | Track the balance of "change talk" vs. "sustain talk" that the script is designed to elicit from the client. For each therapist move, classify whether it is likely to evoke client change talk, sustain talk, or is neutral. Score = (change-talk-eliciting moves) / (total directional moves). But penalize any sequence of 3+ consecutive change-talk moves, as this creates therapeutic pressure that violates the MI spirit. | *Sequential classification with pattern penalty* |
-| **Empathic Accuracy** | For each therapist reflection, rate whether it captures the emotional valence, the cognitive content, and the motivational function of the hypothetical client statement it follows. Full marks require all three; partial credit for valence-only or content-only reflections. Score = average accuracy across all reflections. | *Multi-attribute accuracy per-utterance* |
+| Dimension                        | Rubric / Measurement                                                                                                                                                                                                                                                                                                                                                                                                              | Rubric Type                                               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| **Client Autonomy Preservation** | Scan every therapist utterance for the speech act it performs: reflecting, affirming, asking, informing, directing, warning, prescribing. Map each to an autonomy-support score (reflecting = high, prescribing = low). Aggregate using minimum-weighted-average: the score is pulled toward the most autonomy-violating moment, because a single directive statement can undo a session's worth of reflective work.              | _Speech act classification with min-weighted aggregation_ |
+| **Ambivalence Elicitation**      | Track the balance of "change talk" vs. "sustain talk" that the script is designed to elicit from the client. For each therapist move, classify whether it is likely to evoke client change talk, sustain talk, or is neutral. Score = (change-talk-eliciting moves) / (total directional moves). But penalize any sequence of 3+ consecutive change-talk moves, as this creates therapeutic pressure that violates the MI spirit. | _Sequential classification with pattern penalty_          |
+| **Empathic Accuracy**            | For each therapist reflection, rate whether it captures the emotional valence, the cognitive content, and the motivational function of the hypothetical client statement it follows. Full marks require all three; partial credit for valence-only or content-only reflections. Score = average accuracy across all reflections.                                                                                                  | _Multi-attribute accuracy per-utterance_                  |
 
-*Why very hard:* The rubrics require modeling a hypothetical client's psychological state — not just analyzing the text in isolation, but simulating a dyadic interaction. The dimensions encode ethical constraints (autonomy preservation) alongside clinical effectiveness (ambivalence elicitation), and these are in productive tension: the most effective way to elicit change talk is sometimes to push, which violates autonomy. Errors are not merely aesthetic — a prompt that scores well on elicitation but poorly on autonomy could produce a script that harms a real client.
+_Why very hard:_ The rubrics require modeling a hypothetical client's psychological state — not just analyzing the text in isolation, but simulating a dyadic interaction. The dimensions encode ethical constraints (autonomy preservation) alongside clinical effectiveness (ambivalence elicitation), and these are in productive tension: the most effective way to elicit change talk is sometimes to push, which violates autonomy. Errors are not merely aesthetic — a prompt that scores well on elicitation but poorly on autonomy could produce a script that harms a real client.
 
-*IK behavior:* The workspace has hard boundaries that represent ethical walls, not just practical limits. Client Autonomy Preservation acts as a joint limit — a floor that must never be violated regardless of what the other sliders request. The Jacobian shows that Ambivalence Elicitation and Client Autonomy are strongly anti-correlated near the ethical boundary: the most effective elicitation moves are the ones that most threaten autonomy. The IK solver must treat the autonomy floor as a hard constraint, not a soft target — the system should refuse to generate a prompt that crosses the ethical boundary even if the user requests it. Manipulability near this boundary is low, and the app should surface confidence intervals aggressively: the evaluator's uncertainty about whether a given utterance violates autonomy has real consequences.
+_IK behavior:_ The workspace has hard boundaries that represent ethical walls, not just practical limits. Client Autonomy Preservation acts as a joint limit — a floor that must never be violated regardless of what the other sliders request. The Jacobian shows that Ambivalence Elicitation and Client Autonomy are strongly anti-correlated near the ethical boundary: the most effective elicitation moves are the ones that most threaten autonomy. The IK solver must treat the autonomy floor as a hard constraint, not a soft target — the system should refuse to generate a prompt that crosses the ethical boundary even if the user requests it. Manipulability near this boundary is low, and the app should surface confidence intervals aggressively: the evaluator's uncertainty about whether a given utterance violates autonomy has real consequences.
 
 ## 7. The Meta-Pattern Across Examples
 
@@ -329,7 +329,7 @@ The seven examples above reveal a consistent progression along several axes:
 
 - **Consequence weight.** Easy examples are low-stakes (a slightly suboptimal email). Hard examples involve financial risk (legal clauses) or human welfare (therapeutic scripts). The app must surface confidence intervals and evaluator uncertainty more aggressively as stakes increase.
 
-The app's deepest value proposition is that it handles all seven cases with the *same interface*: a spider chart, some sliders, and a lock button. The complexity lives entirely in the hidden layers — the IK solver and the free energy landscape it navigates — and the user navigates all of it through the same sculpting gesture.
+The app's deepest value proposition is that it handles all seven cases with the _same interface_: a spider chart, some sliders, and a lock button. The complexity lives entirely in the hidden layers — the IK solver and the free energy landscape it navigates — and the user navigates all of it through the same sculpting gesture.
 
 ## 8. Key Challenges
 
@@ -447,4 +447,4 @@ These principles should govern every design decision, from UI layout to scoring 
 
 ---
 
-*— End of Document —*
+_— End of Document —_

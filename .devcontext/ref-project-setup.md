@@ -41,7 +41,7 @@ npm install -D @vitejs/plugin-react-swc
 Then in `vite.config.ts`, replace:
 
 ```typescript
-import react from '@vitejs/plugin-react-swc'
+import react from "@vitejs/plugin-react-swc";
 ```
 
 ### Key Dependencies
@@ -105,9 +105,7 @@ Root `tsconfig.json`:
       "@shared/*": ["./shared/*"]
     }
   },
-  "references": [
-    { "path": "./tsconfig.node.json" }
-  ],
+  "references": [{ "path": "./tsconfig.node.json" }],
   "include": ["src", "shared"]
 }
 ```
@@ -140,17 +138,17 @@ Root `tsconfig.json`:
 ### vite.config.ts
 
 ```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import path from 'path'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import path from "path";
 
 export default defineConfig({
   plugins: [react()],
 
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src'),
-      '@shared': path.resolve(__dirname, './shared'),
+      "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "./shared"),
     },
   },
 
@@ -158,34 +156,35 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
+      "/api": {
+        target: "http://localhost:3001",
         changeOrigin: true,
       },
-      '/sse': {
-        target: 'http://localhost:3001',
+      "/sse": {
+        target: "http://localhost:3001",
         changeOrigin: true,
         // SSE requires no response buffering
         configure: (proxy) => {
-          proxy.on('proxyRes', (proxyRes) => {
-            proxyRes.headers['cache-control'] = 'no-cache'
-            proxyRes.headers['content-type'] = 'text/event-stream'
-          })
+          proxy.on("proxyRes", (proxyRes) => {
+            proxyRes.headers["cache-control"] = "no-cache";
+            proxyRes.headers["content-type"] = "text/event-stream";
+          });
         },
       },
     },
   },
 
   build: {
-    outDir: 'dist/client',
+    outDir: "dist/client",
     sourcemap: true,
   },
-})
+});
 ```
 
 ### How the Proxy Works
 
 In development, two servers run:
+
 - **Vite** on `http://localhost:5173` — serves React app with HMR
 - **Express** on `http://localhost:3001` — handles API + SSE
 
@@ -198,26 +197,26 @@ The `server.proxy` config intercepts requests matching `/api` or `/sse` from the
 ### server/index.ts
 
 ```typescript
-import express from 'express'
-import cors from 'cors'
-import path from 'path'
-import { fileURLToPath } from 'url'
-import dotenv from 'dotenv'
+import express from "express";
+import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 
-dotenv.config()
+dotenv.config();
 
-const app = express()
-const PORT = parseInt(process.env.PORT || '3001', 10)
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const isProd = process.env.NODE_ENV === 'production'
+const app = express();
+const PORT = parseInt(process.env.PORT || "3001", 10);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === "production";
 
-app.use(cors())
-app.use(express.json())
+app.use(cors());
+app.use(express.json());
 
 // ---------- API routes ----------
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok' })
-})
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
 
 // ... mount other API routers here
 // import apiRouter from './routes/api.js'
@@ -230,20 +229,20 @@ app.get('/api/health', (_req, res) => {
 
 // ---------- Production: serve SPA ----------
 if (isProd) {
-  const clientDist = path.resolve(__dirname, '../client')
+  const clientDist = path.resolve(__dirname, "../client");
 
   // Serve static assets (JS, CSS, images)
-  app.use(express.static(clientDist, { index: false }))
+  app.use(express.static(clientDist, { index: false }));
 
   // SPA catch-all: all non-API GET requests serve index.html
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(clientDist, 'index.html'))
-  })
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(clientDist, "index.html"));
+  });
 }
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
-})
+  console.log(`Server running on http://localhost:${PORT}`);
+});
 ```
 
 ### Key Production Detail
@@ -261,52 +260,56 @@ app.listen(PORT, () => {
 `server/routes/sse.ts`:
 
 ```typescript
-import { Router, Request, Response } from 'express'
+import { Router, Request, Response } from "express";
 
-export const sseRouter = Router()
+export const sseRouter = Router();
 
 // Track active connections for broadcasting
-const clients = new Map<string, Response>()
+const clients = new Map<string, Response>();
 
-sseRouter.get('/stream', (req: Request, res: Response) => {
+sseRouter.get("/stream", (req: Request, res: Response) => {
   // --- Required SSE headers ---
-  res.setHeader('Content-Type', 'text/event-stream')
-  res.setHeader('Cache-Control', 'no-cache')
-  res.setHeader('Connection', 'keep-alive')
-  res.setHeader('X-Accel-Buffering', 'no')   // Disable nginx buffering if proxied
-  res.flushHeaders()
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no"); // Disable nginx buffering if proxied
+  res.flushHeaders();
 
   // Unique client ID
-  const clientId = crypto.randomUUID()
-  clients.set(clientId, res)
+  const clientId = crypto.randomUUID();
+  clients.set(clientId, res);
 
   // Send initial connection event
-  res.write(`event: connected\ndata: ${JSON.stringify({ clientId })}\n\n`)
+  res.write(`event: connected\ndata: ${JSON.stringify({ clientId })}\n\n`);
 
   // Heartbeat to keep connection alive (every 30s)
   const heartbeat = setInterval(() => {
-    res.write(`: heartbeat\n\n`)    // Comment line, ignored by EventSource
-  }, 30_000)
+    res.write(`: heartbeat\n\n`); // Comment line, ignored by EventSource
+  }, 30_000);
 
   // Cleanup on disconnect
-  req.on('close', () => {
-    clearInterval(heartbeat)
-    clients.delete(clientId)
-  })
-})
+  req.on("close", () => {
+    clearInterval(heartbeat);
+    clients.delete(clientId);
+  });
+});
 
 // Helper: send event to a specific client
-export function sendEvent(clientId: string, event: string, data: unknown): void {
-  const res = clients.get(clientId)
-  if (!res) return
-  res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+export function sendEvent(
+  clientId: string,
+  event: string,
+  data: unknown,
+): void {
+  const res = clients.get(clientId);
+  if (!res) return;
+  res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
 }
 
 // Helper: broadcast to all clients
 export function broadcast(event: string, data: unknown): void {
-  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
+  const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const res of clients.values()) {
-    res.write(payload)
+    res.write(payload);
   }
 }
 ```
@@ -334,15 +337,17 @@ retry: 3000\n
 If using `compression()` middleware, exclude SSE routes or it will buffer the stream:
 
 ```typescript
-import compression from 'compression'
+import compression from "compression";
 
-app.use(compression({
-  filter: (req) => {
-    // Don't compress SSE responses
-    if (req.path.startsWith('/sse')) return false
-    return compression.filter(req, req.res!)
-  },
-}))
+app.use(
+  compression({
+    filter: (req) => {
+      // Don't compress SSE responses
+      if (req.path.startsWith("/sse")) return false;
+      return compression.filter(req, req.res!);
+    },
+  }),
+);
 ```
 
 ### Client: React Hook with EventSource
@@ -350,88 +355,90 @@ app.use(compression({
 `src/hooks/useSSE.ts`:
 
 ```typescript
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useCallback, useState } from "react";
 
 interface UseSSEOptions {
-  url: string
-  events: Record<string, (data: unknown) => void>
-  enabled?: boolean
+  url: string;
+  events: Record<string, (data: unknown) => void>;
+  enabled?: boolean;
 }
 
 export function useSSE({ url, events, enabled = true }: UseSSEOptions) {
-  const [status, setStatus] = useState<'connecting' | 'open' | 'closed'>('closed')
-  const sourceRef = useRef<EventSource | null>(null)
-  const eventsRef = useRef(events)
-  eventsRef.current = events  // Always use latest handlers without reconnecting
+  const [status, setStatus] = useState<"connecting" | "open" | "closed">(
+    "closed",
+  );
+  const sourceRef = useRef<EventSource | null>(null);
+  const eventsRef = useRef(events);
+  eventsRef.current = events; // Always use latest handlers without reconnecting
 
   const connect = useCallback(() => {
-    if (!enabled) return
+    if (!enabled) return;
 
-    const es = new EventSource(url)
-    sourceRef.current = es
+    const es = new EventSource(url);
+    sourceRef.current = es;
 
-    es.onopen = () => setStatus('open')
+    es.onopen = () => setStatus("open");
 
     es.onerror = () => {
-      setStatus('connecting')
+      setStatus("connecting");
       // EventSource auto-reconnects for network errors.
       // For fatal errors (non-2xx response), readyState becomes CLOSED.
       if (es.readyState === EventSource.CLOSED) {
-        setStatus('closed')
+        setStatus("closed");
       }
-    }
+    };
 
     // Register named event listeners
     for (const eventName of Object.keys(eventsRef.current)) {
       es.addEventListener(eventName, (e: MessageEvent) => {
         try {
-          const data = JSON.parse(e.data)
-          eventsRef.current[eventName]?.(data)
+          const data = JSON.parse(e.data);
+          eventsRef.current[eventName]?.(data);
         } catch {
-          eventsRef.current[eventName]?.(e.data)
+          eventsRef.current[eventName]?.(e.data);
         }
-      })
+      });
     }
 
-    return es
-  }, [url, enabled])
+    return es;
+  }, [url, enabled]);
 
   useEffect(() => {
-    const es = connect()
+    const es = connect();
     return () => {
-      es?.close()
-      setStatus('closed')
-    }
-  }, [connect])
+      es?.close();
+      setStatus("closed");
+    };
+  }, [connect]);
 
   const close = useCallback(() => {
-    sourceRef.current?.close()
-    sourceRef.current = null
-    setStatus('closed')
-  }, [])
+    sourceRef.current?.close();
+    sourceRef.current = null;
+    setStatus("closed");
+  }, []);
 
-  return { status, close }
+  return { status, close };
 }
 ```
 
 ### Usage in a Component
 
 ```tsx
-import { useSSE } from '@/hooks/useSSE'
-import { useState } from 'react'
+import { useSSE } from "@/hooks/useSSE";
+import { useState } from "react";
 
 function ProcessingStatus() {
-  const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<string | null>(null)
+  const [progress, setProgress] = useState(0);
+  const [result, setResult] = useState<string | null>(null);
 
   const { status } = useSSE({
-    url: '/sse/stream',
+    url: "/sse/stream",
     events: {
-      connected: (data) => console.log('SSE connected:', data),
+      connected: (data) => console.log("SSE connected:", data),
       progress: (data: any) => setProgress(data.percent),
       complete: (data: any) => setResult(data.output),
     },
-  })
+  });
 
   return (
     <div>
@@ -439,20 +446,20 @@ function ProcessingStatus() {
       <progress value={progress} max={100} />
       {result && <pre>{result}</pre>}
     </div>
-  )
+  );
 }
 ```
 
 ### EventSource Reconnection Behavior
 
-| Scenario | Browser Behavior |
-|----------|-----------------|
-| Network error / timeout | Auto-reconnects after `retry` ms (default ~3s) |
-| Server sends `retry: 5000` | Reconnects after 5 seconds |
-| Server returns non-2xx (e.g., 500) | Stops reconnecting, `readyState` = CLOSED |
-| Server returns 204 No Content | Stops reconnecting |
-| Client calls `close()` | Stops reconnecting |
-| Server sends `id: 42` then drops | Browser sends `Last-Event-ID: 42` on reconnect |
+| Scenario                           | Browser Behavior                               |
+| ---------------------------------- | ---------------------------------------------- |
+| Network error / timeout            | Auto-reconnects after `retry` ms (default ~3s) |
+| Server sends `retry: 5000`         | Reconnects after 5 seconds                     |
+| Server returns non-2xx (e.g., 500) | Stops reconnecting, `readyState` = CLOSED      |
+| Server returns 204 No Content      | Stops reconnecting                             |
+| Client calls `close()`             | Stops reconnecting                             |
+| Server sends `id: 42` then drops   | Browser sends `Last-Event-ID: 42` on reconnect |
 
 ---
 
@@ -477,10 +484,10 @@ OPENAI_API_KEY=sk-...
 **Accessing in client code:**
 
 ```typescript
-const title = import.meta.env.VITE_APP_TITLE    // "TextChisel"
-const mode  = import.meta.env.MODE               // "development" | "production"
-const dev   = import.meta.env.DEV                // true in dev
-const prod  = import.meta.env.PROD               // true in production
+const title = import.meta.env.VITE_APP_TITLE; // "TextChisel"
+const mode = import.meta.env.MODE; // "development" | "production"
+const dev = import.meta.env.DEV; // true in dev
+const prod = import.meta.env.PROD; // true in production
 ```
 
 **TypeScript support** — add to `src/vite-env.d.ts`:
@@ -489,25 +496,25 @@ const prod  = import.meta.env.PROD               // true in production
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_APP_TITLE: string
-  readonly VITE_API_BASE_URL: string
+  readonly VITE_APP_TITLE: string;
+  readonly VITE_API_BASE_URL: string;
 }
 
 interface ImportMeta {
-  readonly env: ImportMetaEnv
+  readonly env: ImportMetaEnv;
 }
 ```
 
 ### .env File Loading Order (Vite)
 
-| File | Loaded When | Git |
-|------|-------------|-----|
-| `.env` | Always | Commit |
-| `.env.local` | Always | Gitignore |
-| `.env.development` | `vite dev` | Commit |
-| `.env.development.local` | `vite dev` | Gitignore |
-| `.env.production` | `vite build` | Commit |
-| `.env.production.local` | `vite build` | Gitignore |
+| File                     | Loaded When  | Git       |
+| ------------------------ | ------------ | --------- |
+| `.env`                   | Always       | Commit    |
+| `.env.local`             | Always       | Gitignore |
+| `.env.development`       | `vite dev`   | Commit    |
+| `.env.development.local` | `vite dev`   | Gitignore |
+| `.env.production`        | `vite build` | Commit    |
+| `.env.production.local`  | `vite build` | Gitignore |
 
 Mode-specific files take priority over generic ones.
 
@@ -516,11 +523,11 @@ Mode-specific files take priority over generic ones.
 Express has no built-in .env support. Use `dotenv`:
 
 ```typescript
-import dotenv from 'dotenv'
-dotenv.config()   // Reads .env from project root
+import dotenv from "dotenv";
+dotenv.config(); // Reads .env from project root
 
-const apiKey = process.env.OPENAI_API_KEY   // available
-const port   = process.env.PORT || '3001'
+const apiKey = process.env.OPENAI_API_KEY; // available
+const port = process.env.PORT || "3001";
 ```
 
 All variables from `.env` are available via `process.env` on the server (no prefix filtering). Guard secrets by never prefixing them with `VITE_`.
@@ -544,15 +551,15 @@ All variables from `.env` are available via `process.env` on the server (no pref
   "private": true,
   "type": "module",
   "scripts": {
-    "dev":          "concurrently -n client,server -c blue,green \"npm run dev:client\" \"npm run dev:server\"",
-    "dev:client":   "vite",
-    "dev:server":   "tsx watch server/index.ts",
-    "build":        "npm run build:client && npm run build:server",
+    "dev": "concurrently -n client,server -c blue,green \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
+    "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc -p server/tsconfig.json",
-    "start":        "NODE_ENV=production node server/dist/server/index.js",
-    "preview":      "npm run build && npm run start",
-    "typecheck":    "tsc --noEmit && tsc -p server/tsconfig.json --noEmit"
+    "start": "NODE_ENV=production node server/dist/server/index.js",
+    "preview": "npm run build && npm run start",
+    "typecheck": "tsc --noEmit && tsc -p server/tsconfig.json --noEmit"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -577,15 +584,15 @@ All variables from `.env` are available via `process.env` on the server (no pref
 
 ### Script Breakdown
 
-| Script | What It Does |
-|--------|-------------|
-| `npm run dev` | Starts Vite (port 5173) and Express (port 3001) in parallel via concurrently. Vite proxies `/api` and `/sse` to Express. |
-| `npm run dev:client` | Vite dev server only (HMR, fast refresh). |
-| `npm run dev:server` | Express via `tsx watch` — auto-restarts on file changes. |
-| `npm run build` | Builds client to `dist/client/` then compiles server TS to `dist/server/`. |
-| `npm run start` | Production mode. Express serves API + SSE + static SPA from `dist/client/`. Single port. |
-| `npm run preview` | Build then start — test production locally. |
-| `npm run typecheck` | Type-check both client and server without emitting files. |
+| Script               | What It Does                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `npm run dev`        | Starts Vite (port 5173) and Express (port 3001) in parallel via concurrently. Vite proxies `/api` and `/sse` to Express. |
+| `npm run dev:client` | Vite dev server only (HMR, fast refresh).                                                                                |
+| `npm run dev:server` | Express via `tsx watch` — auto-restarts on file changes.                                                                 |
+| `npm run build`      | Builds client to `dist/client/` then compiles server TS to `dist/server/`.                                               |
+| `npm run start`      | Production mode. Express serves API + SSE + static SPA from `dist/client/`. Single port.                                 |
+| `npm run preview`    | Build then start — test production locally.                                                                              |
+| `npm run typecheck`  | Type-check both client and server without emitting files.                                                                |
 
 ### Why `tsx watch`?
 
@@ -621,7 +628,7 @@ Browser → http://localhost:3001 (single port)
 
 - [Vite: Getting Started](https://vite.dev/guide/) — Official scaffold commands and project templates
 - [Vite: Server Options (proxy)](https://vite.dev/config/server-options) — Proxy configuration reference
-- [Vite: Env Variables and Modes](https://vite.dev/guide/env-and-mode) — VITE_ prefix, .env loading order
+- [Vite: Env Variables and Modes](https://vite.dev/guide/env-and-mode) — VITE\_ prefix, .env loading order
 - [Vite: Building for Production](https://vite.dev/guide/build) — Build output and configuration
 - [@vitejs/plugin-react (npm)](https://www.npmjs.com/package/@vitejs/plugin-react) — React plugin options
 - [MDN: Using Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events) — EventSource API, wire format, reconnection

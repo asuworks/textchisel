@@ -33,12 +33,12 @@ const db = new PGlite("file://./path/to/pgdata");
 
 ### Storage Options Summary
 
-| Scheme       | Environment        | Persistence | Notes                                      |
-|--------------|--------------------|-------------|---------------------------------------------|
-| `memory://`  | All platforms      | None        | Ephemeral, fastest                          |
-| `idb://`     | Browser            | IndexedDB   | Recommended for browser; loads all files into memory on start, flushes after each query |
-| `file://`    | Node.js, Bun, Deno | Filesystem  | Standard file persistence                   |
-| _(no prefix)_| Node.js, Bun, Deno | Filesystem  | Treated as file path                        |
+| Scheme        | Environment        | Persistence | Notes                                                                                   |
+| ------------- | ------------------ | ----------- | --------------------------------------------------------------------------------------- |
+| `memory://`   | All platforms      | None        | Ephemeral, fastest                                                                      |
+| `idb://`      | Browser            | IndexedDB   | Recommended for browser; loads all files into memory on start, flushes after each query |
+| `file://`     | Node.js, Bun, Deno | Filesystem  | Standard file persistence                                                               |
+| _(no prefix)_ | Node.js, Bun, Deno | Filesystem  | Treated as file path                                                                    |
 
 ### PGlite with Extensions
 
@@ -62,7 +62,7 @@ const db = await PGlite.create({
 // .query() — single statement with parameters (extended query protocol)
 const result = await db.query<{ id: number; name: string }>(
   "SELECT * FROM users WHERE id = $1",
-  [1]
+  [1],
 );
 // result.rows => [{ id: 1, name: "Alice" }]
 
@@ -170,16 +170,16 @@ export const users = pgTable("users", {
 import { jsonb } from "drizzle-orm/pg-core";
 
 // Basic JSONB (typed as unknown)
-jsonb("data")
+jsonb("data");
 
 // JSONB with type inference
-jsonb("data").$type<{ foo: string; bar: number }>()
+jsonb("data").$type<{ foo: string; bar: number }>();
 
 // JSONB with default value
-jsonb("settings").$type<{ theme: string }>().default({ theme: "light" })
+jsonb("settings").$type<{ theme: string }>().default({ theme: "light" });
 
 // JSONB array type
-jsonb("tags").$type<string[]>().default([])
+jsonb("tags").$type<string[]>().default([]);
 ```
 
 ### UUID Column Details
@@ -188,13 +188,13 @@ jsonb("tags").$type<string[]>().default([])
 import { uuid } from "drizzle-orm/pg-core";
 
 // UUID with random default (uses gen_random_uuid())
-uuid("id").defaultRandom().primaryKey()
+uuid("id").defaultRandom().primaryKey();
 
 // UUID without default (caller must supply)
-uuid("ref_id")
+uuid("ref_id");
 
 // UUID with explicit SQL default
-uuid("id").default(sql`gen_random_uuid()`)
+uuid("id").default(sql`gen_random_uuid()`);
 ```
 
 ### Type Inference Helpers
@@ -261,6 +261,7 @@ await migrate(db, { migrationsFolder: "./drizzle" });
 Standard drizzle-kit CLI commands require Node.js. For browser-only apps:
 
 **Option 1 — Raw SQL on startup:**
+
 ```typescript
 // Run schema creation SQL directly via PGlite
 await db.exec(`
@@ -275,6 +276,7 @@ await db.exec(`
 ```
 
 **Option 2 — Bundle migrations as JSON:**
+
 ```typescript
 // Build step (Node.js script):
 import { readMigrationFiles } from "drizzle-orm/migrator";
@@ -289,6 +291,7 @@ import migrations from "./migrations.json";
 ```
 
 **Option 3 — Third-party packages:**
+
 - `@proj-airi/drizzle-orm-browser` — provides a browser-compatible migrator
 - `drizzle-on-indexeddb` — compiles migrations into a JSON bundle
 
@@ -354,18 +357,20 @@ function DocumentList() {
 ```
 
 **Signature:**
+
 ```typescript
 function useLiveQuery<T = { [key: string]: unknown }>(
   query: string,
-  params?: unknown[] | undefined | null
+  params?: unknown[] | undefined | null,
 ): Results<T> | undefined;
 ```
 
 **With parameters:**
+
 ```tsx
 const results = useLiveQuery<{ id: string; title: string }>(
   "SELECT * FROM documents WHERE status = $1",
-  [currentStatus]
+  [currentStatus],
 );
 ```
 
@@ -383,7 +388,7 @@ function DocumentList() {
   }>(
     "SELECT * FROM documents ORDER BY created_at DESC",
     undefined, // params
-    "id"       // key column (must be unique)
+    "id", // key column (must be unique)
   );
 
   if (!results) return <div>Loading...</div>;
@@ -399,11 +404,12 @@ function DocumentList() {
 ```
 
 **Signature:**
+
 ```typescript
 function useLiveIncrementalQuery<T = { [key: string]: unknown }>(
   query: string,
   params?: unknown[] | undefined | null,
-  key?: string
+  key?: string,
 ): Results<T> | undefined;
 ```
 
@@ -418,10 +424,9 @@ function AddDocument() {
   const db = usePGlite();
 
   const handleAdd = async () => {
-    await db.query(
-      "INSERT INTO documents (title) VALUES ($1)",
-      ["New Document"]
-    );
+    await db.query("INSERT INTO documents (title) VALUES ($1)", [
+      "New Document",
+    ]);
     // useLiveQuery consumers will automatically re-render
   };
 
@@ -431,13 +436,13 @@ function AddDocument() {
 
 ### Choosing Between useLiveQuery and useLiveIncrementalQuery
 
-| Aspect                  | useLiveQuery             | useLiveIncrementalQuery          |
-|-------------------------|--------------------------|----------------------------------|
-| Mechanism               | Re-runs full query       | Diffs changes in Postgres        |
-| Small result sets       | Faster (less overhead)   | Slight overhead from diff logic  |
-| Large result sets       | Slower (full re-query)   | Faster (only processes changes)  |
-| Wide rows (many cols)   | Slower                   | Faster                           |
-| Requires unique key     | No                       | Yes                              |
+| Aspect                | useLiveQuery           | useLiveIncrementalQuery         |
+| --------------------- | ---------------------- | ------------------------------- |
+| Mechanism             | Re-runs full query     | Diffs changes in Postgres       |
+| Small result sets     | Faster (less overhead) | Slight overhead from diff logic |
+| Large result sets     | Slower (full re-query) | Faster (only processes changes) |
+| Wide rows (many cols) | Slower                 | Faster                          |
+| Requires unique key   | No                     | Yes                             |
 
 ---
 
@@ -464,14 +469,10 @@ Subscribe to a query and get full results on every change:
 const { rows, fields, unsubscribe } = await db.live.query<{
   id: string;
   title: string;
-}>(
-  "SELECT * FROM documents WHERE status = $1",
-  [$status],
-  (results) => {
-    // Called whenever underlying tables change
-    console.log("Updated rows:", results.rows);
-  }
-);
+}>("SELECT * FROM documents WHERE status = $1", [$status], (results) => {
+  // Called whenever underlying tables change
+  console.log("Updated rows:", results.rows);
+});
 
 // Later: stop listening
 unsubscribe();
@@ -491,7 +492,7 @@ const { rows, fields, unsubscribe } = await db.live.incrementalQuery<{
   "id", // key column
   (results) => {
     console.log("Updated rows:", results.rows);
-  }
+  },
 );
 ```
 
@@ -507,9 +508,9 @@ const { fields, unsubscribe } = await db.live.changes(
   (changes) => {
     for (const change of changes) {
       console.log(change.__changed_columns__); // which columns changed
-      console.log(change.__op__);              // "INSERT" | "UPDATE" | "DELETE"
+      console.log(change.__op__); // "INSERT" | "UPDATE" | "DELETE"
     }
-  }
+  },
 );
 ```
 
@@ -594,10 +595,7 @@ const filtered = await db
   .select()
   .from(documents)
   .where(
-    and(
-      eq(documents.status, "published"),
-      like(documents.title, "%guide%")
-    )
+    and(eq(documents.status, "published"), like(documents.title, "%guide%")),
   );
 
 // Order, limit, offset
@@ -642,8 +640,8 @@ await db
   .where(
     and(
       eq(documents.status, "draft"),
-      sql`${documents.updatedAt} < NOW() - INTERVAL '30 days'`
-    )
+      sql`${documents.updatedAt} < NOW() - INTERVAL '30 days'`,
+    ),
   );
 ```
 
@@ -660,9 +658,7 @@ const [deleted] = await db
   .returning();
 
 // Bulk delete
-await db
-  .delete(documents)
-  .where(eq(documents.status, "archived"));
+await db.delete(documents).where(eq(documents.status, "archived"));
 ```
 
 ### Transactions
@@ -687,17 +683,17 @@ await db.transaction(async (tx) => {
 
 ### PGlite vs Full Postgres
 
-| Feature                     | PGlite                          | Full Postgres               |
-|-----------------------------|---------------------------------|-----------------------------|
-| Concurrency                 | Single-user / single-connection | Multi-user, multi-connection|
-| Network access              | No listening on ports           | TCP/IP, Unix sockets        |
-| psql / pg_dump              | Not available                   | Full CLI tools              |
-| Memory                      | Browser: 2-4 GB limit           | Server RAM                  |
-| Scheduling (pg_cron)        | Not supported                   | Available                   |
-| PostGIS (full)              | Not available (needs GEOS)      | Available                   |
-| Replication                 | Not supported                   | Streaming, logical          |
-| Performance (complex queries)| May differ from server          | Optimized for server        |
-| Startup time                | WASM load + data hydration      | Daemon already running      |
+| Feature                       | PGlite                          | Full Postgres                |
+| ----------------------------- | ------------------------------- | ---------------------------- |
+| Concurrency                   | Single-user / single-connection | Multi-user, multi-connection |
+| Network access                | No listening on ports           | TCP/IP, Unix sockets         |
+| psql / pg_dump                | Not available                   | Full CLI tools               |
+| Memory                        | Browser: 2-4 GB limit           | Server RAM                   |
+| Scheduling (pg_cron)          | Not supported                   | Available                    |
+| PostGIS (full)                | Not available (needs GEOS)      | Available                    |
+| Replication                   | Not supported                   | Streaming, logical           |
+| Performance (complex queries) | May differ from server          | Optimized for server         |
+| Startup time                  | WASM load + data hydration      | Daemon already running       |
 
 ### Available Extensions
 

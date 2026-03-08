@@ -1,35 +1,35 @@
-import { create } from 'zustand'
-import { devtools, persist, createJSONStorage } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
-import { temporal } from 'zundo'
-import type { SessionStatus } from '@shared/types'
+import { create } from "zustand";
+import { devtools, persist, createJSONStorage } from "zustand/middleware";
+import { immer } from "zustand/middleware/immer";
+import { temporal } from "zundo";
+import type { SessionStatus } from "@shared/types";
 
 // --- State shape ---
 
 interface PromptState {
-  systemPrompt: string
-  userTemplate: string
-  setSystemPrompt: (prompt: string) => void
-  setUserTemplate: (template: string) => void
+  systemPrompt: string;
+  userTemplate: string;
+  setSystemPrompt: (prompt: string) => void;
+  setUserTemplate: (template: string) => void;
 }
 
 interface EvaluationState {
-  targetScores: Record<string, number>
-  lockedDimensions: Set<string>
-  setTargetScore: (dimensionId: string, score: number) => void
-  toggleLock: (dimensionId: string) => void
+  targetScores: Record<string, number>;
+  lockedDimensions: Set<string>;
+  setTargetScore: (dimensionId: string, score: number) => void;
+  toggleLock: (dimensionId: string) => void;
 }
 
 interface UIState {
-  activeSessionId: string | null
-  sessionStatus: SessionStatus | null
-  sidebarOpen: boolean
-  setActiveSession: (id: string | null) => void
-  setSessionStatus: (status: SessionStatus | null) => void
-  toggleSidebar: () => void
+  activeSessionId: string | null;
+  sessionStatus: SessionStatus | null;
+  sidebarOpen: boolean;
+  setActiveSession: (id: string | null) => void;
+  setSessionStatus: (status: SessionStatus | null) => void;
+  toggleSidebar: () => void;
 }
 
-export type AppState = PromptState & EvaluationState & UIState
+export type AppState = PromptState & EvaluationState & UIState;
 
 // --- Store ---
 // Middleware order (outside → inside): devtools → persist → temporal → immer
@@ -40,15 +40,15 @@ export const useAppStore = create<AppState>()(
       temporal(
         immer((set) => ({
           // --- Prompt slice ---
-          systemPrompt: '',
-          userTemplate: '',
+          systemPrompt: "",
+          userTemplate: "",
           setSystemPrompt: (prompt) =>
             set((state) => {
-              state.systemPrompt = prompt
+              state.systemPrompt = prompt;
             }),
           setUserTemplate: (template) =>
             set((state) => {
-              state.userTemplate = template
+              state.userTemplate = template;
             }),
 
           // --- Evaluation slice ---
@@ -56,14 +56,14 @@ export const useAppStore = create<AppState>()(
           lockedDimensions: new Set<string>(),
           setTargetScore: (dimensionId, score) =>
             set((state) => {
-              state.targetScores[dimensionId] = score
+              state.targetScores[dimensionId] = score;
             }),
           toggleLock: (dimensionId) =>
             set((state) => {
               if (state.lockedDimensions.has(dimensionId)) {
-                state.lockedDimensions.delete(dimensionId)
+                state.lockedDimensions.delete(dimensionId);
               } else {
-                state.lockedDimensions.add(dimensionId)
+                state.lockedDimensions.add(dimensionId);
               }
             }),
 
@@ -73,15 +73,15 @@ export const useAppStore = create<AppState>()(
           sidebarOpen: true,
           setActiveSession: (id) =>
             set((state) => {
-              state.activeSessionId = id
+              state.activeSessionId = id;
             }),
           setSessionStatus: (status) =>
             set((state) => {
-              state.sessionStatus = status
+              state.sessionStatus = status;
             }),
           toggleSidebar: () =>
             set((state) => {
-              state.sidebarOpen = !state.sidebarOpen
+              state.sidebarOpen = !state.sidebarOpen;
             }),
         })),
         {
@@ -92,11 +92,11 @@ export const useAppStore = create<AppState>()(
             targetScores: state.targetScores,
           }),
           limit: 50,
-        }
+        },
       ),
       {
         // Persist: save to localStorage
-        name: 'textchisel-storage',
+        name: "textchisel-storage",
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
           systemPrompt: state.systemPrompt,
@@ -104,8 +104,8 @@ export const useAppStore = create<AppState>()(
           targetScores: state.targetScores,
           sidebarOpen: state.sidebarOpen,
         }),
-      }
+      },
     ),
-    { name: 'TextChisel Store' }
-  )
-)
+    { name: "TextChisel Store" },
+  ),
+);

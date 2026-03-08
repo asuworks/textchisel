@@ -20,17 +20,17 @@
 
 ## Phase Overview
 
-| Phase | Name | Goal | Typical Duration |
-|-------|------|------|-----------------|
-| 0 | Discovery | Understand what to build | Days |
-| 1 | Exploration | Test risky assumptions with throwaway spikes | 1-2 weeks |
-| 2 | Contracts | Freeze module boundaries as executable code | Days |
-| 3 | Foundation | Project skeleton, infra, CI/CD — zero logic | 1-2 days |
-| 4 | Construction | Build and integrate modules via TDD | Weeks to months |
-| 5 | Hardening | System testing, performance, security, docs | 1-2 weeks |
-| 6 | Deployment | Staging → production pipeline | Days |
-| 7 | Operations | Monitoring, incidents, maintenance | Ongoing |
-| 8 | Evolution | New features, refactors, scaling | Ongoing |
+| Phase | Name         | Goal                                         | Typical Duration |
+| ----- | ------------ | -------------------------------------------- | ---------------- |
+| 0     | Discovery    | Understand what to build                     | Days             |
+| 1     | Exploration  | Test risky assumptions with throwaway spikes | 1-2 weeks        |
+| 2     | Contracts    | Freeze module boundaries as executable code  | Days             |
+| 3     | Foundation   | Project skeleton, infra, CI/CD — zero logic  | 1-2 days         |
+| 4     | Construction | Build and integrate modules via TDD          | Weeks to months  |
+| 5     | Hardening    | System testing, performance, security, docs  | 1-2 weeks        |
+| 6     | Deployment   | Staging → production pipeline                | Days             |
+| 7     | Operations   | Monitoring, incidents, maintenance           | Ongoing          |
+| 8     | Evolution    | New features, refactors, scaling             | Ongoing          |
 
 ---
 
@@ -175,6 +175,7 @@
 ### The Build Cycle (per module)
 
 **Session A — Test Generation:**
+
 1. Claude reads the module's contract from `.devcontext/contracts/`
 2. Claude proposes test cases: happy path, error cases, edge cases, contract conformance
 3. You review and approve/adjust
@@ -183,24 +184,27 @@
 6. Commit.
 
 **Session B — Implementation:**
+
 1. Claude implements the module until all Session A tests pass
 2. No new tests in this session
 3. If Claude discovers uncovered cases, flag them for Session C
 
 **Session C — Test Hardening (optional, for risky modules):**
+
 1. Add edge case tests, property-based tests, fuzz tests
 2. Verify the implementation handles them
 
 ### The Four Gates (pass all before proceeding)
 
-| Gate | Question | How to verify |
-|------|----------|---------------|
-| **Contract** | Does it match the frozen interface? | Import tests against contracts/ pass |
-| **Tests** | Does it work? | Unit tests pass |
-| **Integration** | Can it talk to its neighbors? | Integration test with built modules (mocks for unbuilt) |
-| **Vibe** | Does the code read well? | You spot-check key files and feel good |
+| Gate            | Question                            | How to verify                                           |
+| --------------- | ----------------------------------- | ------------------------------------------------------- |
+| **Contract**    | Does it match the frozen interface? | Import tests against contracts/ pass                    |
+| **Tests**       | Does it work?                       | Unit tests pass                                         |
+| **Integration** | Can it talk to its neighbors?       | Integration test with built modules (mocks for unbuilt) |
+| **Vibe**        | Does the code read well?            | You spot-check key files and feel good                  |
 
 **If a gate fails:**
+
 - Contract or Tests → fix in the current session
 - Integration → dedicated integration session
 - Vibe → throw away implementation, keep tests, rebuild
@@ -223,6 +227,7 @@
 ### Module Build Order
 
 Start with fewest unbuilt dependencies. Typically:
+
 1. Pure infrastructure / shared utilities
 2. Data layer / storage
 3. Core domain logic
@@ -233,6 +238,7 @@ Start with fewest unbuilt dependencies. Typically:
 ### Parallel Execution
 
 Multiple modules CAN be built simultaneously if they don't share unbuilt dependencies.
+
 - Each session gets the same `CLAUDE.md`, different module assignment
 - Sessions must not modify `contracts/` or other modules' code
 - If a session needs a contract change, it STOPS and flags you
@@ -283,12 +289,12 @@ Multiple modules CAN be built simultaneously if they don't share unbuilt depende
 
 ### Pipeline
 
-| Environment | Purpose | Deploy trigger |
-|-------------|---------|---------------|
-| **Local** | Development | `docker-compose up` |
-| **CI** | Automated testing | Every push |
-| **Staging** | Pre-production verification | Merge to main |
-| **Production** | Real users | Manual promotion from staging |
+| Environment    | Purpose                     | Deploy trigger                |
+| -------------- | --------------------------- | ----------------------------- |
+| **Local**      | Development                 | `docker-compose up`           |
+| **CI**         | Automated testing           | Every push                    |
+| **Staging**    | Pre-production verification | Merge to main                 |
+| **Production** | Real users                  | Manual promotion from staging |
 
 ### First Deploy
 
@@ -334,6 +340,7 @@ Multiple modules CAN be built simultaneously if they don't share unbuilt depende
 ### Hotfix Process
 
 Hotfixes are the ONE exception to "separate test and build sessions." Speed matters.
+
 1. Write a test that reproduces the bug
 2. Fix until the test passes
 3. Run the full test suite — no regressions
@@ -367,6 +374,7 @@ Hotfixes are the ONE exception to "separate test and build sessions." Speed matt
 ### Refactoring
 
 Same rules as features, plus:
+
 - All existing tests must pass throughout
 - Big refactors split into small, independently deployable steps
 - Update contracts before moving code between modules
@@ -374,6 +382,7 @@ Same rules as features, plus:
 ### When to Revisit the Architecture
 
 Red flags:
+
 - Every new feature requires changes in 3+ modules
 - Bug fixes cascade across module boundaries
 - You dread working on a specific module
@@ -418,29 +427,36 @@ project-root/
 # [Project Name]
 
 ## What This Is
+
 [2-3 sentences. What the system does, who it's for.]
 
 ## Tech Stack
+
 [Bullet list. Languages, frameworks, databases, key libraries.]
 
 ## Architecture Overview
+
 [One paragraph. How modules fit together.]
 
 ## Module Map
-| Module | Responsibility | Status |
-|--------|---------------|--------|
-| ... | ... | spike / building / stable / production |
+
+| Module | Responsibility | Status                                 |
+| ------ | -------------- | -------------------------------------- |
+| ...    | ...            | spike / building / stable / production |
 
 ## Invariants (NEVER violate these)
+
 [Numbered list of 5-15 architectural rules.]
 
 ## Where To Find Context
+
 - Frozen contracts: .devcontext/contracts/
 - Architecture decisions: .devcontext/decisions/
 - Reference implementations: .devcontext/reference/
 - Module specs: .devcontext/contracts/{module}/SPEC.md
 
 ## Session Rules
+
 - You are working on ONE module at a time. Ask which if unclear.
 - Import shared types ONLY from shared/. Never define cross-module types locally.
 - If you need to change a contract, STOP and ask. Do not modify contracts.
@@ -451,13 +467,13 @@ project-root/
 
 ## Testing Strategy
 
-| Level | What to verify | Derived from | Location |
-|-------|---------------|-------------|----------|
-| **Unit** | Module behavior in isolation | Module's contract/spec | `tests/unit/{module}/` |
-| **Contract conformance** | Actual I/O matches typed definitions | Contract type definitions | `tests/unit/{module}/` |
-| **Integration** | Two modules communicate correctly | Pair of contracts | `tests/integration/` |
-| **End-to-end** | Critical user journeys work | System description | `tests/e2e/` |
-| **Performance** | System handles expected load | Capacity requirements | `tests/e2e/` or separate |
+| Level                    | What to verify                       | Derived from              | Location                 |
+| ------------------------ | ------------------------------------ | ------------------------- | ------------------------ |
+| **Unit**                 | Module behavior in isolation         | Module's contract/spec    | `tests/unit/{module}/`   |
+| **Contract conformance** | Actual I/O matches typed definitions | Contract type definitions | `tests/unit/{module}/`   |
+| **Integration**          | Two modules communicate correctly    | Pair of contracts         | `tests/integration/`     |
+| **End-to-end**           | Critical user journeys work          | System description        | `tests/e2e/`             |
+| **Performance**          | System handles expected load         | Capacity requirements     | `tests/e2e/` or separate |
 
 ---
 
@@ -498,13 +514,13 @@ project-root/
 
 ## Failure Modes
 
-| Failure Mode | Symptom | Fix |
-|---|---|---|
-| Context starvation | Claude contradicts the architecture | Improve CLAUDE.md |
-| Contract drift | Module outputs don't match neighbor inputs | Add contract conformance tests |
-| Scope creep | Session touches outside files | Enforce session rules; maybe wrong boundary |
-| Sunk cost resistance | Patching instead of rebuilding | Tests survive rebuilds; implementation is cheap |
-| Parallel drift | Simultaneous sessions conflict | Contract is incomplete — add what's missing |
-| Gold-plating | Endless refinement | Four gates define done |
-| Production tunnel vision | All time spent firefighting | Budget 10-20% for ops; fix the systemic issue |
-| Stale docs | CLAUDE.md doesn't match reality | Update docs as part of every deploy |
+| Failure Mode             | Symptom                                    | Fix                                             |
+| ------------------------ | ------------------------------------------ | ----------------------------------------------- |
+| Context starvation       | Claude contradicts the architecture        | Improve CLAUDE.md                               |
+| Contract drift           | Module outputs don't match neighbor inputs | Add contract conformance tests                  |
+| Scope creep              | Session touches outside files              | Enforce session rules; maybe wrong boundary     |
+| Sunk cost resistance     | Patching instead of rebuilding             | Tests survive rebuilds; implementation is cheap |
+| Parallel drift           | Simultaneous sessions conflict             | Contract is incomplete — add what's missing     |
+| Gold-plating             | Endless refinement                         | Four gates define done                          |
+| Production tunnel vision | All time spent firefighting                | Budget 10-20% for ops; fix the systemic issue   |
+| Stale docs               | CLAUDE.md doesn't match reality            | Update docs as part of every deploy             |

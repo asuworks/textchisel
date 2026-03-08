@@ -30,46 +30,46 @@ ANTHROPIC_API_KEY=sk-ant-...
 ## 2. Provider Instances
 
 ```typescript
-import { openai } from '@ai-sdk/openai';
-import { anthropic } from '@ai-sdk/anthropic';
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
 
 // Create model references (no network call yet)
-const gpt4 = openai('gpt-4.1');
-const gpt4o = openai('gpt-4o');
-const gpt4mini = openai('gpt-4.1-mini');
-const claude4sonnet = anthropic('claude-sonnet-4-20250514');
-const claude4opus = anthropic('claude-opus-4-20250714');
+const gpt4 = openai("gpt-4.1");
+const gpt4o = openai("gpt-4o");
+const gpt4mini = openai("gpt-4.1-mini");
+const claude4sonnet = anthropic("claude-sonnet-4-20250514");
+const claude4opus = anthropic("claude-opus-4-20250714");
 ```
 
 ### Ollama (Community Provider)
 
 ```typescript
 // Option A: ai-sdk-ollama (recommended)
-import { ollama } from 'ai-sdk-ollama';
-const local = ollama('llama3.1');
+import { ollama } from "ai-sdk-ollama";
+const local = ollama("llama3.1");
 
 // Option B: OpenAI-compatible provider
-import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 const ollamaProvider = createOpenAICompatible({
-  name: 'ollama',
-  baseURL: 'http://localhost:11434/v1',
-  apiKey: 'ollama', // required but ignored
+  name: "ollama",
+  baseURL: "http://localhost:11434/v1",
+  apiKey: "ollama", // required but ignored
 });
-const local2 = ollamaProvider('llama3.1');
+const local2 = ollamaProvider("llama3.1");
 ```
 
 ### Runtime Model Swapping Pattern
 
 ```typescript
-import { openai } from '@ai-sdk/openai';
-import { anthropic } from '@ai-sdk/anthropic';
-import type { LanguageModel } from 'ai';
+import { openai } from "@ai-sdk/openai";
+import { anthropic } from "@ai-sdk/anthropic";
+import type { LanguageModel } from "ai";
 
 // Registry pattern — swap models at runtime
 const models: Record<string, LanguageModel> = {
-  'fast':    openai('gpt-4.1-mini'),
-  'smart':   openai('gpt-4.1'),
-  'claude':  anthropic('claude-sonnet-4-20250514'),
+  fast: openai("gpt-4.1-mini"),
+  smart: openai("gpt-4.1"),
+  claude: anthropic("claude-sonnet-4-20250514"),
 };
 
 function getModel(key: string): LanguageModel {
@@ -80,8 +80,8 @@ function getModel(key: string): LanguageModel {
 
 // Usage — model chosen by config/env/user input
 const result = await generateText({
-  model: getModel(process.env.AI_MODEL ?? 'fast'),
-  prompt: 'Hello',
+  model: getModel(process.env.AI_MODEL ?? "fast"),
+  prompt: "Hello",
 });
 ```
 
@@ -94,41 +94,43 @@ Generates a single structured object validated against a Zod schema.
 ### Full API
 
 ```typescript
-import { generateObject } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { z } from 'zod';
+import { generateObject } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { z } from "zod";
 
 const { object, usage, finishReason } = await generateObject({
   // --- Required ---
-  model: openai('gpt-4.1'),
+  model: openai("gpt-4.1"),
   prompt: 'Analyze the sentiment of: "This product is amazing"',
 
   // --- Schema (required for output: 'object' | 'array') ---
   schema: z.object({
-    sentiment: z.enum(['positive', 'negative', 'neutral']).describe('Overall sentiment'),
-    confidence: z.number().min(0).max(1).describe('Confidence score 0-1'),
-    keywords: z.array(z.string()).describe('Key sentiment-bearing words'),
+    sentiment: z
+      .enum(["positive", "negative", "neutral"])
+      .describe("Overall sentiment"),
+    confidence: z.number().min(0).max(1).describe("Confidence score 0-1"),
+    keywords: z.array(z.string()).describe("Key sentiment-bearing words"),
   }),
-  schemaName: 'SentimentAnalysis',          // optional — hints to provider
-  schemaDescription: 'Sentiment analysis',  // optional — hints to provider
+  schemaName: "SentimentAnalysis", // optional — hints to provider
+  schemaDescription: "Sentiment analysis", // optional — hints to provider
 
   // --- Generation params ---
-  temperature: 0,          // 0-2 range, provider-dependent. Use temperature OR topP.
-  topP: undefined,         // Nucleus sampling (alternative to temperature)
-  maxTokens: 1000,         // Max output tokens
-  maxRetries: 2,           // Auto-retry on transient errors (default: 2)
+  temperature: 0, // 0-2 range, provider-dependent. Use temperature OR topP.
+  topP: undefined, // Nucleus sampling (alternative to temperature)
+  maxTokens: 1000, // Max output tokens
+  maxRetries: 2, // Auto-retry on transient errors (default: 2)
 
   // --- Output mode ---
-  output: 'object',        // 'object' (default) | 'array' | 'enum' | 'no-schema'
+  output: "object", // 'object' (default) | 'array' | 'enum' | 'no-schema'
 
   // --- System prompt ---
-  system: 'You are a sentiment analysis engine.',
+  system: "You are a sentiment analysis engine.",
 
   // --- Messages (alternative to prompt) ---
   // messages: [{ role: 'user', content: 'Analyze...' }],
 
   // --- Abort ---
-  abortSignal: undefined,  // AbortSignal for cancellation
+  abortSignal: undefined, // AbortSignal for cancellation
 });
 
 console.log(object);
@@ -141,13 +143,13 @@ console.log(usage);
 
 ```typescript
 const { object: items } = await generateObject({
-  model: openai('gpt-4.1'),
-  output: 'array',
+  model: openai("gpt-4.1"),
+  output: "array",
   schema: z.object({
     title: z.string(),
     summary: z.string(),
   }),
-  prompt: 'Generate 5 blog post ideas about TypeScript',
+  prompt: "Generate 5 blog post ideas about TypeScript",
 });
 // items: Array<{ title: string; summary: string }>
 ```
@@ -156,9 +158,9 @@ const { object: items } = await generateObject({
 
 ```typescript
 const { object: category } = await generateObject({
-  model: openai('gpt-4.1'),
-  output: 'enum',
-  enum: ['bug', 'feature', 'question', 'docs'],
+  model: openai("gpt-4.1"),
+  output: "enum",
+  enum: ["bug", "feature", "question", "docs"],
   prompt: 'Classify this issue: "The login button is broken"',
 });
 // category: 'bug'
@@ -168,9 +170,9 @@ const { object: category } = await generateObject({
 
 ```typescript
 const { object } = await generateObject({
-  model: openai('gpt-4.1'),
-  output: 'no-schema',
-  prompt: 'Return JSON with the capital of France',
+  model: openai("gpt-4.1"),
+  output: "no-schema",
+  prompt: "Return JSON with the capital of France",
 });
 // object: unknown — no type safety, use when schema is dynamic
 ```
@@ -184,13 +186,13 @@ Streams text tokens in real-time. Primary function for chat/completion UIs.
 ### Full API
 
 ```typescript
-import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 const result = streamText({
   // --- Required ---
-  model: openai('gpt-4.1'),
-  prompt: 'Explain quantum computing in simple terms',
+  model: openai("gpt-4.1"),
+  prompt: "Explain quantum computing in simple terms",
 
   // --- Or use messages ---
   // messages: [
@@ -203,7 +205,7 @@ const result = streamText({
   maxTokens: 2000,
   topP: undefined,
   maxRetries: 2,
-  system: 'You are a helpful assistant.',
+  system: "You are a helpful assistant.",
 
   // --- Callbacks ---
   onChunk: ({ chunk }) => {
@@ -211,11 +213,11 @@ const result = streamText({
   },
   onFinish: ({ text, usage, finishReason }) => {
     // Called when stream completes
-    console.log('Total tokens:', usage.totalTokens);
+    console.log("Total tokens:", usage.totalTokens);
   },
   onError: ({ error }) => {
     // Called on stream error (added in v4.1.22)
-    console.error('Stream error:', error);
+    console.error("Stream error:", error);
   },
 
   // --- Tools (function calling) ---
@@ -242,11 +244,11 @@ console.log(fullText);
 // Option C: Get all parts
 for await (const part of result.fullStream) {
   switch (part.type) {
-    case 'text-delta':
+    case "text-delta":
       process.stdout.write(part.textDelta);
       break;
-    case 'finish':
-      console.log('\nDone:', part.usage);
+    case "finish":
+      console.log("\nDone:", part.usage);
       break;
   }
 }
@@ -256,14 +258,14 @@ for await (const part of result.fullStream) {
 
 ```typescript
 // app/api/chat/route.ts
-import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: openai('gpt-4.1'),
+    model: openai("gpt-4.1"),
     messages,
   });
 
@@ -276,15 +278,15 @@ export async function POST(req: Request) {
 
 ```typescript
 // app/actions.ts
-'use server';
+"use server";
 
-import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
-import { UIMessage } from 'ai';
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
+import { UIMessage } from "ai";
 
 export async function chat(messages: UIMessage[]) {
   const result = streamText({
-    model: openai('gpt-4.1'),
+    model: openai("gpt-4.1"),
     messages,
   });
 
@@ -295,18 +297,18 @@ export async function chat(messages: UIMessage[]) {
 ### Express / Plain Node.js
 
 ```typescript
-import express from 'express';
-import { streamText } from 'ai';
-import { openai } from '@ai-sdk/openai';
+import express from "express";
+import { streamText } from "ai";
+import { openai } from "@ai-sdk/openai";
 
 const app = express();
 app.use(express.json());
 
-app.post('/api/chat', async (req, res) => {
+app.post("/api/chat", async (req, res) => {
   const { messages } = req.body;
 
   const result = streamText({
-    model: openai('gpt-4.1'),
+    model: openai("gpt-4.1"),
     messages,
   });
 
@@ -453,23 +455,23 @@ export function ObjectStreamUI() {
 
 ### Error Types
 
-| Error Class | When | Key Properties |
-|---|---|---|
-| `AI_APICallError` | Provider HTTP error (401, 429, 500) | `statusCode`, `message`, `isRetryable` |
-| `AI_RetryError` | All retries exhausted | `lastError`, `errors` (array of attempts) |
-| `AI_JSONParseError` | Malformed JSON from provider | `text` (raw response) |
-| `AI_TypeValidationError` | Object doesn't match Zod schema | `value`, `cause` |
-| `AI_NoSuchModelError` | Invalid model identifier | `modelId` |
+| Error Class              | When                                | Key Properties                            |
+| ------------------------ | ----------------------------------- | ----------------------------------------- |
+| `AI_APICallError`        | Provider HTTP error (401, 429, 500) | `statusCode`, `message`, `isRetryable`    |
+| `AI_RetryError`          | All retries exhausted               | `lastError`, `errors` (array of attempts) |
+| `AI_JSONParseError`      | Malformed JSON from provider        | `text` (raw response)                     |
+| `AI_TypeValidationError` | Object doesn't match Zod schema     | `value`, `cause`                          |
+| `AI_NoSuchModelError`    | Invalid model identifier            | `modelId`                                 |
 
 ### Server-Side Pattern
 
 ```typescript
-import { generateObject, APICallError, RetryError } from 'ai';
+import { generateObject, APICallError, RetryError } from "ai";
 
 async function safeGenerate(prompt: string) {
   try {
     const { object } = await generateObject({
-      model: openai('gpt-4.1'),
+      model: openai("gpt-4.1"),
       schema: mySchema,
       prompt,
       maxRetries: 3, // built-in retry with exponential backoff
@@ -479,19 +481,19 @@ async function safeGenerate(prompt: string) {
     if (APICallError.isInstance(error)) {
       if (error.statusCode === 429) {
         // Rate limited — back off or queue
-        console.error('Rate limited. Retry after backoff.');
-        return { ok: false, error: 'rate_limited' };
+        console.error("Rate limited. Retry after backoff.");
+        return { ok: false, error: "rate_limited" };
       }
       if (error.statusCode === 401) {
-        console.error('Invalid API key');
-        return { ok: false, error: 'auth_failed' };
+        console.error("Invalid API key");
+        return { ok: false, error: "auth_failed" };
       }
       console.error(`API error ${error.statusCode}: ${error.message}`);
-      return { ok: false, error: 'api_error' };
+      return { ok: false, error: "api_error" };
     }
     if (RetryError.isInstance(error)) {
-      console.error('All retries failed:', error.lastError);
-      return { ok: false, error: 'retries_exhausted' };
+      console.error("All retries failed:", error.lastError);
+      return { ok: false, error: "retries_exhausted" };
     }
     throw error; // Unknown error — rethrow
   }
@@ -501,7 +503,7 @@ async function safeGenerate(prompt: string) {
 ### Manual Retry with Exponential Backoff
 
 ```typescript
-import { generateText, APICallError } from 'ai';
+import { generateText, APICallError } from "ai";
 
 async function withBackoff<T>(
   fn: () => Promise<T>,
@@ -525,14 +527,14 @@ async function withBackoff<T>(
       throw error;
     }
   }
-  throw new Error('Unreachable');
+  throw new Error("Unreachable");
 }
 
 // Usage
 const result = await withBackoff(() =>
   generateText({
-    model: openai('gpt-4.1'),
-    prompt: 'Hello',
+    model: openai("gpt-4.1"),
+    prompt: "Hello",
     maxRetries: 0, // disable built-in retry
   }),
 );
@@ -562,11 +564,11 @@ const { messages, error, reload } = useChat({
 
 ```typescript
 const result = streamText({
-  model: openai('gpt-4.1'),
+  model: openai("gpt-4.1"),
   messages,
   onError: ({ error }) => {
     // Log mid-stream errors (e.g., connection drop)
-    console.error('Stream error:', error);
+    console.error("Stream error:", error);
     // Optionally persist for debugging
   },
 });
@@ -579,21 +581,21 @@ const result = streamText({
 ### generateText (simple text, no schema)
 
 ```typescript
-import { generateText } from 'ai';
+import { generateText } from "ai";
 const { text } = await generateText({
-  model: openai('gpt-4.1'),
-  prompt: 'Write a haiku about TypeScript',
+  model: openai("gpt-4.1"),
+  prompt: "Write a haiku about TypeScript",
 });
 ```
 
 ### streamObject (stream structured data)
 
 ```typescript
-import { streamObject } from 'ai';
+import { streamObject } from "ai";
 const result = streamObject({
-  model: openai('gpt-4.1'),
+  model: openai("gpt-4.1"),
   schema: mySchema,
-  prompt: 'Analyze this review...',
+  prompt: "Analyze this review...",
 });
 for await (const partialObject of result.partialObjectStream) {
   console.log(partialObject); // partially filled object, updates as tokens arrive
@@ -603,21 +605,21 @@ for await (const partialObject of result.partialObjectStream) {
 ### Tool Calling
 
 ```typescript
-import { generateText, tool } from 'ai';
-import { z } from 'zod';
+import { generateText, tool } from "ai";
+import { z } from "zod";
 
 const result = await generateText({
-  model: openai('gpt-4.1'),
-  prompt: 'What is the weather in London?',
+  model: openai("gpt-4.1"),
+  prompt: "What is the weather in London?",
   tools: {
     getWeather: tool({
-      description: 'Get current weather for a city',
+      description: "Get current weather for a city",
       parameters: z.object({
-        city: z.string().describe('City name'),
+        city: z.string().describe("City name"),
       }),
       execute: async ({ city }) => {
         // Call real API
-        return { temp: 18, condition: 'cloudy' };
+        return { temp: 18, condition: "cloudy" };
       },
     }),
   },

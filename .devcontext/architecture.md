@@ -6,18 +6,18 @@
 
 ## Confirmed Tech Stack
 
-| Component | Choice |
-|---|---|
-| Language | TypeScript (monorepo) |
-| Frontend | React 19 |
-| Runtime | Node.js (single process: serves UI + proxies LLM calls) |
-| LLM Integration | Vercel AI SDK (`ai` + `@ai-sdk/openai` + `@ai-sdk/anthropic`) |
-| Database | PGlite (embedded Postgres, in-process) |
-| Reactive State | PGlite `useLiveQuery` (data) + Zustand (UI state + undo/redo via Zundo) |
-| Spider Chart | Chart.js + chartjs-plugin-dragdata |
-| Versioning | Immutable PromptVersion snapshots |
-| Deployment | localhost only |
-| Agentic Framework | None — plain TypeScript orchestration |
+| Component         | Choice                                                                  |
+| ----------------- | ----------------------------------------------------------------------- |
+| Language          | TypeScript (monorepo)                                                   |
+| Frontend          | React 19                                                                |
+| Runtime           | Node.js (single process: serves UI + proxies LLM calls)                 |
+| LLM Integration   | Vercel AI SDK (`ai` + `@ai-sdk/openai` + `@ai-sdk/anthropic`)           |
+| Database          | PGlite (embedded Postgres, in-process)                                  |
+| Reactive State    | PGlite `useLiveQuery` (data) + Zustand (UI state + undo/redo via Zundo) |
+| Spider Chart      | Chart.js + chartjs-plugin-dragdata                                      |
+| Versioning        | Immutable PromptVersion snapshots                                       |
+| Deployment        | localhost only                                                          |
+| Agentic Framework | None — plain TypeScript orchestration                                   |
 
 ---
 
@@ -90,12 +90,12 @@
 
 ### LLM Call Points
 
-| Call | Layer | When | Parallel? |
-|------|-------|------|-----------|
-| `generateDimensions` | Orchestration | User submits intent | No — single call |
-| `modifyPrompt` | Grammar | User clicks Regenerate | No — single call, streamed |
-| `scorePrompt` × 3 | Evaluation | After prompt generated | Yes — all 3 in parallel |
-| `scorePrompt` × 3 × 3 | Evaluation (with noise reduction) | After prompt generated | Yes — 9 calls in parallel |
+| Call                  | Layer                             | When                   | Parallel?                  |
+| --------------------- | --------------------------------- | ---------------------- | -------------------------- |
+| `generateDimensions`  | Orchestration                     | User submits intent    | No — single call           |
+| `modifyPrompt`        | Grammar                           | User clicks Regenerate | No — single call, streamed |
+| `scorePrompt` × 3     | Evaluation                        | After prompt generated | Yes — all 3 in parallel    |
+| `scorePrompt` × 3 × 3 | Evaluation (with noise reduction) | After prompt generated | Yes — 9 calls in parallel  |
 
 ---
 
@@ -105,9 +105,9 @@
 
 ```typescript
 interface Session {
-  id: string;                    // UUID
-  userIntent: string;            // "Write a cold email to a Series B investor..."
-  currentVersionId: string;      // Points to active PromptVersion
+  id: string; // UUID
+  userIntent: string; // "Write a cold email to a Series B investor..."
+  currentVersionId: string; // Points to active PromptVersion
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,14 +117,14 @@ interface Session {
 
 ```typescript
 interface Dimension {
-  id: string;                    // UUID
+  id: string; // UUID
   sessionId: string;
-  name: string;                  // User-facing: "Urgency"
-  rubric: Rubric;                // Full rubric definition
-  currentScore: number;          // Latest evaluated score (native scale)
-  targetScore: number | null;    // User's target (null = no target set)
-  locked: boolean;               // Is this dimension locked?
-  displayOrder: number;          // Position on spider chart (0, 1, 2)
+  name: string; // User-facing: "Urgency"
+  rubric: Rubric; // Full rubric definition
+  currentScore: number; // Latest evaluated score (native scale)
+  targetScore: number | null; // User's target (null = no target set)
+  locked: boolean; // Is this dimension locked?
+  displayOrder: number; // Position on spider chart (0, 1, 2)
   createdAt: Date;
 }
 ```
@@ -135,39 +135,40 @@ The rubric is the most complex model. It must support multiple measurement types
 
 ```typescript
 interface Rubric {
-  id: string;                    // UUID
+  id: string; // UUID
   dimensionId: string;
-  description: string;           // Natural language: "Measures the level of time pressure..."
+  description: string; // Natural language: "Measures the level of time pressure..."
   rubricType: RubricType;
-  levels: RubricLevel[];         // Ordered scoring levels
-  evaluationSteps: string[];     // Auto-generated G-Eval steps (cached)
+  levels: RubricLevel[]; // Ordered scoring levels
+  evaluationSteps: string[]; // Auto-generated G-Eval steps (cached)
   scoreRange: {
     min: number;
     max: number;
   };
-  normalizedRange: {             // For spider chart display (0-1)
+  normalizedRange: {
+    // For spider chart display (0-1)
     min: 0;
     max: 1;
   };
 }
 
 type RubricType =
-  | 'ordinal'            // Discrete levels with linguistic markers (Urgency)
-  | 'count'              // Raw integer count (Personalization Depth)
-  | 'taxonomic'          // Classification against a hierarchy (Ask Directness)
-  | 'extremum'           // Scored by most extreme instance
-  | 'graph_theoretic'    // Structural properties
-  | 'ratio'              // Ratio-based annotation density
-  | 'simulation'         // Simulated reader comprehension
-  | 'narratological'     // Narrative theory classification
-  | 'dialectical'        // Philosophical dialectical analysis
-  | 'topological';       // Mathematical classification
+  | "ordinal" // Discrete levels with linguistic markers (Urgency)
+  | "count" // Raw integer count (Personalization Depth)
+  | "taxonomic" // Classification against a hierarchy (Ask Directness)
+  | "extremum" // Scored by most extreme instance
+  | "graph_theoretic" // Structural properties
+  | "ratio" // Ratio-based annotation density
+  | "simulation" // Simulated reader comprehension
+  | "narratological" // Narrative theory classification
+  | "dialectical" // Philosophical dialectical analysis
+  | "topological"; // Mathematical classification
 
 interface RubricLevel {
-  level: number;               // 1, 2, 3, 4, 5
-  label: string;               // "No temporal language"
-  description: string;         // Full description of what this level means
-  indicators: string[];        // Observable markers: ["no deadlines", "no urgency words"]
+  level: number; // 1, 2, 3, 4, 5
+  label: string; // "No temporal language"
+  description: string; // Full description of what this level means
+  indicators: string[]; // Observable markers: ["no deadlines", "no urgency words"]
 }
 ```
 
@@ -177,10 +178,10 @@ Immutable snapshot. Never updated — only appended.
 
 ```typescript
 interface PromptVersion {
-  id: string;                    // UUID
+  id: string; // UUID
   sessionId: string;
-  versionNumber: number;         // Sequential within session
-  parentVersionId: string | null;// What version this was derived from
+  versionNumber: number; // Sequential within session
+  parentVersionId: string | null; // What version this was derived from
 
   // The prompt
   promptText: string;
@@ -197,17 +198,17 @@ interface PromptVersion {
 interface DimensionSnapshot {
   dimensionId: string;
   name: string;
-  score: number;                 // Evaluated score (native scale)
-  normalizedScore: number;       // 0-1 for spider chart
+  score: number; // Evaluated score (native scale)
+  normalizedScore: number; // 0-1 for spider chart
   targetScore: number | null;
   locked: boolean;
 }
 
 type VersionAction =
-  | { type: 'initial' }
-  | { type: 'regenerate'; freeDimensionId: string; targetValue: number }
-  | { type: 'revert'; fromVersionId: string }
-  | { type: 'lock_change'; dimensionId: string; locked: boolean };
+  | { type: "initial" }
+  | { type: "regenerate"; freeDimensionId: string; targetValue: number }
+  | { type: "revert"; fromVersionId: string }
+  | { type: "lock_change"; dimensionId: string; locked: boolean };
 ```
 
 ### GrammarInstruction
@@ -222,7 +223,7 @@ interface GrammarInstruction {
     rubric: Rubric;
     currentScore: number;
     targetScore: number;
-    direction: 'increase' | 'decrease';
+    direction: "increase" | "decrease";
   };
   lockedDimensions: Array<{
     name: string;
@@ -230,7 +231,7 @@ interface GrammarInstruction {
     currentScore: number;
     // The rubric description tells the LLM what "locked" means qualitatively
   }>;
-  userIntent: string;            // Original intent for context
+  userIntent: string; // Original intent for context
 }
 ```
 
@@ -301,27 +302,39 @@ User intent ──► generateDimensions() ──► 3 Dimensions with Rubrics
 **LLM Call Specification:**
 
 ```typescript
-import { generateObject } from 'ai';
-import { z } from 'zod';
+import { generateObject } from "ai";
+import { z } from "zod";
 
 const DimensionProposalSchema = z.object({
-  dimensions: z.array(z.object({
-    name: z.string().describe('Short, user-friendly dimension name'),
-    description: z.string().describe('One-sentence explanation for the user'),
-    rubricType: z.enum(['ordinal', 'count', 'taxonomic']),
-    levels: z.array(z.object({
-      level: z.number(),
-      label: z.string(),
-      description: z.string(),
-      indicators: z.array(z.string()),
-    })).length(5),
-    scoreRange: z.object({ min: z.number(), max: z.number() }),
-  })).length(3),
+  dimensions: z
+    .array(
+      z.object({
+        name: z.string().describe("Short, user-friendly dimension name"),
+        description: z
+          .string()
+          .describe("One-sentence explanation for the user"),
+        rubricType: z.enum(["ordinal", "count", "taxonomic"]),
+        levels: z
+          .array(
+            z.object({
+              level: z.number(),
+              label: z.string(),
+              description: z.string(),
+              indicators: z.array(z.string()),
+            }),
+          )
+          .length(5),
+        scoreRange: z.object({ min: z.number(), max: z.number() }),
+      }),
+    )
+    .length(3),
 });
 
-async function generateDimensions(userIntent: string): Promise<DimensionProposal> {
+async function generateDimensions(
+  userIntent: string,
+): Promise<DimensionProposal> {
   const { object } = await generateObject({
-    model: provider(modelId),  // User-configured
+    model: provider(modelId), // User-configured
     schema: DimensionProposalSchema,
     prompt: DIMENSION_GENERATION_PROMPT(userIntent),
   });
@@ -417,15 +430,15 @@ Output evaluation steps as an ordered list.
 
 ```typescript
 const ScoreSchema = z.object({
-  reasoning: z.string().describe('Step-by-step evaluation following the steps'),
-  score: z.number().describe('Score on the rubric scale'),
-  confidence: z.enum(['high', 'medium', 'low']),
+  reasoning: z.string().describe("Step-by-step evaluation following the steps"),
+  score: z.number().describe("Score on the rubric scale"),
+  confidence: z.enum(["high", "medium", "low"]),
 });
 
 async function scorePrompt(
   prompt: string,
   dimension: Dimension,
-  evalSteps: string[]
+  evalSteps: string[],
 ): Promise<Score> {
   // Run N=3 samples in parallel for noise reduction
   const samples = await Promise.all(
@@ -434,20 +447,20 @@ async function scorePrompt(
         model: provider(modelId),
         schema: ScoreSchema,
         prompt: SCORING_PROMPT(prompt, dimension, evalSteps),
-        temperature: 0.3,  // Slight variation for diversity
-      })
-    )
+        temperature: 0.3, // Slight variation for diversity
+      }),
+    ),
   );
 
   // Average the scores, keep median reasoning
-  const scores = samples.map(s => s.object.score);
+  const scores = samples.map((s) => s.object.score);
   const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length;
 
   return {
     score: avgScore,
     normalizedScore: normalize(avgScore, dimension.rubric.scoreRange),
     reasoning: samples[Math.floor(samples.length / 2)].object.reasoning,
-    confidence: deriveConfidence(scores),  // High if std < 0.5, Low if std > 1.0
+    confidence: deriveConfidence(scores), // High if std < 0.5, Low if std > 1.0
     rawScores: scores,
   };
 }
@@ -484,7 +497,10 @@ function normalize(score: number, range: { min: number; max: number }): number {
   return (score - range.min) / (range.max - range.min);
 }
 
-function denormalize(normalized: number, range: { min: number; max: number }): number {
+function denormalize(
+  normalized: number,
+  range: { min: number; max: number },
+): number {
   return normalized * (range.max - range.min) + range.min;
 }
 ```
@@ -556,13 +572,15 @@ Indicators to REMOVE or REDUCE: {currentLevel.indicators.join(', ')}
 **Implementation:**
 
 ```typescript
-import { streamText } from 'ai';
+import { streamText } from "ai";
 
-async function modifyPrompt(instruction: GrammarInstruction): Promise<ReadableStream> {
+async function modifyPrompt(
+  instruction: GrammarInstruction,
+): Promise<ReadableStream> {
   const result = streamText({
     model: provider(modelId),
     prompt: GRAMMAR_META_PROMPT(instruction),
-    temperature: 0.4,  // Low for precision, not zero for diversity
+    temperature: 0.4, // Low for precision, not zero for diversity
   });
 
   return result.textStream;
@@ -608,6 +626,7 @@ async function modifyPrompt(instruction: GrammarInstruction): Promise<ReadableSt
 **Optimistic Updates:**
 
 While steps 4-6 are running, the UI shows:
+
 - Step 4 start: Spinner on chart, "Generating..." status
 - Step 4 streaming: Prompt text appears progressively
 - Step 5 start: Show interpolated predicted scores on chart (dimmed)
@@ -620,17 +639,17 @@ const LOCK_TOLERANCE = 0.5; // On a 1-5 scale
 
 function checkLockFidelity(
   lockedDimensions: Dimension[],
-  newScores: Record<string, Score>
+  newScores: Record<string, Score>,
 ): LockDeviation[] {
   return lockedDimensions
-    .map(dim => ({
+    .map((dim) => ({
       dimensionId: dim.id,
       dimensionName: dim.name,
       expectedScore: dim.currentScore,
       actualScore: newScores[dim.id].score,
       deviation: Math.abs(newScores[dim.id].score - dim.currentScore),
     }))
-    .filter(d => d.deviation > LOCK_TOLERANCE);
+    .filter((d) => d.deviation > LOCK_TOLERANCE);
 }
 ```
 
@@ -649,10 +668,11 @@ async function regenerateWithLockRetry(
   // Append deviation feedback to the grammar instruction
   const retryInstruction: GrammarInstruction = {
     ...instruction,
-    lockDeviationFeedback: deviations.map(d =>
-      `WARNING: Your previous attempt shifted "${d.dimensionName}" from ${d.expectedScore} to ${d.actualScore}. ` +
-      `This dimension is LOCKED at ${d.expectedScore}. You MUST preserve it. ` +
-      `Adjust your modifications to maintain this score.`
+    lockDeviationFeedback: deviations.map(
+      (d) =>
+        `WARNING: Your previous attempt shifted "${d.dimensionName}" from ${d.expectedScore} to ${d.actualScore}. ` +
+        `This dimension is LOCKED at ${d.expectedScore}. You MUST preserve it. ` +
+        `Adjust your modifications to maintain this score.`,
     ),
   };
 
@@ -668,15 +688,27 @@ Different LLM providers have different concurrency capabilities. The scoring str
 
 ```typescript
 interface ProviderCapabilities {
-  maxConcurrentRequests: number;  // Ollama: 1, Cloud APIs: 20+
-  samplesPerDimension: number;    // Ollama: 1, Cloud: 3
+  maxConcurrentRequests: number; // Ollama: 1, Cloud APIs: 20+
+  samplesPerDimension: number; // Ollama: 1, Cloud: 3
   supportsStructuredOutput: boolean;
 }
 
 const PROVIDER_DEFAULTS: Record<string, ProviderCapabilities> = {
-  openai:    { maxConcurrentRequests: 20, samplesPerDimension: 3, supportsStructuredOutput: true },
-  anthropic: { maxConcurrentRequests: 20, samplesPerDimension: 3, supportsStructuredOutput: true },
-  ollama:    { maxConcurrentRequests: 1,  samplesPerDimension: 1, supportsStructuredOutput: false },
+  openai: {
+    maxConcurrentRequests: 20,
+    samplesPerDimension: 3,
+    supportsStructuredOutput: true,
+  },
+  anthropic: {
+    maxConcurrentRequests: 20,
+    samplesPerDimension: 3,
+    supportsStructuredOutput: true,
+  },
+  ollama: {
+    maxConcurrentRequests: 1,
+    samplesPerDimension: 1,
+    supportsStructuredOutput: false,
+  },
 };
 
 async function scoreAllAdaptive(
@@ -685,8 +717,11 @@ async function scoreAllAdaptive(
   capabilities: ProviderCapabilities,
 ): Promise<Record<string, Score>> {
   const N = capabilities.samplesPerDimension;
-  const tasks = dimensions.flatMap(dim =>
-    Array.from({ length: N }, () => ({ dim, fn: () => scoreSingle(promptText, dim) }))
+  const tasks = dimensions.flatMap((dim) =>
+    Array.from({ length: N }, () => ({
+      dim,
+      fn: () => scoreSingle(promptText, dim),
+    })),
   );
 
   // Respect concurrency limit
@@ -699,10 +734,10 @@ async function scoreAllAdaptive(
 
 **Impact on latency:**
 
-| Provider | Parallel calls | Samples | Scoring duration |
-|---|---|---|---|
-| OpenAI/Anthropic | 9 concurrent | N=3 | ~1.5-2.5s |
-| Ollama | 1 sequential | N=1 | ~4-8s (model-dependent) |
+| Provider         | Parallel calls | Samples | Scoring duration        |
+| ---------------- | -------------- | ------- | ----------------------- |
+| OpenAI/Anthropic | 9 concurrent   | N=3     | ~1.5-2.5s               |
+| Ollama           | 1 sequential   | N=1     | ~4-8s (model-dependent) |
 
 For Ollama, total loop time may exceed 8s. This is acceptable — local models trade latency for cost ($0).
 
@@ -712,14 +747,18 @@ Every LLM call is wrapped in a resilient execution pattern.
 
 ```typescript
 interface LLMCallOptions {
-  maxRetries: number;       // Default: 2
-  retryDelayMs: number;     // Default: 1000 (exponential backoff)
-  timeoutMs: number;        // Default: 30000
+  maxRetries: number; // Default: 2
+  retryDelayMs: number; // Default: 1000 (exponential backoff)
+  timeoutMs: number; // Default: 30000
 }
 
 async function resilientLLMCall<T>(
   callFn: () => Promise<T>,
-  options: LLMCallOptions = { maxRetries: 2, retryDelayMs: 1000, timeoutMs: 30000 },
+  options: LLMCallOptions = {
+    maxRetries: 2,
+    retryDelayMs: 1000,
+    timeoutMs: 30000,
+  },
 ): Promise<T> {
   let lastError: Error;
 
@@ -742,9 +781,11 @@ async function resilientLLMCall<T>(
 function isNonRetryable(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
-    return msg.includes('invalid api key') ||
-           msg.includes('model not found') ||
-           msg.includes('authentication');
+    return (
+      msg.includes("invalid api key") ||
+      msg.includes("model not found") ||
+      msg.includes("authentication")
+    );
   }
   return false;
 }
@@ -752,14 +793,14 @@ function isNonRetryable(error: unknown): boolean {
 
 **Error states in the UI:**
 
-| Error | User sees | Recovery |
-|---|---|---|
-| Invalid API key | "API key is invalid. Check Settings." | Settings panel opens |
-| Rate limited | "Rate limited. Retrying in {N}s..." | Auto-retry with backoff |
-| Model not found | "Model '{id}' not available. Check Settings." | Settings panel opens |
-| Network timeout | "Request timed out. Try again?" | Manual retry button |
-| Structured output parse failure | "Scoring failed. Retrying..." | Auto-retry (up to 2x) |
-| All retries exhausted (scoring) | Prompt displayed, scores show "—" | "Scores unavailable. Retry?" button |
+| Error                           | User sees                                     | Recovery                            |
+| ------------------------------- | --------------------------------------------- | ----------------------------------- |
+| Invalid API key                 | "API key is invalid. Check Settings."         | Settings panel opens                |
+| Rate limited                    | "Rate limited. Retrying in {N}s..."           | Auto-retry with backoff             |
+| Model not found                 | "Model '{id}' not available. Check Settings." | Settings panel opens                |
+| Network timeout                 | "Request timed out. Try again?"               | Manual retry button                 |
+| Structured output parse failure | "Scoring failed. Retrying..."                 | Auto-retry (up to 2x)               |
+| All retries exhausted (scoring) | Prompt displayed, scores show "—"             | "Scores unavailable. Retry?" button |
 
 **Graceful degradation:** If scoring fails but generation succeeds, the user still sees the new prompt text. Scores show as unavailable rather than crashing the app.
 
@@ -811,14 +852,14 @@ function isNonRetryable(error: unknown): boolean {
 
 ### Component State Dependencies
 
-| Component | PGlite useLiveQuery (persistent, reactive) | Zustand (ephemeral UI state) |
-|---|---|---|
-| SpiderChart | dimension scores, lock states | target scores, hover state |
-| PromptDisplay | current version prompt_text | streaming text, diff mode |
-| DimensionPanel | dimensions, rubrics, scores | slider positions |
-| VersionTimeline | all prompt_versions | selected comparison pair |
-| DimensionProposal | — | proposed dimensions (pre-commit) |
-| RegenerateButton | — | isRegenerating, canRegenerate |
+| Component         | PGlite useLiveQuery (persistent, reactive) | Zustand (ephemeral UI state)     |
+| ----------------- | ------------------------------------------ | -------------------------------- |
+| SpiderChart       | dimension scores, lock states              | target scores, hover state       |
+| PromptDisplay     | current version prompt_text                | streaming text, diff mode        |
+| DimensionPanel    | dimensions, rubrics, scores                | slider positions                 |
+| VersionTimeline   | all prompt_versions                        | selected comparison pair         |
+| DimensionProposal | —                                          | proposed dimensions (pre-commit) |
+| RegenerateButton  | —                                          | isRegenerating, canRegenerate    |
 
 ---
 
@@ -829,28 +870,30 @@ function isNonRetryable(error: unknown): boolean {
 PGlite's `useLiveQuery` hook from `@electric-sql/pglite-react` provides reactive queries that auto-update when underlying data changes.
 
 ```typescript
-import { useLiveQuery } from '@electric-sql/pglite-react';
-import { db } from '../db/client';  // Drizzle instance over PGlite
-import { sessions, dimensions, promptVersions } from '../db/schema';
+import { useLiveQuery } from "@electric-sql/pglite-react";
+import { db } from "../db/client"; // Drizzle instance over PGlite
+import { sessions, dimensions, promptVersions } from "../db/schema";
 
 // Reactive queries used by components — re-render on data change
 function useSessionDimensions(sessionId: string) {
   return useLiveQuery(
-    db.select().from(dimensions).where(eq(dimensions.sessionId, sessionId))
+    db.select().from(dimensions).where(eq(dimensions.sessionId, sessionId)),
   );
 }
 
 function useVersionHistory(sessionId: string) {
   return useLiveQuery(
-    db.select().from(promptVersions)
+    db
+      .select()
+      .from(promptVersions)
       .where(eq(promptVersions.sessionId, sessionId))
-      .orderBy(promptVersions.versionNumber)
+      .orderBy(promptVersions.versionNumber),
   );
 }
 
 function useCurrentVersion(versionId: string) {
   return useLiveQuery(
-    db.select().from(promptVersions).where(eq(promptVersions.id, versionId))
+    db.select().from(promptVersions).where(eq(promptVersions.id, versionId)),
   );
 }
 ```
@@ -861,18 +904,18 @@ function useCurrentVersion(versionId: string) {
 interface UIState {
   // Session flow
   activeSessionId: string | null;
-  phase: 'intent_input' | 'dimension_proposal' | 'workspace';
+  phase: "intent_input" | "dimension_proposal" | "workspace";
 
   // Dimension proposal (before committing to DB)
   proposedDimensions: DimensionProposal | null;
 
   // Regeneration
   isRegenerating: boolean;
-  streamingText: string;          // Accumulated streamed text
-  optimisticScores: Record<string, number> | null;  // Predicted scores
+  streamingText: string; // Accumulated streamed text
+  optimisticScores: Record<string, number> | null; // Predicted scores
 
   // Spider chart interaction
-  targetScores: Record<string, number>;  // Slider target positions
+  targetScores: Record<string, number>; // Slider target positions
   hoveredDimension: string | null;
 
   // Version comparison
@@ -880,17 +923,17 @@ interface UIState {
   compareVersionIds: [string, string] | null;
 
   // Undo/redo
-  undoStack: string[];            // Version IDs
-  undoPointer: number;            // Current position in stack
+  undoStack: string[]; // Version IDs
+  undoPointer: number; // Current position in stack
 
   // LLM config
-  provider: 'openai' | 'anthropic' | 'ollama';
+  provider: "openai" | "anthropic" | "ollama";
   modelId: string;
   apiKey: string;
 
   // Cost tracking
-  sessionCallCount: number;       // Total LLM calls this session
-  sessionEstimatedCost: number;   // Estimated $ cost this session
+  sessionCallCount: number; // Total LLM calls this session
+  sessionEstimatedCost: number; // Estimated $ cost this session
 
   // Error state
   lastError: { message: string; recoverable: boolean } | null;
@@ -898,7 +941,7 @@ interface UIState {
 
 interface UIActions {
   // Session
-  setPhase: (phase: UIState['phase']) => void;
+  setPhase: (phase: UIState["phase"]) => void;
 
   // Regeneration
   startRegeneration: () => void;
@@ -923,7 +966,7 @@ function undo() {
   if (undoPointer <= 0) return;
   undoPointer--;
   const versionId = undoStack[undoPointer];
-  loadVersion(versionId);  // Updates currentVersionId in session
+  loadVersion(versionId); // Updates currentVersionId in session
 }
 
 // Redo = move pointer forward
@@ -966,7 +1009,7 @@ interface DimensionService {
    */
   commitDimensions(
     sessionId: string,
-    proposal: DimensionProposal
+    proposal: DimensionProposal,
   ): Promise<Dimension[]>;
 }
 
@@ -982,7 +1025,7 @@ interface GrammarService {
    */
   modifyPrompt(instruction: GrammarInstruction): Promise<{
     textStream: ReadableStream<string>;
-    fullText: Promise<string>;  // Resolves when stream completes
+    fullText: Promise<string>; // Resolves when stream completes
   }>;
 }
 
@@ -993,10 +1036,7 @@ interface EvaluationService {
    * Score a prompt on a single dimension.
    * Runs N=3 samples internally for noise reduction.
    */
-  scorePrompt(
-    promptText: string,
-    dimension: Dimension,
-  ): Promise<Score>;
+  scorePrompt(promptText: string, dimension: Dimension): Promise<Score>;
 
   /**
    * Score a prompt on all dimensions in parallel.
@@ -1073,11 +1113,11 @@ interface RegenerationOrchestrator {
 
 ```typescript
 interface Score {
-  score: number;                 // Native scale (e.g., 1-5)
-  normalizedScore: number;       // 0-1 for spider chart
-  reasoning: string;             // Evaluation reasoning
-  confidence: 'high' | 'medium' | 'low';
-  rawScores: number[];           // Individual sample scores
+  score: number; // Native scale (e.g., 1-5)
+  normalizedScore: number; // 0-1 for spider chart
+  reasoning: string; // Evaluation reasoning
+  confidence: "high" | "medium" | "low";
+  rawScores: number[]; // Individual sample scores
 }
 
 interface LockDeviation {
@@ -1105,26 +1145,26 @@ interface DimensionProposal {
 
 ### Target: < 8 seconds from "Regenerate" click to spider chart update
 
-| Phase | What Happens | Duration | Technique |
-|---|---|---|---|
-| 1. Build instruction | Construct GrammarInstruction from state | < 5ms | In-memory |
-| 2. Grammar layer | streamText() — modify prompt | 1.5–3s | Streaming: first tokens in ~300ms |
-| 3. Eval steps | Lookup cached evaluation steps | < 10ms | PGlite cache hit |
-| 4. Score all dims | Provider-adaptive: cloud 9 parallel, Ollama 3 sequential | 1.5–2.5s (cloud) / 4–8s (Ollama) | Promise.all() with pLimit concurrency |
-| 5. Aggregate | Average scores, check lock fidelity | < 5ms | In-memory |
-| 6. Persist | Insert PromptVersion row | < 10ms | PGlite local write |
-| 7. Update UI | Update spider chart, version timeline | < 50ms | PGlite useLiveQuery reactive |
-| **Total** | | **3–5.5s** | |
+| Phase                | What Happens                                             | Duration                         | Technique                             |
+| -------------------- | -------------------------------------------------------- | -------------------------------- | ------------------------------------- |
+| 1. Build instruction | Construct GrammarInstruction from state                  | < 5ms                            | In-memory                             |
+| 2. Grammar layer     | streamText() — modify prompt                             | 1.5–3s                           | Streaming: first tokens in ~300ms     |
+| 3. Eval steps        | Lookup cached evaluation steps                           | < 10ms                           | PGlite cache hit                      |
+| 4. Score all dims    | Provider-adaptive: cloud 9 parallel, Ollama 3 sequential | 1.5–2.5s (cloud) / 4–8s (Ollama) | Promise.all() with pLimit concurrency |
+| 5. Aggregate         | Average scores, check lock fidelity                      | < 5ms                            | In-memory                             |
+| 6. Persist           | Insert PromptVersion row                                 | < 10ms                           | PGlite local write                    |
+| 7. Update UI         | Update spider chart, version timeline                    | < 50ms                           | PGlite useLiveQuery reactive          |
+| **Total**            |                                                          | **3–5.5s**                       |                                       |
 
 ### Perceived Latency (What the User Experiences)
 
-| Time | User Sees |
-|---|---|
-| 0ms | "Regenerating..." spinner, chart dims |
-| ~300ms | First tokens of new prompt appear in PromptDisplay |
-| ~1.5s | Prompt text streaming visibly |
-| ~3s | Full prompt text visible |
-| ~3–5.5s | Spider chart snaps to new scores (animated) |
+| Time    | User Sees                                          |
+| ------- | -------------------------------------------------- |
+| 0ms     | "Regenerating..." spinner, chart dims              |
+| ~300ms  | First tokens of new prompt appear in PromptDisplay |
+| ~1.5s   | Prompt text streaming visibly                      |
+| ~3s     | Full prompt text visible                           |
+| ~3–5.5s | Spider chart snaps to new scores (animated)        |
 
 **Key optimizations applied:**
 
@@ -1135,12 +1175,12 @@ interface DimensionProposal {
 
 ### Where to Optimize Further (Phase 2)
 
-| Optimization | Estimated Savings |
-|---|---|
-| Semantic caching (similar slider positions) | Skip grammar+eval entirely: < 200ms |
-| Predicted outputs (OpenAI) | 30-50% generation speedup |
-| Reduce N from 3 to 1 (after calibration network) | ~60% eval savings |
-| Speculative precompute (adjacent slider positions) | Instant perceived response |
+| Optimization                                       | Estimated Savings                   |
+| -------------------------------------------------- | ----------------------------------- |
+| Semantic caching (similar slider positions)        | Skip grammar+eval entirely: < 200ms |
+| Predicted outputs (OpenAI)                         | 30-50% generation speedup           |
+| Reduce N from 3 to 1 (after calibration network)   | ~60% eval savings                   |
+| Speculative precompute (adjacent slider positions) | Instant perceived response          |
 
 ---
 
@@ -1220,9 +1260,12 @@ class CriSPOGrammarService implements GrammarService {
 function getModel(): LanguageModel {
   const { provider, modelId, apiKey } = useUIStore.getState();
   switch (provider) {
-    case 'openai': return openai(modelId, { apiKey });
-    case 'anthropic': return anthropic(modelId, { apiKey });
-    case 'ollama': return ollama(modelId);
+    case "openai":
+      return openai(modelId, { apiKey });
+    case "anthropic":
+      return anthropic(modelId, { apiKey });
+    case "ollama":
+      return ollama(modelId);
   }
 }
 ```
@@ -1307,6 +1350,7 @@ textchisel/
 2. **No cost visibility** — Mitigated by adding `sessionCallCount` and `sessionEstimatedCost` to UI state. Display in header. Implementation detail, not architectural.
 
 ### Pre-Mortem Run
+
 - Date: 2026-03-07
 - Mode: deep
 - Tigers: 4 (3 addressed, 1 accepted)

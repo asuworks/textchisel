@@ -34,30 +34,30 @@ shared/ (contracts — all modules depend on this)
 
 ### Foundation (Phase 2+3)
 
-| Order | Module | Why First |
-|-------|--------|-----------|
-| 1 | shared | All modules depend on contracts |
-| 2 | db | Data layer, no logic dependencies |
-| 3 | store | UI state, depends only on shared types |
+| Order | Module | Why First                              |
+| ----- | ------ | -------------------------------------- |
+| 1     | shared | All modules depend on contracts        |
+| 2     | db     | Data layer, no logic dependencies      |
+| 3     | store  | UI state, depends only on shared types |
 
 ### Construction (Phase 4)
 
-| Wave | Modules | Parallel? | Dependencies |
-|------|---------|-----------|-------------|
-| 1 | dimensions, evaluation, chart | Yes | shared only |
-| 2 | rewriter | No | needs evaluation contract |
-| 3 | orchestrator | No | needs evaluation + rewriter |
-| 4 | shell | No | needs store + chart + orchestrator |
+| Wave | Modules                       | Parallel? | Dependencies                       |
+| ---- | ----------------------------- | --------- | ---------------------------------- |
+| 1    | dimensions, evaluation, chart | Yes       | shared only                        |
+| 2    | rewriter                      | No        | needs evaluation contract          |
+| 3    | orchestrator                  | No        | needs evaluation + rewriter        |
+| 4    | shell                         | No        | needs store + chart + orchestrator |
 
 ### Integration Sessions
 
-| After | Integration Test |
-|-------|-----------------|
-| Foundation | db ↔ store (live queries update store) |
-| Wave 1 | dimensions → evaluation (generated dims can be scored) |
-| Wave 2 | evaluation → rewriter (scores inform rewrite prompt) |
-| Wave 3 | orchestrator ↔ evaluation + rewriter (loop works end-to-end) |
-| Wave 4 | Full system (shell drives orchestrator through store) |
+| After      | Integration Test                                              |
+| ---------- | ------------------------------------------------------------- |
+| Foundation | db ↔ store (live queries update store)                       |
+| Wave 1     | dimensions → evaluation (generated dims can be scored)        |
+| Wave 2     | evaluation → rewriter (scores inform rewrite prompt)          |
+| Wave 3     | orchestrator ↔ evaluation + rewriter (loop works end-to-end) |
+| Wave 4     | Full system (shell drives orchestrator through store)         |
 
 ---
 
