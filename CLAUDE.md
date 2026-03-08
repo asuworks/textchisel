@@ -11,6 +11,7 @@ A prompt engineering workbench that helps users iteratively refine LLM prompts t
 - PGlite `useLiveQuery` for reactive data + Zustand (UI state + undo/redo via Zundo)
 - Vercel AI SDK (`ai` + `@ai-sdk/openai` + `@ai-sdk/anthropic`)
 - Chart.js + chartjs-plugin-dragdata (spider chart)
+- qlty CLI (ESLint + Prettier + osv-scanner, pre-commit/pre-push hooks)
 
 ## Architecture Overview
 
@@ -18,22 +19,22 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 
 ## Module Map
 
-| Module | Responsibility | Status |
-|--------|---------------|--------|
-| `shared` | Contracts: Zod schemas, Drizzle table defs, TypeScript types | skeleton |
-| `db` | PGlite lifecycle, Drizzle client, migrations, version snapshots | skeleton |
-| `store` | Zustand slices (prompt, eval, ui), middleware composition | skeleton |
-| `dimensions` | Generate dimensions from intent (generateObject), dimension CRUD | not started |
-| `evaluation` | G-Eval scoring per dimension, score normalization, caching | not started |
-| `rewriter` | Grammar layer meta-prompt, streaming text rewrite (streamText) | not started |
-| `orchestrator` | Regeneration loop, convergence detection, step coordination | not started |
-| `chart` | SpiderChart component, drag/lock, target overlay | not started |
-| `shell` | App layout, panels, intent input, version timeline, provider config | not started |
+| Module         | Responsibility                                                      | Status      |
+| -------------- | ------------------------------------------------------------------- | ----------- |
+| `shared`       | Contracts: Zod schemas, Drizzle table defs, TypeScript types        | skeleton    |
+| `db`           | PGlite lifecycle, Drizzle client, migrations, version snapshots     | skeleton    |
+| `store`        | Zustand slices (prompt, eval, ui), middleware composition           | skeleton    |
+| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | not started |
+| `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | not started |
+| `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | not started |
+| `orchestrator` | Regeneration loop, convergence detection, step coordination         | not started |
+| `chart`        | SpiderChart component, drag/lock, target overlay                    | not started |
+| `shell`        | App layout, panels, intent input, version timeline, provider config | not started |
 
 ## Current Phase
 
-**Phase 2+3 (Contracts + Foundation)** — IN PROGRESS
-Scaffold complete. Remaining: ESLint (deferred), golden commit tag.
+**Phase 2+3 (Contracts + Foundation)** — COMPLETE
+Scaffold complete. Linting via qlty (ESLint + Prettier) with pre-commit/pre-push hooks.
 
 See `.devcontext/phase.md` for detailed progress.
 

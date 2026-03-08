@@ -1,0 +1,131 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: PARTIAL_PLUS
+---
+goal: Scaffold Phase 2+3 foundation — contracts, project structure, infra, methodology system
+now: Begin Phase 4 Construction — Wave 1 builds dimensions, evaluation, and chart modules (parallel)
+
+test: "npm run typecheck && npx vitest run && npx vite build"
+
+done_this_session:
+  - task: Resumed from architecture handoff, validated all reference docs and decisions
+    files:
+      [
+        thoughts/shared/handoffs/general/2026-03-08_15-06_architecture-and-context.yaml,
+      ]
+  - task: Designed 8-module breakdown optimized for legibility, extensibility, testability
+    files: [.devcontext/modules.md]
+  - task: Created CLAUDE.md seed prompt with module map, 12 invariants, session rules, build order
+    files: [CLAUDE.md]
+  - task: Created phase tracker and methodology integration
+    files: [.devcontext/phase.md]
+  - task: Scaffolded Vite + React 19 + Express + TS monorepo with all config
+    files:
+      [
+        package.json,
+        tsconfig.json,
+        tsconfig.node.json,
+        server/tsconfig.json,
+        vite.config.ts,
+        vitest.config.ts,
+        index.html,
+      ]
+  - task: Defined shared contracts — 4 Drizzle tables + Zod schemas + inferred types
+    files: [shared/schema.ts, shared/types.ts]
+  - task: Implemented PGlite + Drizzle client with raw SQL migration on startup
+    files: [src/db/index.ts]
+  - task: Implemented Zustand store with full middleware stack (devtools→persist→temporal→immer) and 3 slices
+    files: [src/store/index.ts]
+  - task: Created 8 module barrel exports, Express server with LLM proxy stub, React entry
+    files:
+      [
+        src/dimensions/index.ts,
+        src/evaluation/index.ts,
+        src/rewriter/index.ts,
+        src/orchestrator/index.ts,
+        src/chart/index.ts,
+        src/shell/index.ts,
+        server/index.ts,
+        server/routes/llm.ts,
+        src/main.tsx,
+        src/App.tsx,
+      ]
+  - task: Set up Vitest + Tailwind CSS v4 + test setup
+    files: [tests/setup.ts, tests/unit/smoke.test.ts, src/app.css]
+  - task: Golden commit cd57523 tagged v0.0.0-skeleton — all gates pass
+    files: []
+
+blockers: []
+
+questions:
+  - ESLint/Prettier not yet configured (deferred, not blocking)
+  - PGlite runs in browser (idb://) — server is purely LLM proxy. Confirm this is correct architecture.
+
+decisions:
+  - eight_modules: Split pipeline into dimensions/evaluation/rewriter/orchestrator for independent testability and extension
+  - tailwind_v4: Vite plugin, no config file, @import "tailwindcss" in CSS
+  - vitest_jsdom: Native Vite integration, @testing-library/react for component tests
+  - bundler_resolution: Both client and server use bundler moduleResolution (tsx handles server at runtime)
+  - skip_phase1: Exploration risks already mitigated by oracle research during Discovery
+  - combine_phase2_3: Small project, contracts defined inline with scaffold
+
+findings:
+  - pglite_version_pin: pglite-react@0.2.33 requires pglite@0.3.15, not ^0.2.0
+  - tsconfig_composite_noemit: composite:true + noEmit:true conflicts in TS project references; use emitDeclarationOnly instead
+  - server_bundler_resolution: NodeNext moduleResolution requires .js extensions in imports; bundler resolution avoids this since tsx handles execution
+
+worked:
+  - Writing all config files first, then source files, then npm install — efficient batching
+  - Defining contracts (shared/) before module skeletons — types available immediately
+  - Raw SQL migration string in db/index.ts — simple, no drizzle-kit CLI dependency in browser
+
+failed: []
+
+next:
+  - Begin Phase 4 Construction Wave 1 (parallel sessions possible)
+  - dimensions module — generate dimensions from intent via generateObject, test with mocked AI SDK
+  - evaluation module — G-Eval scoring per dimension via generateObject, score normalization logic
+  - chart module — SpiderChart component with Chart.js + dragdata, drag/lock behavior
+  - After Wave 1 — integration session: dimensions → evaluation (generated dims can be scored)
+  - Wave 2: rewriter module (streamText meta-prompt construction)
+  - Wave 3: orchestrator module (evaluate→rewrite loop + convergence)
+  - Wave 4: shell module (app layout, panels, wire everything)
+  - Consider adding ESLint/Prettier before Wave 1 begins
+
+files:
+  created:
+    - CLAUDE.md
+    - .devcontext/modules.md
+    - .devcontext/phase.md
+    - .gitignore
+    - .env.example
+    - package.json
+    - package-lock.json
+    - tsconfig.json
+    - tsconfig.node.json
+    - server/tsconfig.json
+    - vite.config.ts
+    - vitest.config.ts
+    - index.html
+    - shared/schema.ts
+    - shared/types.ts
+    - server/index.ts
+    - server/routes/llm.ts
+    - src/main.tsx
+    - src/App.tsx
+    - src/app.css
+    - src/vite-env.d.ts
+    - src/db/index.ts
+    - src/store/index.ts
+    - src/dimensions/index.ts
+    - src/evaluation/index.ts
+    - src/rewriter/index.ts
+    - src/orchestrator/index.ts
+    - src/chart/index.ts
+    - src/shell/index.ts
+    - tests/setup.ts
+    - tests/unit/smoke.test.ts
+    - thoughts/shared/handoffs/general/2026-03-08_15-49_foundation-scaffold.yaml
+  modified: []
