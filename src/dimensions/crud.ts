@@ -1,24 +1,19 @@
 import { eq, asc } from "drizzle-orm";
-import { getDb } from "@/db";
+import { ensureDb } from "@/db";
 import { dimensions } from "@shared/schema";
 import type { Dimension } from "@shared/types";
 import type { GeneratedDimensions } from "@shared/types";
 
 /**
  * Bulk insert generated dimensions into PGlite for a given session.
- *
- * Each dimension gets a sequential sortOrder starting from 0.
- * Weight defaults to 1.0 and locked defaults to false.
- *
- * @param sessionId - The session to associate dimensions with
- * @param dims - Array of generated dimension data (name, description, rubric)
- * @returns The created Dimension records with IDs and defaults applied
+ * Returns null if DB is unavailable.
  */
 export async function createDimensions(
   sessionId: string,
   dims: GeneratedDimensions["dimensions"],
-): Promise<Dimension[]> {
-  const db = getDb();
+): Promise<Dimension[] | null> {
+  const db = await ensureDb();
+  if (!db) return null;
 
   const values = dims.map((dim, index) => ({
     sessionId,
@@ -37,14 +32,13 @@ export async function createDimensions(
 
 /**
  * Fetch all dimensions for a session, ordered by sortOrder ascending.
- *
- * @param sessionId - The session ID to query dimensions for
- * @returns Array of Dimension records, ordered by sortOrder
+ * Returns empty array if DB is unavailable.
  */
 export async function getDimensionsBySession(
   sessionId: string,
 ): Promise<Dimension[]> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return [];
 
   const result = await db
     .select()
@@ -57,21 +51,25 @@ export async function getDimensionsBySession(
 
 /**
  * Update a dimension's mutable fields.
- *
- * Only name, description, weight, rubric, and locked can be updated.
- * Throws if the dimension does not exist.
- *
- * @param id - The dimension ID to update
- * @param updates - Partial object with fields to update
- * @returns The updated Dimension record
+ * Returns null if DB is unavailable.
  */
 export async function updateDimension(
   id: string,
   updates: Partial<
-    Pick<Dimension, "name" | "description" | "weight" | "rubric" | "locked">
+    Pick<
+      Dimension,
+      | "name"
+      | "description"
+      | "weight"
+      | "rubric"
+      | "locked"
+      | "evalPrompt"
+      | "rewriteHint"
+    >
   >,
-): Promise<Dimension> {
-  const db = getDb();
+): Promise<Dimension | null> {
+  const db = await ensureDb();
+  if (!db) return null;
 
   const result = await db
     .update(dimensions)
@@ -88,11 +86,11 @@ export async function updateDimension(
 
 /**
  * Delete a dimension by ID.
- *
- * @param id - The dimension ID to delete
+ * No-op if DB is unavailable.
  */
 export async function deleteDimension(id: string): Promise<void> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return;
 
   await db.delete(dimensions).where(eq(dimensions.id, id));
 }

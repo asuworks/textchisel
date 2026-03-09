@@ -1,20 +1,18 @@
 import { eq, and } from "drizzle-orm";
-import { getDb } from "@/db";
+import { ensureDb } from "@/db";
 import { evalStepCache } from "@shared/schema";
 import type { EvalStep } from "@shared/types";
 
 /**
  * Look up a cached evaluation score for a specific version + dimension pair.
- *
- * @param versionId - The prompt version ID
- * @param dimensionId - The dimension ID
- * @returns The cached EvalStep, or null if not found
+ * Returns null if DB is unavailable.
  */
 export async function getCachedScore(
   versionId: string,
   dimensionId: string,
 ): Promise<EvalStep | null> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return null;
 
   const results = await db
     .select()
@@ -40,12 +38,13 @@ interface CacheScoreInput {
 
 /**
  * Insert an evaluation score into the cache.
- *
- * @param input - The eval step data to cache
- * @returns The created EvalStep record
+ * Returns null if DB is unavailable.
  */
-export async function cacheScore(input: CacheScoreInput): Promise<EvalStep> {
-  const db = getDb();
+export async function cacheScore(
+  input: CacheScoreInput,
+): Promise<EvalStep | null> {
+  const db = await ensureDb();
+  if (!db) return null;
 
   const results = await db
     .insert(evalStepCache)
@@ -63,14 +62,13 @@ export async function cacheScore(input: CacheScoreInput): Promise<EvalStep> {
 
 /**
  * Retrieve all cached evaluation scores for a given prompt version.
- *
- * @param versionId - The prompt version ID
- * @returns Array of EvalStep records for the version
+ * Returns empty array if DB is unavailable.
  */
 export async function getCachedScoresForVersion(
   versionId: string,
 ): Promise<EvalStep[]> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return [];
 
   const results = await db
     .select()

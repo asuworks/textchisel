@@ -1,18 +1,20 @@
 import { eq, desc } from "drizzle-orm";
-import { getDb } from "./index";
+import { ensureDb } from "./index";
 import { sessions, promptVersions } from "@shared/schema";
 import type { Session, PromptVersion } from "@shared/types";
 
 // --- Session CRUD ---
 
-export async function createSession(intent: string): Promise<Session> {
-  const db = getDb();
+export async function createSession(intent: string): Promise<Session | null> {
+  const db = await ensureDb();
+  if (!db) return null;
   const result = await db.insert(sessions).values({ intent }).returning();
   return result[0];
 }
 
 export async function getSession(id: string): Promise<Session | null> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return null;
   const result = await db
     .select()
     .from(sessions)
@@ -30,14 +32,16 @@ export async function createPromptVersion(data: {
   userTemplate: string;
   generatedText?: string | null;
   scores?: Record<string, number> | null;
-}): Promise<PromptVersion> {
-  const db = getDb();
+}): Promise<PromptVersion | null> {
+  const db = await ensureDb();
+  if (!db) return null;
   const result = await db.insert(promptVersions).values(data).returning();
   return result[0];
 }
 
 export async function getNextVersionNum(sessionId: string): Promise<number> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return 1;
   const result = await db
     .select()
     .from(promptVersions)
@@ -50,7 +54,8 @@ export async function getNextVersionNum(sessionId: string): Promise<number> {
 export async function getVersionsBySession(
   sessionId: string,
 ): Promise<PromptVersion[]> {
-  const db = getDb();
+  const db = await ensureDb();
+  if (!db) return [];
   return db
     .select()
     .from(promptVersions)

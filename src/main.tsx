@@ -5,8 +5,8 @@ import { ErrorBoundary } from "@/shell/ErrorBoundary";
 import App from "./App";
 import "./app.css";
 
-async function boot() {
-  await initDatabase();
+function boot() {
+  // Render immediately — state persists via localStorage/Zustand.
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <ErrorBoundary>
@@ -14,6 +14,14 @@ async function boot() {
       </ErrorBoundary>
     </StrictMode>,
   );
+
+  // PGlite init in background — non-blocking, optional for long-term DB persistence.
+  initDatabase().catch((err) => {
+    console.warn(
+      "[textchisel] PGlite init failed (app runs without DB persistence):",
+      err,
+    );
+  });
 }
 
 boot();
