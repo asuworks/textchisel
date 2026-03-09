@@ -23,6 +23,10 @@ export default defineConfig({
     },
   },
 
+  optimizeDeps: {
+    exclude: ["@electric-sql/pglite"],
+  },
+
   build: {
     outDir: "dist/client",
     sourcemap: true,

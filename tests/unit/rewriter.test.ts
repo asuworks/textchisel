@@ -232,10 +232,13 @@ describe("rewriteTextFull", () => {
   });
 
   it("should return the full rewritten text string", async () => {
+    const fullText =
+      "Climate change represents the defining crisis of our era.";
     const mockStreamText = vi.fn().mockReturnValue({
-      text: Promise.resolve(
-        "Climate change represents the defining crisis of our era.",
-      ),
+      text: Promise.resolve(fullText),
+      textStream: (async function* () {
+        yield fullText;
+      })(),
     });
 
     vi.doMock("ai", () => ({
@@ -250,9 +253,7 @@ describe("rewriteTextFull", () => {
       model: fakeModel,
     });
 
-    expect(result).toBe(
-      "Climate change represents the defining crisis of our era.",
-    );
+    expect(result).toBe(fullText);
   });
 
   it("should propagate errors from streamText", async () => {
@@ -260,6 +261,9 @@ describe("rewriteTextFull", () => {
       get text() {
         return Promise.reject(new Error("model unavailable"));
       },
+      textStream: (async function* () {
+        throw new Error("model unavailable");
+      })(),
     }));
 
     vi.doMock("ai", () => ({

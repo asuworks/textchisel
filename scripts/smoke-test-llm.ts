@@ -17,11 +17,12 @@ interface DimRaw {
   rubric: { score: number; description: string }[];
 }
 
-async function post(path: string, body: unknown) {
+async function post(path: string, body: unknown, timeoutMs = 60_000) {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!res.ok) {
     const text = await res.text();

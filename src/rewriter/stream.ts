@@ -35,5 +35,11 @@ export async function rewriteTextFull(
   options: RewriteOptions,
 ): Promise<string> {
   const result = rewriteText(options);
-  return await result.text;
+  // Actively consume the stream — awaiting result.text alone can stall
+  // in some Node.js/AI SDK version combinations.
+  let text = "";
+  for await (const chunk of result.textStream) {
+    text += chunk;
+  }
+  return text;
 }
