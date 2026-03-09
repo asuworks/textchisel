@@ -122,7 +122,7 @@ shared/ (contracts — all modules depend on this)
 
 ### orchestrator
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** Regeneration loop (evaluate→compare→rewrite→repeat), convergence detection
 - **Key files:** `src/orchestrator/loop.ts`, `src/orchestrator/convergence.ts`
 - **LLM pattern:** None directly — coordinates evaluation + rewriter

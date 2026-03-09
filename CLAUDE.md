@@ -27,7 +27,7 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 | `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | done        |
 | `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | done        |
 | `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | done        |
-| `orchestrator` | Regeneration loop, convergence detection, step coordination         | not started |
+| `orchestrator` | Regeneration loop, convergence detection, step coordination         | done        |
 | `chart`        | SpiderChart component, drag/lock, target overlay                    | done        |
 | `shell`        | App layout, panels, intent input, version timeline, provider config | not started |
 
