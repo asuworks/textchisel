@@ -1,6 +1,6 @@
 import { streamText } from "ai";
 import type { LanguageModel } from "ai";
-import type { RewriteContext } from "./prompt";
+import type { RewriteContext } from "@shared/types";
 import { buildRewritePrompt } from "./prompt";
 
 export interface RewriteOptions extends RewriteContext {

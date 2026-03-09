@@ -65,7 +65,7 @@ shared/ (contracts — all modules depend on this)
 
 ### shared/
 
-- **Status:** not started
+- **Status:** done
 - **Files:** `shared/types.ts`, `shared/schemas.ts`
 - **Contracts:**
   - `Session` — { id, intent, status, createdAt }
@@ -73,12 +73,12 @@ shared/ (contracts — all modules depend on this)
   - `DimensionScore` — { dimensionId, score, reasoning }
   - `PromptVersion` — { id, sessionId, versionNum, systemPrompt, userTemplate, scores, text }
   - `EvalStepCache` — { versionId, dimensionId, score, reasoning, model, cached }
-  - `TargetScores` — Map<dimensionId, number>
+  - `TargetScores` — Record<dimensionId, number> (ADR-001)
   - `LockSet` — Set<dimensionId>
 
 ### db
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** PGlite lifecycle, Drizzle client setup, schema migration (raw SQL), query helpers, version snapshot persistence
 - **Key files:** `src/db/client.ts`, `src/db/migrations.ts`, `src/db/queries.ts`
 - **Test strategy:** In-memory PGlite instance, no mocks needed
@@ -86,7 +86,7 @@ shared/ (contracts — all modules depend on this)
 
 ### store
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** Zustand slices, middleware composition (devtools→persist→temporal→immer)
 - **Key files:** `src/store/index.ts`, `src/store/slices/`
 - **Slices:** promptSlice, evaluationSlice, uiSlice
@@ -95,7 +95,7 @@ shared/ (contracts — all modules depend on this)
 
 ### dimensions
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** Generate evaluation dimensions from user intent via generateObject
 - **Key files:** `src/dimensions/generate.ts`, `src/dimensions/schema.ts`
 - **LLM pattern:** `generateObject` with Zod schema → Dimension[]
@@ -104,7 +104,7 @@ shared/ (contracts — all modules depend on this)
 
 ### evaluation
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** G-Eval style scoring per dimension, score normalization, eval caching
 - **Key files:** `src/evaluation/score.ts`, `src/evaluation/normalize.ts`, `src/evaluation/cache.ts`
 - **LLM pattern:** `generateObject` per dimension → DimensionScore
@@ -113,7 +113,7 @@ shared/ (contracts — all modules depend on this)
 
 ### rewriter
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** Grammar layer meta-prompt construction, streaming text rewrite
 - **Key files:** `src/rewriter/prompt.ts`, `src/rewriter/stream.ts`
 - **LLM pattern:** `streamText` with meta-prompt → revised text
@@ -131,7 +131,7 @@ shared/ (contracts — all modules depend on this)
 
 ### chart
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** SpiderChart React component, drag/lock behavior, target overlay
 - **Key files:** `src/chart/SpiderChart.tsx`, `src/chart/types.ts`
 - **Test strategy:** Component tests with static data, visual regression

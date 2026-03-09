@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { LanguageModel } from "ai";
-import type { Dimension, EvaluationScore } from "@shared/types";
-import type { RewriteContext } from "@/rewriter/prompt";
+import type { Dimension, EvaluationScore, RewriteContext } from "@shared/types";
 import { buildRewritePrompt } from "@/rewriter/prompt";
 
 // --- Test fixtures ---

@@ -1,8 +1,8 @@
 # Phase Tracker
 
-## Current Phase: 4 (Construction) — NOT STARTED
+## Current Phase: 4 (Construction) — IN PROGRESS
 
-Next action: Begin Wave 1 — dimensions, evaluation, chart modules (parallel)
+Next action: Wave 3 — orchestrator module (evaluate→rewrite loop, convergence detection)
 
 ---
 
@@ -48,7 +48,14 @@ TODO:
 - [x] Set up linting + formatting (qlty CLI: ESLint + Prettier + pre-commit/pre-push hooks)
 - [x] Tag golden commit (v0.0.0-skeleton — cd57523)
 
-### Phase 4: Construction — NOT STARTED
+### Phase 4: Construction — IN PROGRESS
+
+- [x] Wave 1: dimensions, evaluation, chart (parallel)
+- [x] Wave 1 integration: dimensions → evaluation pipeline
+- [x] Wave 2: rewriter
+- [x] Contract reconciliation: ADR-001 (TargetScores Map→Record), ADR-002 (RewriteContext to shared)
+- [ ] Wave 3: orchestrator
+- [ ] Wave 4: shell
 
 See `.devcontext/modules.md` for per-module build plan and status.
 

@@ -24,11 +24,11 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 | `shared`       | Contracts: Zod schemas, Drizzle table defs, TypeScript types        | skeleton    |
 | `db`           | PGlite lifecycle, Drizzle client, migrations, version snapshots     | skeleton    |
 | `store`        | Zustand slices (prompt, eval, ui), middleware composition           | skeleton    |
-| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | not started |
-| `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | not started |
-| `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | not started |
+| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | done        |
+| `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | done        |
+| `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | done        |
 | `orchestrator` | Regeneration loop, convergence detection, step coordination         | not started |
-| `chart`        | SpiderChart component, drag/lock, target overlay                    | not started |
+| `chart`        | SpiderChart component, drag/lock, target overlay                    | done        |
 | `shell`        | App layout, panels, intent input, version timeline, provider config | not started |
 
 ## Current Phase

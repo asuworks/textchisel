@@ -22,8 +22,8 @@ export type NewEvalStep = typeof evalStepCache.$inferInsert;
 
 // --- Non-DB types ---
 
-/** dimensionId → target score (1-5) */
-export type TargetScores = Map<string, number>;
+/** dimensionId → target score (1-5). Record (not Map) for JSON serialization compatibility. */
+export type TargetScores = Record<string, number>;
 
 /** Set of locked dimension IDs */
 export type LockSet = Set<string>;
@@ -62,3 +62,19 @@ export const EvaluationScoreSchema = z.object({
 });
 
 export type EvaluationScore = z.infer<typeof EvaluationScoreSchema>;
+
+// --- Rewriter contracts (ADR-002) ---
+
+export interface RewriteContext {
+  intent: string;
+  currentText: string;
+  dimensions: Dimension[];
+  currentScores: Record<string, EvaluationScore>;
+  targetScores: Record<string, number>;
+  lockedDimensionIds: Set<string>;
+}
+
+export interface RewritePrompt {
+  system: string;
+  user: string;
+}

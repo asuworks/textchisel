@@ -1,18 +1,4 @@
-import type { Dimension, EvaluationScore } from "@shared/types";
-
-export interface RewriteContext {
-  intent: string;
-  currentText: string;
-  dimensions: Dimension[];
-  currentScores: Record<string, EvaluationScore>;
-  targetScores: Record<string, number>;
-  lockedDimensionIds: Set<string>;
-}
-
-export interface RewritePrompt {
-  system: string;
-  user: string;
-}
+import type { RewriteContext, RewritePrompt } from "@shared/types";
 
 const SYSTEM_PROMPT = `You are a writing refinement engine. Your job is to rewrite text to improve specific quality dimensions while preserving the writer's original intent.
 
