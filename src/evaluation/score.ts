@@ -3,15 +3,16 @@ import type { LanguageModel } from "ai";
 import { EvaluationScoreSchema } from "@shared/types";
 import type { Dimension, EvaluationScore } from "@shared/types";
 
-const SYSTEM_PROMPT = `You are a rigorous text evaluator using the G-Eval framework. You will evaluate a piece of text on a single quality dimension.
+const SYSTEM_PROMPT = `You are a rigorous text evaluator. You will evaluate a piece of text on a single dimension.
 
 Your evaluation must:
 - Focus ONLY on the specified dimension
-- Use the provided rubric (if available) to calibrate your score
-- Assign an integer score from 1 (lowest) to 5 (highest)
+- The rubric defines what each score (1-5) means for THIS dimension — follow it exactly
+- Dimensions may measure quantity, quality, style, or any other property — do not assume "higher = better quality"
+- For example, if a rubric says "1=none, 5=many", score based on COUNT, not quality
 - Provide a brief, specific justification referencing concrete aspects of the text
 
-Be precise and consistent. Do not let one dimension influence another.`;
+Be precise and literal. Match the rubric definitions exactly.`;
 
 interface ScoreDimensionInput {
   text: string;
@@ -37,16 +38,30 @@ export async function scoreDimension(
 ): Promise<EvaluationScore> {
   const { text, dimension, model } = input;
 
-  let rubricSection = "";
-  if (dimension.rubric) {
-    const rubricLines = Object.entries(dimension.rubric)
-      .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([level, desc]) => `  ${level}: ${desc}`)
-      .join("\n");
-    rubricSection = `\n\nRubric:\n${rubricLines}`;
-  }
+  let prompt: string;
 
-  const prompt = `Evaluate the following text on the dimension "${dimension.name}".
+  if (dimension.evalPrompt) {
+    // Tier 1: use generated evaluation methodology
+    prompt = `${dimension.evalPrompt}
+
+Text to evaluate:
+"""
+${text}
+"""
+
+Apply the methodology above. Keep your reasoning brief (2-3 sentences).`;
+  } else {
+    // Fallback: generic template
+    let rubricSection = "";
+    if (dimension.rubric) {
+      const rubricLines = Object.entries(dimension.rubric)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([level, desc]) => `  ${level}: ${desc}`)
+        .join("\n");
+      rubricSection = `\n\nRubric:\n${rubricLines}`;
+    }
+
+    prompt = `Evaluate the following text on the dimension "${dimension.name}".
 
 Dimension: ${dimension.name}
 Description: ${dimension.description}${rubricSection}
@@ -56,7 +71,8 @@ Text to evaluate:
 ${text}
 """
 
-Score the text from 1 to 5 on this dimension and provide brief reasoning.`;
+Evaluate step-by-step: (1) identify what the rubric measures, (2) find concrete evidence in the text, (3) match evidence to the rubric level that fits best. Apply the rubric literally — do not default to a generic quality judgment. Keep your reasoning brief (2-3 sentences).`;
+  }
 
   const { object } = await generateObject({
     model,
@@ -67,6 +83,7 @@ Score the text from 1 to 5 on this dimension and provide brief reasoning.`;
     system: SYSTEM_PROMPT,
     prompt,
     temperature: 0,
+    maxRetries: 3,
   });
 
   return object;

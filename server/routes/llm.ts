@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { createModel } from "../model.js";
 import { generateDimensions } from "../../src/dimensions/generate.js";
+import { generateDimensionPrompts } from "../../src/prompts/generate.js";
+import { generateRewriteInstruction } from "../../src/prompts/rewrite-planner.js";
 import { scoreAllDimensions } from "../../src/evaluation/score.js";
 import { rewriteText, rewriteTextFull } from "../../src/rewriter/stream.js";
 import {
@@ -59,10 +61,33 @@ llmRouter.post("/evaluate", async (req, res) => {
   }
 });
 
-// POST /api/llm/rewrite
+// POST /api/llm/prompts/generate
+// Body: { dimension: { name, description, rubric }, intent, provider?, modelId? }
+llmRouter.post("/prompts/generate", async (req, res) => {
+  try {
+    const { dimension, intent } = req.body;
+    if (!dimension || !intent) {
+      res.status(400).json({ error: "dimension and intent are required" });
+      return;
+    }
+    const model = getModelConfig(req.body);
+    const result = await generateDimensionPrompts({
+      name: dimension.name,
+      description: dimension.description,
+      rubric: dimension.rubric,
+      intent,
+      model,
+    });
+    res.json(result);
+  } catch (err) {
+    console.error("prompts/generate error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/llm/rewrite/plan
 // Body: { intent, currentText, dimensions, currentScores, targetScores, lockedDimensionIds: string[], provider?, modelId? }
-// Returns: SSE data stream (Vercel AI SDK format)
-llmRouter.post("/rewrite", async (req, res) => {
+llmRouter.post("/rewrite/plan", async (req, res) => {
   try {
     const {
       intent,
@@ -76,6 +101,42 @@ llmRouter.post("/rewrite", async (req, res) => {
       res
         .status(400)
         .json({ error: "intent, currentText, and dimensions are required" });
+      return;
+    }
+    const model = getModelConfig(req.body);
+    const result = await generateRewriteInstruction(
+      {
+        intent,
+        currentText,
+        dimensions,
+        currentScores: currentScores ?? {},
+        targetScores: targetScores ?? {},
+        lockedDimensionIds: new Set(lockedDimensionIds ?? []),
+      },
+      model,
+    );
+    res.json(result);
+  } catch (err) {
+    console.error("rewrite/plan error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/llm/rewrite
+// Body: { intent, currentText, dimensions, currentScores, targetScores, lockedDimensionIds: string[], provider?, modelId? }
+// Returns: SSE data stream (Vercel AI SDK format)
+llmRouter.post("/rewrite", async (req, res) => {
+  try {
+    const {
+      intent,
+      currentText,
+      dimensions,
+      currentScores,
+      targetScores,
+      lockedDimensionIds,
+    } = req.body;
+    if (!intent || !dimensions) {
+      res.status(400).json({ error: "intent and dimensions are required" });
       return;
     }
     const model = getModelConfig(req.body);
@@ -106,11 +167,10 @@ llmRouter.post("/rewrite/full", async (req, res) => {
       currentScores,
       targetScores,
       lockedDimensionIds,
+      rewritePlan,
     } = req.body;
-    if (!intent || !currentText || !dimensions) {
-      res
-        .status(400)
-        .json({ error: "intent, currentText, and dimensions are required" });
+    if (!intent || !dimensions) {
+      res.status(400).json({ error: "intent and dimensions are required" });
       return;
     }
     const model = getModelConfig(req.body);
@@ -122,6 +182,7 @@ llmRouter.post("/rewrite/full", async (req, res) => {
       currentScores: currentScores ?? {},
       targetScores: targetScores ?? {},
       lockedDimensionIds: new Set(lockedDimensionIds ?? []),
+      rewritePlan: rewritePlan ?? undefined,
     });
     res.json({ text });
   } catch (err) {
@@ -153,11 +214,14 @@ llmRouter.post("/orchestrate", async (req, res) => {
     }
     const model = getModelConfig(req.body);
 
-    // Wire real deps: evaluation.scoreAllDimensions + rewriter.rewriteTextFull
+    // Wire real deps: evaluation + rewriter + Tier 2 planner
     const deps: OrchestratorDeps = {
       scoreAll: scoreAllDimensions,
       rewrite: async (options) => {
         return rewriteTextFull({ ...options, model });
+      },
+      planRewrite: async (context) => {
+        return generateRewriteInstruction(context, model);
       },
     };
 

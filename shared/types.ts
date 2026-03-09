@@ -25,8 +25,8 @@ export type NewEvalStep = typeof evalStepCache.$inferInsert;
 /** dimensionId → target score (1-5). Record (not Map) for JSON serialization compatibility. */
 export type TargetScores = Record<string, number>;
 
-/** Set of locked dimension IDs */
-export type LockSet = Set<string>;
+/** Locked dimension IDs. Record for JSON serialization (Zustand persist). */
+export type LockSet = Record<string, boolean>;
 
 // --- Session status ---
 
@@ -43,14 +43,30 @@ export type SessionStatus =
 
 // --- Zod schemas for LLM structured output ---
 
+/** Rubric: sequential integer keys "1" through N (2-7 levels). Used for storage/runtime. */
+export const RubricSchema = z
+  .record(z.string(), z.string())
+  .describe(
+    "Rubric with sequential integer keys starting from '1', each mapping to a description of what that score level means",
+  );
+
+/** Fixed 5-key rubric schema for LLM structured generation (models need explicit named keys). */
+const GenerationRubricSchema = z.object({
+  "1": z.string().describe("Description for score level 1"),
+  "2": z.string().describe("Description for score level 2"),
+  "3": z.string().describe("Description for score level 3"),
+  "4": z.string().describe("Description for score level 4"),
+  "5": z.string().describe("Description for score level 5"),
+});
+
 export const DimensionGenerationSchema = z.object({
   dimensions: z.array(
     z.object({
       name: z.string().describe("Short name for this evaluation dimension"),
       description: z.string().describe("What this dimension measures"),
-      rubric: z
-        .record(z.string())
-        .describe("Scoring criteria keyed by level 1-5"),
+      rubric: GenerationRubricSchema.describe(
+        "Rubric with keys 1-5, each mapping to a description of what that score level means",
+      ),
     }),
   ),
 });
@@ -58,11 +74,46 @@ export const DimensionGenerationSchema = z.object({
 export type GeneratedDimensions = z.infer<typeof DimensionGenerationSchema>;
 
 export const EvaluationScoreSchema = z.object({
-  score: z.number().int().min(1).max(5).describe("Score from 1 to 5"),
+  score: z
+    .number()
+    .int()
+    .min(1)
+    .max(7)
+    .describe(
+      "Score from 1 to N (where N is the number of rubric levels, 2-7)",
+    ),
   reasoning: z.string().describe("Brief justification for the score"),
 });
 
 export type EvaluationScore = z.infer<typeof EvaluationScoreSchema>;
+
+// --- Meta-prompt contracts (ADR-003) ---
+
+export const DimensionPromptsSchema = z.object({
+  evalPrompt: z
+    .string()
+    .describe(
+      "Evaluation methodology prompt: step-by-step instructions for how to evaluate text on this dimension",
+    ),
+  rewriteHint: z
+    .string()
+    .describe(
+      "Writing guide: what this dimension controls and how text changes at each level",
+    ),
+});
+
+export type DimensionPrompts = z.infer<typeof DimensionPromptsSchema>;
+
+export const RewritePlanSchema = z.object({
+  inferredIntent: z
+    .string()
+    .describe("What the user is trying to achieve with this set of changes"),
+  instructions: z
+    .string()
+    .describe("Concrete writing instructions for the rewriter to follow"),
+});
+
+export type RewritePlan = z.infer<typeof RewritePlanSchema>;
 
 // --- Rewriter contracts (ADR-002) ---
 

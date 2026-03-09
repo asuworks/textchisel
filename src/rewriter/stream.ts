@@ -1,10 +1,11 @@
 import { streamText } from "ai";
 import type { LanguageModel } from "ai";
-import type { RewriteContext } from "@shared/types";
+import type { RewriteContext, RewritePlan } from "@shared/types";
 import { buildRewritePrompt } from "./prompt";
 
 export interface RewriteOptions extends RewriteContext {
   model: LanguageModel;
+  rewritePlan?: RewritePlan;
 }
 
 /**
@@ -16,9 +17,10 @@ export interface RewriteOptions extends RewriteContext {
  * - `result.toDataStreamResponse()` for Express SSE response
  */
 export function rewriteText(options: RewriteOptions) {
-  const { model, ...context } = options;
-  const { system, user } = buildRewritePrompt(context);
-
+  const { model, rewritePlan, ...context } = options;
+  const { system, user } = buildRewritePrompt(context, rewritePlan);
+  console.log("Rewrite system prompt:", system);
+  console.log("Rewrite user prompt:", user);
   return streamText({
     model,
     system,
@@ -35,8 +37,6 @@ export async function rewriteTextFull(
   options: RewriteOptions,
 ): Promise<string> {
   const result = rewriteText(options);
-  // Actively consume the stream — awaiting result.text alone can stall
-  // in some Node.js/AI SDK version combinations.
   let text = "";
   for await (const chunk of result.textStream) {
     text += chunk;

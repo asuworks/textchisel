@@ -33,6 +33,8 @@ export const dimensions = pgTable("dimensions", {
   rubric: jsonb("rubric").$type<Record<string, string>>(),
   locked: boolean("locked").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
+  evalPrompt: text("eval_prompt"),
+  rewriteHint: text("rewrite_hint"),
 });
 
 // --- Prompt Versions (immutable snapshots) ---

@@ -1,5 +1,10 @@
 import type { LanguageModel } from "ai";
-import type { Dimension, EvaluationScore, RewriteContext } from "@shared/types";
+import type {
+  Dimension,
+  EvaluationScore,
+  RewriteContext,
+  RewritePlan,
+} from "@shared/types";
 import { checkConvergence, checkLockFidelity } from "./convergence";
 import type { LockDeviation, ConvergenceCheck } from "./convergence";
 
@@ -13,8 +18,16 @@ export interface OrchestratorDeps {
   }) => Promise<Map<string, EvaluationScore>>;
 
   rewrite: (
-    options: RewriteContext & { model: LanguageModel },
+    options: RewriteContext & {
+      model: LanguageModel;
+      rewritePlan?: RewritePlan;
+    },
   ) => Promise<string>;
+
+  /** Optional Tier 2 rewrite planner — generates transition-aware instructions */
+  planRewrite?: (
+    context: RewriteContext & { model: LanguageModel },
+  ) => Promise<RewritePlan>;
 }
 
 // --- Input / Output types ---
@@ -118,7 +131,17 @@ export async function runOrchestrationLoop(
       lockedDimensionIds,
     };
 
-    const newText = await deps.rewrite({ ...rewriteContext, model });
+    // Generate Tier 2 rewrite plan if planner is available
+    let rewritePlan: RewritePlan | undefined;
+    if (deps.planRewrite && currentText.trim().length > 0) {
+      rewritePlan = await deps.planRewrite({ ...rewriteContext, model });
+    }
+
+    const newText = await deps.rewrite({
+      ...rewriteContext,
+      model,
+      rewritePlan,
+    });
 
     // 2. Evaluate rewritten text
     const scoresMap = await deps.scoreAll({ text: newText, dimensions, model });
