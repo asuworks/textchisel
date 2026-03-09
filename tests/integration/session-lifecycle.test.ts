@@ -32,7 +32,9 @@ async function initTestDb() {
       weight REAL NOT NULL DEFAULT 1.0,
       rubric JSONB,
       locked BOOLEAN NOT NULL DEFAULT FALSE,
-      sort_order INTEGER NOT NULL DEFAULT 0
+      sort_order INTEGER NOT NULL DEFAULT 0,
+        eval_prompt TEXT,
+        rewrite_hint TEXT
     );
 
     CREATE TABLE IF NOT EXISTS prompt_versions (
@@ -69,7 +71,7 @@ describe("session lifecycle", () => {
     db = await initTestDb();
 
     vi.doMock("@/db", () => ({
-      getDb: () => db.db,
+      ensureDb: async () => db.db,
     }));
   });
 

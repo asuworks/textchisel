@@ -33,7 +33,9 @@ async function initTestDb() {
       weight REAL NOT NULL DEFAULT 1.0,
       rubric JSONB,
       locked BOOLEAN NOT NULL DEFAULT FALSE,
-      sort_order INTEGER NOT NULL DEFAULT 0
+      sort_order INTEGER NOT NULL DEFAULT 0,
+        eval_prompt TEXT,
+        rewrite_hint TEXT
     );
 
     CREATE TABLE IF NOT EXISTS prompt_versions (
@@ -111,9 +113,9 @@ describe("dimensions → evaluation integration", () => {
 
     testDb = await initTestDb();
 
-    // Mock getDb for both dimensions and evaluation modules
+    // Mock ensureDb for both dimensions and evaluation modules
     vi.doMock("@/db", () => ({
-      getDb: () => testDb.db,
+      ensureDb: async () => testDb.db,
     }));
 
     // Create a test session

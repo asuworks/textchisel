@@ -111,7 +111,7 @@ function makeDefaultProps(
     dimensions: dims,
     currentScores: overrides.currentScores ?? { d1: 3, d2: 4, d3: 2 },
     targetScores: overrides.targetScores ?? { d1: 4, d2: 5, d3: 3 },
-    lockedDimensions: overrides.lockedDimensions ?? new Set<string>(),
+    lockedDimensions: overrides.lockedDimensions ?? {},
     onTargetChange: overrides.onTargetChange ?? vi.fn(),
     onLockToggle: overrides.onLockToggle ?? vi.fn(),
   };
@@ -147,18 +147,18 @@ describe("clampScore", () => {
 
 describe("isLocked", () => {
   it("returns true for a locked dimension", () => {
-    const locked = new Set(["d1", "d3"]);
+    const locked = { d1: true, d3: true };
     expect(isLocked(locked, "d1")).toBe(true);
     expect(isLocked(locked, "d3")).toBe(true);
   });
 
   it("returns false for an unlocked dimension", () => {
-    const locked = new Set(["d1"]);
+    const locked = { d1: true };
     expect(isLocked(locked, "d2")).toBe(false);
   });
 
   it("returns false for empty lock set", () => {
-    const locked = new Set<string>();
+    const locked: Record<string, boolean> = {};
     expect(isLocked(locked, "d1")).toBe(false);
   });
 });
@@ -244,7 +244,7 @@ describe("SpiderChart component", () => {
 
   it("handles lockedDimensions set correctly", () => {
     const props = makeDefaultProps({
-      lockedDimensions: new Set(["d1", "d3"]),
+      lockedDimensions: { d1: true, d3: true },
     });
     const { container } = render(<SpiderChart {...props} />);
     const canvas = container.querySelector("canvas");

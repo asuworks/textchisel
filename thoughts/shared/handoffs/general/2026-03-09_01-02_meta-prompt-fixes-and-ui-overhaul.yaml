@@ -1,0 +1,116 @@
+---
+session: general
+date: 2026-03-09
+status: partial
+outcome: PARTIAL_MINUS
+---
+goal: "Fix meta-prompting bugs, add Target Fit button, overhaul UI layout (sidebar, chart colors, skeletons, click-to-lock, dimension drawer)"
+now: "Replace Drawer with Popover for per-dimension editing on chart label click; redesign Dimension/Rubric UI for clarity; add variable rubric levels (2-7)"
+
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "Bug 1 fix: handleGenerate now uses dimsWithPrompts (with Tier 1 meta-prompts) for initial rewrite+eval instead of dims (without)"
+    files: [src/shell/App.tsx]
+  - task: "Bug 2 fix: initial/regenerate text generation now includes dim.rewriteHint alongside rubric"
+    files: [src/rewriter/prompt.ts]
+  - task: "Gap 1 fix: store.updateDimension clears stale evalPrompt/rewriteHint when name/description/rubric edited"
+    files: [src/store/index.ts]
+  - task: "Gap 2 fix: orchestrator loop now supports Tier 2 via optional planRewrite dep; wired in server route"
+    files: [src/orchestrator/loop.ts, server/routes/llm.ts]
+  - task: "Target Fit button: Popover with Slider (1-10 iterations) triggers orchestration loop in TextPanel"
+    files: [src/shell/TextPanel.tsx, src/shell/App.tsx]
+  - task: "Rubric schema reliability: z.record() → explicit {1..5} keys; dimension gen temperature 0.7→0.4"
+    files: [shared/types.ts, src/dimensions/generate.ts]
+  - task: "Sidebar replaces header — narrow vertical bar with branding + settings icon"
+    files: [src/shell/App.tsx, src/shell/SettingsDialog.tsx]
+  - task: "Spider chart: target=amber, current=slate, round (circle) target controls, click-to-lock on points"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Click dimension label on chart → opens Drawer with single DimensionCard editing UI"
+    files:
+      [
+        src/chart/SpiderChart.tsx,
+        src/chart/types.ts,
+        src/shell/ChartPanel.tsx,
+        src/shell/App.tsx,
+        src/shell/DimensionList.tsx,
+      ]
+  - task: "Underlined blue dimension labels on chart (plugin) to signal clickability"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "InlineEdit compact highlight: hover=bg-muted/50, edit=ring+bg-muted/30, no layout shift"
+    files: [src/components/ui/inline-edit.tsx]
+  - task: "Loading skeletons: concentric circles for chart (generating only), text lines for TextPanel (refining)"
+    files: [src/shell/ChartPanel.tsx, src/shell/TextPanel.tsx]
+  - task: "Pane defaults: 30/40/30"
+    files: [src/shell/App.tsx]
+  - task: "Drawer constrained to chart pane via container prop + absolute positioning"
+    files: [src/shell/App.tsx]
+  - task: "DimensionCard exported from DimensionList for reuse"
+    files: [src/shell/DimensionList.tsx]
+  - task: "Installed shadcn drawer (vaul) and sidebar components"
+    files:
+      [
+        src/components/ui/drawer.tsx,
+        src/components/ui/sidebar.tsx,
+        src/components/ui/sheet.tsx,
+        src/hooks/use-mobile.ts,
+      ]
+
+blockers:
+  - "Drawer positioning not fully working — user wants Popover instead (next session)"
+  - "Still needs API key smoke test for meta-prompting pipeline"
+
+questions:
+  - "Should dimension Popover appear anchored to the chart label or centered in chart pane?"
+  - "Variable rubric levels (2-7): should existing DimensionGenerationSchema enforce exact count or allow range?"
+  - "How should rubric level add/remove UI work? Plus/minus buttons at bottom of level list?"
+
+decisions:
+  - drawer_to_popover: "Drawer didn't constrain well to chart pane — user decided Popover is better for per-dimension editing"
+  - variable_rubrics: "User wants 2-7 rubric levels instead of fixed 5. Requires schema change in shared/types.ts and prompt changes in dimensions/generate.ts"
+  - sidebar_minimal: "Used simple narrow sidebar (12-wide aside) instead of full shadcn SidebarProvider — sufficient for branding+settings"
+
+findings:
+  - meta_prompt_bugs: "3 bugs found via deep pipeline trace: (1) dims vs dimsWithPrompts, (2) rewriteHint unused in initial gen, (3) stale meta-prompts on edit"
+  - rubric_schema_fix: "z.record() → explicit z.object with keys 1-5 dramatically reduces AI_NoObjectGeneratedError by giving model named required keys"
+  - chart_label_click: "Chart.js has no native label click events — used scales.r.getPointPosition + distance check with 50px radius"
+  - drawer_container_limitation: "Vaul drawer container prop + absolute positioning partially works but still has full-width overlay issues"
+
+worked:
+  - "Parallel sub-agents (3 spark agents) for independent chart/InlineEdit/skeleton changes"
+  - "Direct implementation for structural changes (sidebar, drawer wiring)"
+  - "Explicit rubric schema keys for structured output reliability"
+
+failed:
+  - "Drawer constrained to pane — vaul's overlay and content positioning fight against container scoping"
+
+next:
+  - "PRIORITY: Replace Drawer with Popover for per-dimension editing — anchor to chart label position or use Popover with controlled open state"
+  - "Redesign DimensionCard for Popover context — more compact, cleaner layout for rubric levels and descriptions"
+  - "Variable rubric levels (2-7): update RubricSchema to use z.record with min/max validation instead of fixed 5 keys; update generate.ts system prompt"
+  - "Update all code that hardcodes ['1','2','3','4','5'] rubric iteration (DimensionList.tsx:225, prompt.ts, rewrite-planner.ts)"
+  - "Consider removing DimensionList from left pane entirely — all dimension editing via chart label Popovers"
+  - "API key smoke test for meta-prompting (carried over from previous session)"
+  - "Delete unused ControlBar.tsx (carried over)"
+
+files:
+  created:
+    - src/components/ui/drawer.tsx
+    - src/components/ui/sidebar.tsx
+    - src/components/ui/sheet.tsx
+    - src/hooks/use-mobile.ts
+  modified:
+    - shared/types.ts
+    - src/shell/App.tsx
+    - src/shell/TextPanel.tsx
+    - src/shell/ChartPanel.tsx
+    - src/shell/DimensionList.tsx
+    - src/shell/SettingsDialog.tsx
+    - src/chart/SpiderChart.tsx
+    - src/chart/types.ts
+    - src/components/ui/inline-edit.tsx
+    - src/store/index.ts
+    - src/rewriter/prompt.ts
+    - src/orchestrator/loop.ts
+    - src/dimensions/generate.ts
+    - server/routes/llm.ts

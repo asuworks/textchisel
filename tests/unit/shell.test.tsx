@@ -4,6 +4,7 @@ import { IntentPanel } from "@/shell/IntentPanel";
 import { TextPanel } from "@/shell/TextPanel";
 import { ControlBar } from "@/shell/ControlBar";
 import { DimensionList } from "@/shell/DimensionList";
+import { useAppStore } from "@/store";
 import type { Dimension, EvaluationScore } from "@shared/types";
 
 // --- Test fixtures ---
@@ -18,7 +19,6 @@ function makeDimension(overrides: Partial<Dimension> = {}): Dimension {
     locked: false,
     rubric: { "1": "Unclear", "3": "Adequate", "5": "Crystal clear" },
     sortOrder: 0,
-    createdAt: new Date("2026-01-01"),
     ...overrides,
   };
 }
@@ -42,7 +42,7 @@ describe("IntentPanel", () => {
       screen.getByPlaceholderText(/describe the text/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /generate dimensions/i }),
+      screen.getByRole("button", { name: /generate/i }),
     ).toBeInTheDocument();
   });
 
@@ -56,9 +56,7 @@ describe("IntentPanel", () => {
         hasDimensions={false}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /generate dimensions/i }),
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /generate/i })).toBeDisabled();
   });
 
   it("should enable generate button when intent has text", () => {
@@ -71,9 +69,7 @@ describe("IntentPanel", () => {
         hasDimensions={false}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /generate dimensions/i }),
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: /generate/i })).toBeEnabled();
   });
 
   it("should call onGenerate when button clicked", () => {
@@ -87,9 +83,7 @@ describe("IntentPanel", () => {
         hasDimensions={false}
       />,
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /generate dimensions/i }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: /generate/i }));
     expect(onGenerate).toHaveBeenCalledOnce();
   });
 
@@ -140,55 +134,52 @@ describe("IntentPanel", () => {
 
 // --- TextPanel ---
 
+const textPanelDefaults = {
+  text: "",
+  onTextChange: vi.fn(),
+  isStreaming: false,
+  streamingText: "",
+  status: "idle",
+  canEvaluate: false,
+  canRegenerate: false,
+  canRefine: false,
+  onEvaluate: vi.fn(),
+  onRegenerate: vi.fn(),
+  onRefine: vi.fn(),
+};
+
 describe("TextPanel", () => {
   it("should render textarea with placeholder", () => {
-    render(
-      <TextPanel
-        text=""
-        onTextChange={vi.fn()}
-        isStreaming={false}
-        streamingText=""
-        hasScores={false}
-      />,
-    );
-    expect(screen.getByPlaceholderText(/enter or paste/i)).toBeInTheDocument();
+    render(<TextPanel {...textPanelDefaults} />);
+    expect(
+      screen.getByPlaceholderText(/text will appear/i),
+    ).toBeInTheDocument();
   });
 
   it("should display current text", () => {
-    render(
-      <TextPanel
-        text="Hello world"
-        onTextChange={vi.fn()}
-        isStreaming={false}
-        streamingText=""
-        hasScores={false}
-      />,
-    );
+    render(<TextPanel {...textPanelDefaults} text="Hello world" />);
     expect(screen.getByDisplayValue("Hello world")).toBeInTheDocument();
   });
 
   it("should display streaming text when streaming", () => {
     render(
       <TextPanel
+        {...textPanelDefaults}
         text="original"
-        onTextChange={vi.fn()}
         isStreaming={true}
         streamingText="streaming result"
-        hasScores={false}
       />,
     );
     expect(screen.getByDisplayValue("streaming result")).toBeInTheDocument();
-    expect(screen.getByText(/rewriting/i)).toBeInTheDocument();
   });
 
   it("should be read-only when streaming", () => {
     render(
       <TextPanel
+        {...textPanelDefaults}
         text="original"
-        onTextChange={vi.fn()}
         isStreaming={true}
         streamingText="streaming"
-        hasScores={false}
       />,
     );
     const textarea = screen.getByDisplayValue("streaming");
@@ -197,32 +188,20 @@ describe("TextPanel", () => {
 
   it("should call onTextChange when typing", () => {
     const onTextChange = vi.fn();
-    render(
-      <TextPanel
-        text=""
-        onTextChange={onTextChange}
-        isStreaming={false}
-        streamingText=""
-        hasScores={false}
-      />,
-    );
-    fireEvent.change(screen.getByPlaceholderText(/enter or paste/i), {
+    render(<TextPanel {...textPanelDefaults} onTextChange={onTextChange} />);
+    fireEvent.change(screen.getByPlaceholderText(/text will appear/i), {
       target: { value: "New text" },
     });
     expect(onTextChange).toHaveBeenCalledWith("New text");
   });
 
-  it("should show hint when scores exist", () => {
+  it("should render evaluate, regenerate, and refine buttons", () => {
     render(
-      <TextPanel
-        text="some text"
-        onTextChange={vi.fn()}
-        isStreaming={false}
-        streamingText=""
-        hasScores={true}
-      />,
+      <TextPanel {...textPanelDefaults} canEvaluate canRegenerate canRefine />,
     );
-    expect(screen.getByText(/drag chart points/i)).toBeInTheDocument();
+    expect(screen.getByText("Evaluate")).toBeInTheDocument();
+    expect(screen.getByText("Regenerate")).toBeInTheDocument();
+    expect(screen.getByText("Refine")).toBeInTheDocument();
   });
 });
 
@@ -292,33 +271,48 @@ describe("ControlBar", () => {
 // --- DimensionList ---
 
 describe("DimensionList", () => {
+  beforeEach(() => {
+    // Reset store state before each test
+    useAppStore.setState({
+      dimensions: [],
+      currentScores: {},
+      targetScores: {},
+      lockedDimensions: {},
+      sessionId: null,
+    });
+  });
+
   it("should render nothing when no dimensions", () => {
-    const { container } = render(
-      <DimensionList dimensions={[]} currentScores={{}} />,
-    );
+    const { container } = render(<DimensionList />);
     expect(container.firstChild).toBeNull();
   });
 
   it("should render dimension names", () => {
-    const dims = [
-      makeDimension({ id: "d1", name: "Clarity" }),
-      makeDimension({ id: "d2", name: "Tone", sortOrder: 1 }),
-    ];
-    render(<DimensionList dimensions={dims} currentScores={{}} />);
+    useAppStore.setState({
+      dimensions: [
+        makeDimension({ id: "d1", name: "Clarity" }),
+        makeDimension({ id: "d2", name: "Tone", sortOrder: 1 }),
+      ],
+    });
+    render(<DimensionList />);
     expect(screen.getByText("Clarity")).toBeInTheDocument();
     expect(screen.getByText("Tone")).toBeInTheDocument();
   });
 
   it("should show scores when available", () => {
-    const dims = [makeDimension({ id: "d1", name: "Clarity" })];
-    const scores = { d1: SCORE };
-    render(<DimensionList dimensions={dims} currentScores={scores} />);
-    expect(screen.getByText("4/5")).toBeInTheDocument();
+    useAppStore.setState({
+      dimensions: [makeDimension({ id: "d1", name: "Clarity" })],
+      currentScores: { d1: SCORE },
+    });
+    render(<DimensionList />);
+    expect(screen.getByText("Score: 4")).toBeInTheDocument();
   });
 
   it("should show description", () => {
-    const dims = [makeDimension({ description: "Measures text clarity" })];
-    render(<DimensionList dimensions={dims} currentScores={{}} />);
+    useAppStore.setState({
+      dimensions: [makeDimension({ description: "Measures text clarity" })],
+    });
+    render(<DimensionList />);
     expect(screen.getByText("Measures text clarity")).toBeInTheDocument();
   });
 });

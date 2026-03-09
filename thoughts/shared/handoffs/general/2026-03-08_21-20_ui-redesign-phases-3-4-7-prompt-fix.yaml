@@ -1,0 +1,92 @@
+---
+session: general
+date: 2026-03-08
+status: partial
+outcome: PARTIAL_MINUS
+---
+goal: "UI redesign phases 3, 4, 7 + resizable panels + initial text generation + prompt system fixes"
+now: "Fix prompt composition for evaluation and rewriting — rubrics not being followed literally by LLM"
+
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "Installed shadcn resizable component, converted App.tsx 3-pane layout to ResizablePanelGroup"
+    files: [src/components/ui/resizable.tsx, src/shell/App.tsx]
+  - task: "Phase 3: Spider chart redesign — dual-layer visual (current=blue foreground, target=pink dashed background), triangle markers for targets, maintainAspectRatio:false, layout padding for labels"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Phase 4: DimensionList rewrite — reads from Zustand store, inline-editable names/descriptions via InlineEdit, Switch lock toggle, expandable Collapsible rubric levels, AlertDialog delete confirmation, Add Dimension button (max 12)"
+    files: [src/shell/DimensionList.tsx, src/store/index.ts]
+  - task: "Phase 4: Added store actions — updateDimension, addDimension, removeDimension"
+    files: [src/store/index.ts]
+  - task: "Phase 7: SettingsDialog with provider/model select + API key input with show/hide toggle, useSettings hook backed by localStorage"
+    files: [src/shell/SettingsDialog.tsx, src/shell/useSettings.ts]
+  - task: "Phase 7: Copy button in TextPanel header with Copied! feedback"
+    files: [src/shell/TextPanel.tsx]
+  - task: "Changed Generate flow — now generates initial text alongside dimensions via apiRewriteFull"
+    files: [src/shell/App.tsx, server/routes/llm.ts]
+  - task: "Relaxed server validation — currentText no longer required for rewrite endpoints (allows initial generation)"
+    files: [server/routes/llm.ts]
+  - task: "Adapted rewriter prompt — separate initial generation prompt with full rubric scale when currentText is empty"
+    files: [src/rewriter/prompt.ts]
+  - task: "Updated evaluation + rewriter system prompts to say rubrics are literal (not generic quality scale)"
+    files: [src/evaluation/score.ts, src/rewriter/prompt.ts]
+  - task: "Fixed DimensionList layout — flex-based, ScrollArea fills remaining space, Add button pinned at bottom"
+    files: [src/shell/DimensionList.tsx, src/shell/App.tsx]
+  - task: "Updated tests for DimensionList (store-based) and IntentPanel (button text change)"
+    files: [tests/unit/shell.test.tsx]
+
+blockers:
+  - "Prompt composition still not producing correct results — LLM ignores rubric-based scoring for quantitative dimensions (e.g., '# of curse words' scored as quality not quantity). Needs deeper investigation."
+
+questions:
+  - "Should we switch to few-shot examples in evaluation prompts to enforce literal rubric interpretation?"
+  - "Is the G-Eval generateObject approach sufficient, or do we need chain-of-thought scoring?"
+  - "Should dimension generation also produce rubrics calibrated to the intent (e.g., quantitative rubrics for count-based dimensions)?"
+
+decisions:
+  - resizable_panels: "20% sidebar, 50% chart, 30% text — user can drag to resize"
+  - generate_flow: "Generate button now generates dimensions AND initial text in one click"
+  - dimension_list_store: "DimensionList reads directly from Zustand store instead of taking props"
+  - stacked_card_layout: "Dimension cards: name+delete top row, description middle, scores+lock bottom row"
+
+findings:
+  - prompt_quality_bias: "Both evaluation and rewriter system prompts had hardcoded '1=lowest quality, 5=excellent' scale that overrode dimension-specific rubrics. Fixed to say 'follow rubric literally' but LLM still biased toward quality interpretation."
+  - base_ui_not_radix: "shadcn components use @base-ui/react (not Radix). No asChild prop — use render prop or pass children directly. Dialog/AlertDialog triggers use render={<Component />} pattern."
+  - resizable_v4_api: "react-resizable-panels v4 uses 'orientation' not 'direction'. Added direction→orientation adapter in resizable.tsx wrapper."
+  - chart_label_clipping: "Chart.js radar chart clips long point labels. Fixed with layout.padding (40px sides) and pointLabels.padding (24px). Do NOT truncate labels."
+
+worked:
+  - "Direct implementation for UI work (not agent delegation)"
+  - "Stacked card layout for dimension cards — much cleaner than cramming everything on one row"
+  - "Resizable panels give user control over layout proportions"
+
+failed:
+  - "Parallel sub-agents for phases 3/4/7 — Phase 4 made no changes, Phase 7 only installed components. Only Phase 3 produced usable SpiderChart changes."
+  - "Generic quality scale in system prompts — completely wrong for quantitative dimensions"
+
+next:
+  - "PRIORITY: Deep investigation of prompt composition — src/rewriter/prompt.ts:19 and src/evaluation/score.ts:6"
+  - "Test with quantitative dimensions (# curse words, # paragraphs, # dashes) — verify rubric scores match actual text properties"
+  - "Consider few-shot examples in evaluation prompt to anchor literal rubric interpretation"
+  - "Consider improving dimension generation (src/dimensions/generate.ts) to produce better rubrics based on intent — quantitative intents should get quantitative rubrics"
+  - "Phase 5 (auto-eval + streaming) — after prompt quality is solid"
+  - "Phase 6 (version timeline + diffs) — last"
+
+files:
+  created:
+    - src/components/ui/resizable.tsx
+    - src/shell/SettingsDialog.tsx
+    - src/shell/useSettings.ts
+  modified:
+    - src/shell/App.tsx
+    - src/shell/DimensionList.tsx
+    - src/shell/TextPanel.tsx
+    - src/shell/IntentPanel.tsx
+    - src/store/index.ts
+    - src/chart/SpiderChart.tsx
+    - src/rewriter/prompt.ts
+    - src/evaluation/score.ts
+    - server/routes/llm.ts
+    - tests/unit/shell.test.tsx
+    - package.json
+    - package-lock.json

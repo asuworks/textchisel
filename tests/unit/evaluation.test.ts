@@ -653,7 +653,9 @@ describe("evaluation cache", () => {
         weight REAL NOT NULL DEFAULT 1.0,
         rubric JSONB,
         locked BOOLEAN NOT NULL DEFAULT FALSE,
-        sort_order INTEGER NOT NULL DEFAULT 0
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        eval_prompt TEXT,
+        rewrite_hint TEXT
       );
 
       CREATE TABLE IF NOT EXISTS prompt_versions (
@@ -686,9 +688,9 @@ describe("evaluation cache", () => {
     vi.resetModules();
     testDb = await initTestDb();
 
-    // Mock getDb to return our test database
+    // Mock ensureDb to return our test database
     vi.doMock("@/db", () => ({
-      getDb: () => testDb.db,
+      ensureDb: async () => testDb.db,
     }));
 
     // Create a test session

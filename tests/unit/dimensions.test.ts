@@ -193,7 +193,9 @@ describe("dimensions CRUD", () => {
         weight REAL NOT NULL DEFAULT 1.0,
         rubric JSONB,
         locked BOOLEAN NOT NULL DEFAULT FALSE,
-        sort_order INTEGER NOT NULL DEFAULT 0
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        eval_prompt TEXT,
+        rewrite_hint TEXT
       );
     `);
 
@@ -206,9 +208,9 @@ describe("dimensions CRUD", () => {
   beforeEach(async () => {
     db = await initTestDb();
 
-    // Mock getDb to return our test database
+    // Mock ensureDb to return our test database
     vi.doMock("@/db", () => ({
-      getDb: () => db.db,
+      ensureDb: async () => db.db,
     }));
 
     // Create a test session

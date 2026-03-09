@@ -1,0 +1,123 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: PARTIAL_PLUS
+---
+goal: UI redesign phases 1-2 — shadcn/ui migration + state architecture refactor
+now: Continue with Phase 3 (spider chart redesign) or Phase 4 (dimension management) — both are independent
+
+test: "npx vitest run && npx tsc --noEmit"
+
+done_this_session:
+  - task: "Reviewed PRD §9.2 + architecture.md, identified 4 missing MVP features"
+    files: [.devcontext/textchisel-prd.md, .devcontext/architecture.md]
+  - task: "Researched and wrote 597-line UI/UX best practices reference (reactivity, background processes, inline editing, versions, chart interaction, Nielsen heuristics)"
+    files: [.devcontext/ref-uiux-best-practices.md]
+  - task: "Created comprehensive 7-phase UI redesign plan"
+    files: [thoughts/shared/plans/ui-redesign-plan.md]
+  - task: "Phase 1: Installed shadcn/ui with Tailwind v4, added 19 components, created InlineEdit component, migrated all shell components"
+    files:
+      [
+        components.json,
+        src/app.css,
+        src/lib/utils.ts,
+        src/components/ui/*.tsx,
+        src/shell/App.tsx,
+        src/shell/IntentPanel.tsx,
+        src/shell/DimensionList.tsx,
+        src/shell/ControlBar.tsx,
+        src/shell/TextPanel.tsx,
+      ]
+  - task: "Mapped all shadcn components to UI zones across all 7 phases"
+    files: [.devcontext/ref-shadcn-component-map.md]
+  - task: "Phase 2: Consolidated all business state from App.tsx useState to Zustand store"
+    files: [src/store/index.ts, src/shell/App.tsx]
+  - task: "Phase 2: Fixed lockedDimensions from Set<string> to Record<string,boolean> for JSON serialization"
+    files:
+      [
+        shared/types.ts,
+        src/store/index.ts,
+        src/chart/types.ts,
+        src/chart/helpers.ts,
+        tests/unit/chart.test.tsx,
+      ]
+  - task: "Phase 2: Added lockedDimensions to Zustand persist partialize, removed orphaned store fields"
+    files: [src/store/index.ts]
+
+blockers: []
+
+questions:
+  - "RewriteContext.lockedDimensionIds in shared/types.ts still uses Set<string> — internal APIs (rewriter, orchestrator) kept Set for natural API. Conversion at boundary in App.tsx via lockedIds() helper. Is this OK or should we change all internal APIs too?"
+
+decisions:
+  - shadcn_style: "base-nova style with neutral base color — clean, minimal"
+  - locked_dims_boundary: "Store uses Record<string,boolean> (JSON-safe), internal APIs keep Set<string>, conversion at App.tsx boundary via lockedIds() helper"
+  - dimension_limit: "12 dimensions max, no warnings (user decision)"
+  - manual_refine: "Keep manual Refine button, no auto-refine on chart drag (user decision)"
+  - defer_useLiveQuery: "Manual sync from PGlite for now, add useLiveQuery later if reactivity gaps emerge"
+  - no_dark_mode_mvp: "shadcn supports it but deferred"
+
+findings:
+  - state_consolidation: "App.tsx had 7 useState hooks for business state, all moved to Zustand. Zero useState for business state now."
+  - orphaned_fields_removed: "systemPrompt, userTemplate, activeSessionId were defined in store but unused by UI — removed"
+  - set_serialization: "Set<string> is not JSON-serializable, Zustand persist with createJSONStorage silently drops it. Record<string,boolean> fixes this."
+  - shadcn_tw4: "shadcn@4.0.2 works with Tailwind v4 out of the box — auto-detected during init"
+
+worked:
+  - "Direct implementation (not agent delegation) for focused UI work"
+  - "Installing all shadcn components upfront to avoid per-phase install friction"
+  - "Boundary conversion pattern for Set→Record (keeps internal API clean, store JSON-safe)"
+
+failed:
+  - "kraken agent still unreliable (confirmed pattern)"
+
+next:
+  - "START HERE: Phase 3 (spider chart redesign) or Phase 4 (dimension management) — both independent after Phase 2"
+  - "Phase 3: Make chart much bigger, current=blue background/faded, target=pink draggable foreground, fix overlapping points, add lock toggle UI"
+  - "Phase 4: Inline-editable dimension names/descriptions/levels, add/remove dimensions, Switch for lock toggle, Collapsible for rubric levels"
+  - "Phase 7 (parallel with 3/4): Settings dialog with API key + model selection, export/copy button"
+  - "Phase 5 (after 3+4): Auto-evaluate after rewrite, streaming text, process stepper, cancel button"
+  - "Phase 6 (last): Version timeline with diffs, reactive version switching"
+  - "Third-party installs still needed: @dnd-kit/core (P4 reorder), diff-match-patch (P6 diffs)"
+
+files:
+  created:
+    - components.json
+    - src/lib/utils.ts
+    - src/components/ui/badge.tsx
+    - src/components/ui/button.tsx
+    - src/components/ui/card.tsx
+    - src/components/ui/input.tsx
+    - src/components/ui/scroll-area.tsx
+    - src/components/ui/separator.tsx
+    - src/components/ui/skeleton.tsx
+    - src/components/ui/textarea.tsx
+    - src/components/ui/tooltip.tsx
+    - src/components/ui/inline-edit.tsx
+    - src/components/ui/switch.tsx
+    - src/components/ui/collapsible.tsx
+    - src/components/ui/alert-dialog.tsx
+    - src/components/ui/sonner.tsx
+    - src/components/ui/dialog.tsx
+    - src/components/ui/select.tsx
+    - src/components/ui/tabs.tsx
+    - src/components/ui/popover.tsx
+    - src/components/ui/slider.tsx
+    - .devcontext/ref-uiux-best-practices.md
+    - .devcontext/ref-shadcn-component-map.md
+    - thoughts/shared/plans/ui-redesign-plan.md
+    - thoughts/shared/handoffs/general/2026-03-08_20-32_ui-redesign-phases-1-2.yaml
+  modified:
+    - src/app.css
+    - src/store/index.ts
+    - src/shell/App.tsx
+    - src/shell/IntentPanel.tsx
+    - src/shell/DimensionList.tsx
+    - src/shell/ControlBar.tsx
+    - src/shell/TextPanel.tsx
+    - src/chart/types.ts
+    - src/chart/helpers.ts
+    - shared/types.ts
+    - tests/unit/chart.test.tsx
+    - package.json

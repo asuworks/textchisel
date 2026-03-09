@@ -1,0 +1,123 @@
+---
+session: general
+date: 2026-03-08
+status: partial
+outcome: PARTIAL_MINUS
+---
+goal: "Meta-prompting system (ADR-003), prompt quality fixes, UX interaction logic overhaul"
+now: "Smoke test meta-prompting pipeline with API key — verify Tier 1 + Tier 2 produce better prompts than template fallback"
+
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "Fixed dimension generation prompt — removed generic quality scale, added operational rubric guidance with 3 few-shot examples from PRD §6.1 (Urgency, Personalization Depth, Ask Directness)"
+    files: [src/dimensions/generate.ts]
+  - task: "Fixed evaluation prompt — added step-by-step chain-of-thought, explicit rubric-literal instruction"
+    files: [src/evaluation/score.ts]
+  - task: "Fixed rewriter prompt — shows full rubric scale + quoted target level in rewrite mode (was: target level only)"
+    files: [src/rewriter/prompt.ts]
+  - task: "Added maxRetries:3 and z.coerce.string() for rubric values to fix intermittent AI_NoObjectGeneratedError"
+    files:
+      [src/dimensions/generate.ts, src/evaluation/score.ts, shared/types.ts]
+  - task: "Fixed spider chart layer order — target=foreground (draggable, order:1), current=background (faded, order:2, hitRadius:0)"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Auto-evaluate after generate and refine — evaluation now permanently linked to text generation"
+    files: [src/shell/App.tsx]
+  - task: "Clear stale dimension scores when rubric/name/description edited via updateDimension"
+    files: [src/store/index.ts]
+  - task: "ADR-003: Two-tier meta-prompting system — Tier 1 (static eval+rewrite prompts per dimension, cached), Tier 2 (dynamic transition-aware rewrite planner per refinement)"
+    files: [.devcontext/decisions/ADR-003-generated-meta-prompts.md]
+  - task: "Implemented Tier 1 meta-prompt generator — generateDimensionPrompts(dim, intent, model) produces evalPrompt + rewriteHint"
+    files: [src/prompts/generate.ts, src/prompts/index.ts]
+  - task: "Implemented Tier 2 rewrite planner — generateRewriteInstruction(context, model) analyzes before→after deltas, infers user intent"
+    files: [src/prompts/rewrite-planner.ts]
+  - task: "Schema change — added eval_prompt and rewrite_hint nullable columns to dimensions table"
+    files: [shared/schema.ts, src/db/index.ts]
+  - task: "Wired meta-prompting into evaluation (uses dim.evalPrompt with template fallback) and rewriter (uses Tier 2 plan with template fallback)"
+    files:
+      [src/evaluation/score.ts, src/rewriter/prompt.ts, src/rewriter/stream.ts]
+  - task: "Server routes for meta-prompting — /api/llm/prompts/generate and /api/llm/rewrite/plan"
+    files: [server/routes/llm.ts]
+  - task: "Client API functions — apiGenerateDimensionPrompts and apiRewritePlan"
+    files: [src/shell/api.ts]
+  - task: "App.tsx flow — Tier 1 generated in parallel after dimension creation, Tier 2 generated before each refine"
+    files: [src/shell/App.tsx]
+  - task: "UX: 3 action buttons (Evaluate, Regenerate, Refine) moved to TextPanel; ControlBar removed from chart pane"
+    files: [src/shell/TextPanel.tsx, src/shell/App.tsx]
+  - task: "handleRegenerate — generates fresh text from scratch using targets (currentText=''), ignoring current text"
+    files: [src/shell/App.tsx]
+  - task: "Updated all 5 test migration SQL files with new columns, updated TextPanel tests for new props"
+    files:
+      [
+        tests/unit/shell.test.tsx,
+        tests/unit/dimensions.test.ts,
+        tests/unit/evaluation.test.ts,
+        tests/integration/dimensions-evaluation.test.ts,
+        tests/integration/session-lifecycle.test.ts,
+        tests/integration/prompt-versions.test.ts,
+      ]
+
+blockers:
+  - "Needs smoke test with real API key to verify meta-prompting produces better eval/rewrite than template fallback"
+
+questions:
+  - "Should Tier 1 meta-prompts regenerate when user edits a rubric? Currently only generated on initial dimension creation."
+  - "Should the Regenerate button show the Tier 2 inferred intent to the user before proceeding?"
+  - "ControlBar.tsx is now unused — delete it or keep for future use?"
+
+decisions:
+  - meta_prompting_option_a: "Separate LLM call for Tier 2 (Option A) rather than embedding in rewriter prompt (Option B) — cleaner separation, better debugging"
+  - three_buttons: "Evaluate/Regenerate/Refine in TextPanel — Evaluate re-scores, Regenerate creates from scratch with targets, Refine does transition-aware rewrite"
+  - schema_additive: "eval_prompt and rewrite_hint are nullable — existing dimensions fall back to template behavior"
+  - tier2_system_prompt: "Separate TIER2_SYSTEM_PROMPT for rewriter when plan is available — focuses on following instructions rather than rubric interpretation"
+
+findings:
+  - root_cause_prompt_quality: "Dimension generation hardcoded quality scale ('1=poor, 5=excellent') which corrupted all downstream evaluation and rewriting. Fixed with operational rubric examples."
+  - rewrite_mode_missing_scale: "Rewrite path only showed target level description, not full 1-5 scale. Initial generation path showed full scale. Asymmetry fixed."
+  - stale_scores_on_edit: "Editing dimension rubric left stale evaluation scores in store. Rewriter showed old 'Current assessment' from previous rubric. Fixed by clearing scores on dimension edit."
+  - chart_layers_backwards: "Current scores were drawn on top (order:1) blocking target drag. Swapped: target=foreground, current=background with hitRadius:0."
+
+worked:
+  - "Direct implementation for prompt/evaluation/UI work (not agent delegation)"
+  - "Additive schema changes with nullable columns — no migration headaches"
+  - "Template fallback pattern — new meta-prompting gracefully degrades"
+
+failed:
+  - "z.record(z.string()) intermittently failed when models returned numeric rubric values — fixed with z.coerce.string()"
+
+next:
+  - "PRIORITY: Smoke test with API key — generate dimensions, verify evalPrompt/rewriteHint are populated, test Refine with Tier 2"
+  - "Regenerate Tier 1 meta-prompts when rubric is edited (currently only on creation)"
+  - "Phase 5: streaming text display during refine (currently uses apiRewriteFull)"
+  - "Phase 6: version timeline with diffs"
+  - "Consider deleting ControlBar.tsx (now unused)"
+  - "Add cancel button for in-flight LLM operations"
+
+files:
+  created:
+    - src/prompts/generate.ts
+    - src/prompts/rewrite-planner.ts
+    - src/prompts/index.ts
+    - .devcontext/decisions/ADR-003-generated-meta-prompts.md
+  modified:
+    - shared/schema.ts
+    - shared/types.ts
+    - src/db/index.ts
+    - src/dimensions/generate.ts
+    - src/dimensions/crud.ts
+    - src/evaluation/score.ts
+    - src/rewriter/prompt.ts
+    - src/rewriter/stream.ts
+    - src/store/index.ts
+    - src/chart/SpiderChart.tsx
+    - src/shell/App.tsx
+    - src/shell/TextPanel.tsx
+    - src/shell/DimensionList.tsx
+    - src/shell/api.ts
+    - server/routes/llm.ts
+    - tests/unit/shell.test.tsx
+    - tests/unit/dimensions.test.ts
+    - tests/unit/evaluation.test.ts
+    - tests/integration/dimensions-evaluation.test.ts
+    - tests/integration/session-lifecycle.test.ts
+    - tests/integration/prompt-versions.test.ts

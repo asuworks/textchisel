@@ -1,0 +1,94 @@
+---
+session: general
+date: 2026-03-09
+status: partial
+outcome: PARTIAL_PLUS
+---
+goal: "Drawer→Popover migration, variable rubric levels (2-7), state persistence to localStorage, chart UX improvements"
+now: "Delete unused ControlBar.tsx and Drawer components; fix PGlite WASM memory issue (try clearing IndexedDB); API key smoke test for meta-prompting pipeline"
+
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "Replaced Vaul Drawer with Popover for per-dimension editing on chart label click"
+    files:
+      [
+        src/shell/App.tsx,
+        src/components/ui/popover.tsx,
+        src/chart/types.ts,
+        src/chart/SpiderChart.tsx,
+        src/shell/ChartPanel.tsx,
+      ]
+  - task: "Built clean minimal popover body: name+lock+delete, description, score badges, flat rubric list with +/- buttons"
+    files: [src/shell/App.tsx]
+  - task: "Variable rubric levels (2-7): z.record for runtime, explicit 5-key schema for LLM generation"
+    files: [shared/types.ts, src/dimensions/generate.ts]
+  - task: "Dynamic chart scale via maxRubricLevel(); clampScore accepts max param; target clamped on level removal"
+    files: [src/chart/helpers.ts, src/chart/SpiderChart.tsx, src/shell/App.tsx]
+  - task: "Chart label hover: uses _pointLabelItems + labelCenter() for accurate position; soft circular highlight"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Chart labels black, cursor:pointer on hover, removed buggy underline plugin"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Tooltip: shadcn-styled (white bg, border, rounded), shows rubric description, word-wraps at ~35 chars"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "InlineEdit: always Textarea with field-sizing-content, shared sizing classes for zero layout shift"
+    files: [src/components/ui/inline-edit.tsx]
+  - task: "Add Dimension button in chart pane (ghost style, below chart)"
+    files: [src/shell/ChartPanel.tsx]
+  - task: "State persistence: sessionId, dimensions, currentText, currentScores added to Zustand persist"
+    files: [src/store/index.ts]
+  - task: "PGlite non-blocking: initDatabase runs in background, app renders immediately from localStorage"
+    files: [src/main.tsx, src/db/index.ts]
+  - task: "DimensionList rubric iteration uses Object.entries instead of hardcoded ['1'...'5']"
+    files: [src/shell/DimensionList.tsx]
+
+blockers:
+  - "PGlite WASM consistently fails: WebAssembly.Memory could not allocate. Might be corrupted IndexedDB — user should try clearing it via DevTools → Application → IndexedDB → delete textchisel"
+
+questions:
+  - "Should chart scale normalize (0-1) when dimensions have different level counts, or keep shared max (current)?"
+  - "Should there be a visual indicator on chart axes showing each dimension's actual max level?"
+
+decisions:
+  - dual_rubric_schemas: "z.record for runtime flexibility (2-7 levels), explicit z.object with '1'-'5' keys for LLM generation — prevents AI_NoObjectGeneratedError"
+  - localStorage_primary: "State persists to localStorage via Zustand, not PGlite — instant recovery, no WASM dependency"
+  - pglite_background: "PGlite init moved to non-blocking background call; app renders immediately"
+  - label_positions: "Using Chart.js internal _pointLabelItems + textAlign offset for accurate label center positions"
+
+findings:
+  - _pointLabelItems: "Chart.js stores actual rendered label positions in scale._pointLabelItems — x/y is text anchor (not center), must offset by textAlign and text width"
+  - field_sizing_content: "CSS field-sizing:content on textarea auto-sizes without layout shift — better than switching between span and input"
+  - wasm_memory: "PGlite WASM allocation can consistently fail in WSL2; timeout is 7-10s before error thrown"
+
+worked:
+  - "Virtual anchor element (getBoundingClientRect) for Popover positioning at chart label positions"
+  - "Shared sizing classes between InlineEdit read/edit modes for zero layout shift"
+  - "No-op plugin registration with same id to override stale HMR plugin registrations"
+
+failed:
+  - "getPointPosition(i, drawingArea + padding) does not match actual label positions — labels have textAlign-dependent offsets"
+  - "Vaul Drawer container prop still doesn't constrain properly (from previous session, confirmed)"
+
+next:
+  - "Delete unused ControlBar.tsx and drawer components (src/components/ui/drawer.tsx, sheet.tsx)"
+  - "Fix PGlite WASM: try clearing IndexedDB, or add memory size config to PGlite.create()"
+  - "API key smoke test for meta-prompting pipeline (carried over 2 sessions)"
+  - "Phase 2: State architecture refactor — move remaining App.tsx useState to Zustand"
+  - "Phase 5: Auto-evaluation + streaming display"
+  - "Phase 6: Version timeline + diffs"
+
+files:
+  modified:
+    - shared/types.ts
+    - src/chart/SpiderChart.tsx
+    - src/chart/types.ts
+    - src/chart/helpers.ts
+    - src/components/ui/popover.tsx
+    - src/components/ui/inline-edit.tsx
+    - src/shell/App.tsx
+    - src/shell/ChartPanel.tsx
+    - src/shell/DimensionList.tsx
+    - src/store/index.ts
+    - src/dimensions/generate.ts
+    - src/main.tsx
+    - src/db/index.ts
