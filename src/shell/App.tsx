@@ -1,6 +1,8 @@
 import { useState, useCallback } from "react";
 import type { Dimension, EvaluationScore } from "@shared/types";
 import { useAppStore } from "@/store";
+import { createSession, createPromptVersion, getNextVersionNum } from "@/db";
+import { createDimensions } from "@/dimensions/crud";
 import { IntentPanel } from "./IntentPanel";
 import { ChartPanel } from "./ChartPanel";
 import { TextPanel } from "./TextPanel";
@@ -11,7 +13,8 @@ import { apiGenerateDimensions, apiEvaluate, apiRewriteFull } from "./api";
 type Status = "idle" | "generating" | "evaluating" | "refining" | "error";
 
 export default function App() {
-  // Local state (will move to PGlite/store in integration session)
+  // Session state (PGlite persistence)
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [intent, setIntent] = useState("");
   const [dimensions, setDimensions] = useState<Dimension[]>([]);
   const [currentText, setCurrentText] = useState("");
@@ -35,24 +38,21 @@ export default function App() {
     setError(null);
     try {
       const result = await apiGenerateDimensions(intent);
-      // Convert generated dimensions to Dimension type with IDs
-      const dims: Dimension[] = result.dimensions.map((d, i) => ({
-        id: crypto.randomUUID(),
-        sessionId: "local",
-        name: d.name,
-        description: d.description,
-        weight: 1.0,
-        locked: false,
-        rubric: d.rubric,
-        sortOrder: i,
-        createdAt: new Date(),
-      }));
+
+      // Create new session in PGlite (new session per generation)
+      const session = await createSession(intent);
+      setSessionId(session.id);
+
+      // Persist dimensions in PGlite (returns rows with real UUIDs)
+      const dims = await createDimensions(session.id, result.dimensions);
       setDimensions(dims);
+
       // Initialize target scores to 3 (middle) for each dimension
       for (const dim of dims) {
         setTargetScore(dim.id, 3);
       }
       setCurrentScores({});
+      setCurrentText("");
       setStatus("idle");
     } catch (err) {
       setError(String(err));
@@ -88,6 +88,22 @@ export default function App() {
       });
       setCurrentText(text);
       setStreamingText("");
+
+      // Save immutable prompt version to PGlite
+      if (sessionId) {
+        const versionNum = await getNextVersionNum(sessionId);
+        await createPromptVersion({
+          sessionId,
+          versionNum,
+          systemPrompt: "",
+          userTemplate: intent,
+          generatedText: text,
+          scores: Object.fromEntries(
+            Object.entries(currentScores).map(([id, s]) => [id, s.score]),
+          ),
+        });
+      }
+
       setStatus("idle");
     } catch (err) {
       setError(String(err));
@@ -100,6 +116,7 @@ export default function App() {
     currentScores,
     targetScores,
     lockedDimensions,
+    sessionId,
   ]);
 
   return (

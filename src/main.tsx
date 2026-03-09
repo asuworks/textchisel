@@ -1,10 +1,16 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { initDatabase } from "@/db";
 import App from "./App";
 import "./app.css";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+async function boot() {
+  await initDatabase();
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+boot();

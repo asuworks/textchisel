@@ -72,3 +72,6 @@ export function getDb() {
   if (!db) throw new Error('Database not initialized. Call initDatabase() first.')
   return db
 }
+
+export { createSession, getSession } from './queries'
+export { createPromptVersion, getNextVersionNum, getVersionsBySession } from './queries'
