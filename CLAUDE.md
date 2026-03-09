@@ -19,21 +19,21 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 
 ## Module Map
 
-| Module         | Responsibility                                                      | Status      |
-| -------------- | ------------------------------------------------------------------- | ----------- |
-| `shared`       | Contracts: Zod schemas, Drizzle table defs, TypeScript types        | skeleton    |
-| `db`           | PGlite lifecycle, Drizzle client, migrations, version snapshots     | skeleton    |
-| `store`        | Zustand slices (prompt, eval, ui), middleware composition           | skeleton    |
-| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | done        |
-| `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | done        |
-| `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | done        |
-| `orchestrator` | Regeneration loop, convergence detection, step coordination         | done        |
-| `chart`        | SpiderChart component, drag/lock, target overlay                    | done        |
-| `shell`        | App layout, panels, intent input, version timeline, provider config | not started |
+| Module         | Responsibility                                                      | Status   |
+| -------------- | ------------------------------------------------------------------- | -------- |
+| `shared`       | Contracts: Zod schemas, Drizzle table defs, TypeScript types        | skeleton |
+| `db`           | PGlite lifecycle, Drizzle client, migrations, version snapshots     | skeleton |
+| `store`        | Zustand slices (prompt, eval, ui), middleware composition           | skeleton |
+| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | done     |
+| `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | done     |
+| `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | done     |
+| `orchestrator` | Regeneration loop, convergence detection, step coordination         | done     |
+| `chart`        | SpiderChart component, drag/lock, target overlay                    | done     |
+| `shell`        | App layout, panels, intent input, version timeline, provider config | done     |
 
 ## Current Phase
 
-**Phase 2+3 (Contracts + Foundation)** — COMPLETE
+**Phase 4 (Construction)** — COMPLETE
 Scaffold complete. Linting via qlty (ESLint + Prettier) with pre-commit/pre-push hooks.
 
 See `.devcontext/phase.md` for detailed progress.

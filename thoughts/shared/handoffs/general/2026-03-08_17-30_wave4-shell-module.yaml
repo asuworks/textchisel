@@ -1,0 +1,94 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: SUCCEEDED
+---
+goal: Wave 4 — shell module (app layout, panels, server API routes, client API helpers, 26 tests)
+now: Integration session — wire full system end-to-end, PGlite persistence, real LLM calls
+
+test: "npm run typecheck && npx vitest run"
+
+done_this_session:
+  - task: "Server model factory — creates LanguageModel from provider/modelId (OpenAI + Anthropic)"
+    files: [server/model.ts]
+  - task: "Server API routes — 5 endpoints: dimensions/generate, evaluate, rewrite (SSE), rewrite/full, orchestrate"
+    files: [server/routes/llm.ts]
+  - task: "Client API module — fetch wrappers for all 5 server routes"
+    files: [src/shell/api.ts]
+  - task: "Shell React components — App layout, IntentPanel, ChartPanel, TextPanel, DimensionList, ControlBar"
+    files:
+      [
+        src/shell/App.tsx,
+        src/shell/IntentPanel.tsx,
+        src/shell/ChartPanel.tsx,
+        src/shell/TextPanel.tsx,
+        src/shell/DimensionList.tsx,
+        src/shell/ControlBar.tsx,
+        src/shell/index.ts,
+      ]
+  - task: "Wired App.tsx to import from shell module"
+    files: [src/App.tsx]
+  - task: "Fixed server tsconfig — added path aliases (@shared/*, @/*), JSX support, ../src include"
+    files: [server/tsconfig.json]
+  - task: "26 unit tests — IntentPanel (7), TextPanel (6), ControlBar (5), DimensionList (4), API module (4)"
+    files: [tests/unit/shell.test.tsx]
+  - task: "Updated module statuses and phase tracker — all 8 modules done, Phase 4 complete"
+    files: [CLAUDE.md, .devcontext/modules.md, .devcontext/phase.md]
+
+blockers: []
+
+questions:
+  - "Integration: should PGlite persistence for dimensions/versions happen in the integration session or a separate db-wiring session?"
+  - "Version timeline and provider config UI — add in integration or as a follow-up hardening session?"
+
+decisions:
+  - local_state_for_now: "Shell App uses local React state (useState) for intent, dimensions, currentText, currentScores — will move to PGlite/store in integration session"
+  - non_streaming_refine: "Refine button uses apiRewriteFull (non-streaming) for simplicity; streaming variant (apiRewriteStream) is wired but unused — can switch in integration"
+  - model_from_env_or_request: "Server model factory accepts provider/modelId from request body with fallback to AI_PROVIDER/AI_MODEL env vars"
+  - dimensions_get_uuids: "Generated dimensions get crypto.randomUUID() IDs client-side (temporary — will come from PGlite insert in integration)"
+  - server_tsconfig_includes_src: "Server tsconfig now includes ../src so tsc can type-check server routes that import from src/ modules"
+
+findings:
+  - pipeDataStreamToResponse: "Vercel AI SDK streamText result has pipeDataStreamToResponse(res) for Express — no need for manual SSE wiring"
+  - scoreAllDimensions_returns_map: "scoreAllDimensions still returns Map — server route converts to Record for JSON; same pattern as orchestrator"
+  - set_serialization: "lockedDimensionIds sent as string[] in API requests, reconstructed as Set on server side — Set is not JSON-serializable"
+  - direct_implementation_confirmed: "Direct implementation for focused modules continues to be faster than agent delegation — third session confirming this pattern"
+
+worked:
+  - "Building server routes first, then client components — natural dependency order"
+  - "Component-level unit tests with vi.fn() props — fast, isolated, 26 tests in 270ms"
+  - "Mocking fetch for API tests — clean isolation from server"
+  - "Using existing Zustand store for targetScores/lockedDimensions — ChartPanel just reads store, no prop drilling"
+
+failed: []
+
+next:
+  - "Integration session: test with real LLM calls (set OPENAI_API_KEY or ANTHROPIC_API_KEY in .env)"
+  - "Integration session: wire PGlite persistence for dimensions (createDimensions after generate)"
+  - "Integration session: wire PGlite persistence for prompt versions (save after each rewrite)"
+  - "Integration session: orchestrator ↔ evaluation + rewriter end-to-end test"
+  - "Integration session: full system test (UI → API → LLM → response → chart update)"
+  - "Follow-up: version timeline component (show history of prompt versions)"
+  - "Follow-up: provider config UI (dropdown to select OpenAI/Anthropic + model)"
+  - "Follow-up: streaming rewrite display (switch from apiRewriteFull to apiRewriteStream)"
+
+files:
+  created:
+    - server/model.ts
+    - src/shell/api.ts
+    - src/shell/App.tsx
+    - src/shell/IntentPanel.tsx
+    - src/shell/ChartPanel.tsx
+    - src/shell/TextPanel.tsx
+    - src/shell/DimensionList.tsx
+    - src/shell/ControlBar.tsx
+    - tests/unit/shell.test.tsx
+  modified:
+    - server/routes/llm.ts
+    - server/tsconfig.json
+    - src/App.tsx
+    - src/shell/index.ts
+    - CLAUDE.md
+    - .devcontext/modules.md
+    - .devcontext/phase.md

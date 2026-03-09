@@ -55,7 +55,7 @@ TODO:
 - [x] Wave 2: rewriter
 - [x] Contract reconciliation: ADR-001 (TargetScores Map→Record), ADR-002 (RewriteContext to shared)
 - [x] Wave 3: orchestrator
-- [ ] Wave 4: shell
+- [x] Wave 4: shell
 
 See `.devcontext/modules.md` for per-module build plan and status.
 

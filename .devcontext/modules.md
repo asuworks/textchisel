@@ -139,8 +139,9 @@ shared/ (contracts — all modules depend on this)
 
 ### shell
 
-- **Status:** not started
+- **Status:** done
 - **Responsibility:** App layout, panels, intent input form, version timeline, provider config
-- **Key files:** `src/shell/App.tsx`, `src/shell/panels/`, `src/shell/IntentInput.tsx`
-- **Test strategy:** Integration tests for user flows with mock store
-- **Extension points:** New panels, layout configurations
+- **Key files:** `src/shell/App.tsx`, `src/shell/IntentPanel.tsx`, `src/shell/ChartPanel.tsx`, `src/shell/TextPanel.tsx`, `src/shell/DimensionList.tsx`, `src/shell/ControlBar.tsx`, `src/shell/api.ts`
+- **Server routes:** `server/routes/llm.ts` (5 endpoints), `server/model.ts` (model factory)
+- **Test strategy:** Unit tests for components + API module (26 tests), integration tests with mock store
+- **Extension points:** New panels, layout configurations, provider config UI, version timeline

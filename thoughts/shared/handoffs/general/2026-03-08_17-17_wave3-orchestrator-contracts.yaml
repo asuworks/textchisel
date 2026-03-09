@@ -1,0 +1,89 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: SUCCEEDED
+---
+goal: Contract reconciliation (ADR-001/002) + Wave 3 orchestrator module + README architecture diagram
+now: Wave 4 — shell module (app layout, panels, intent input, wire everything together)
+
+test: "npm run typecheck && npx vitest run"
+
+done_this_session:
+  - task: "Contract reconciliation: TargetScores Map→Record (ADR-001), RewriteContext/RewritePrompt to shared (ADR-002)"
+    files:
+      [
+        shared/types.ts,
+        src/rewriter/prompt.ts,
+        src/rewriter/stream.ts,
+        src/rewriter/index.ts,
+        tests/unit/rewriter.test.ts,
+        .devcontext/decisions/ADR-001-target-scores-record.md,
+        .devcontext/decisions/ADR-002-rewrite-types-to-shared.md,
+      ]
+  - task: "qlty PATH fix for git hooks (#!/bin/sh doesn't source shell configs)"
+    files: [.qlty/hooks/pre-commit.sh, .qlty/hooks/pre-push.sh]
+  - task: "Wave 3: orchestrator module — evaluate→rewrite loop, convergence detection, lock fidelity (25 tests)"
+    files:
+      [
+        src/orchestrator/convergence.ts,
+        src/orchestrator/loop.ts,
+        src/orchestrator/index.ts,
+        tests/unit/orchestrator.test.ts,
+      ]
+  - task: "README with Mermaid architecture diagram inferred from code"
+    files: [README.md]
+  - task: "Updated module statuses and phase tracker for Waves 1-3 completion"
+    files: [CLAUDE.md, .devcontext/modules.md, .devcontext/phase.md]
+
+blockers: []
+
+questions:
+  - "Shell module scope: how much Express API wiring vs pure React UI in this wave?"
+  - "Should shell integration tests use real LLM calls or mock everything?"
+
+decisions:
+  - orchestrator_di: "Orchestrator uses dependency injection (OrchestratorDeps) for scoring/rewriting functions instead of importing evaluation/rewriter directly — respects invariant #2, enables easy mocking"
+  - convergence_tolerance: "Default convergenceTolerance=0 (exact integer match) with maxIterations=3 safety net; lockTolerance=0 (any score change on locked dim is flagged)"
+  - target_scores_record: "TargetScores changed from Map to Record — Map breaks JSON.stringify (Zustand persist, Zundo temporal, PGlite jsonb)"
+  - rewrite_types_shared: "RewriteContext/RewritePrompt moved to shared/types.ts so orchestrator can consume without cross-module imports"
+
+findings:
+  - qlty_sh_path: "Git hooks use #!/bin/sh which doesn't source ~/.bashrc or fish config; must prepend $HOME/.qlty/bin to PATH in hook scripts"
+  - scoreAllDimensions_returns_map: "evaluation.scoreAllDimensions returns Map<string, EvaluationScore> — orchestrator converts via mapToRecord helper; potential future reconciliation target"
+  - prettier_via_precommit: "qlty pre-commit hook runs prettier automatically on staged files; no need to format manually"
+
+worked:
+  - "Direct implementation for focused modules (orchestrator) faster than agent delegation — confirmed pattern from Wave 2"
+  - "Dependency injection pattern for orchestrator enables clean unit testing with vi.fn() mocks"
+  - "Reading all consumer code before contract changes to understand actual usage patterns"
+
+failed: []
+
+next:
+  - "Wave 4: shell module — App.tsx layout, panels (intent input, prompt display, chart), version timeline"
+  - "Express API routes: /api/dimensions/generate, /api/evaluate, /api/rewrite (SSE), /api/orchestrate"
+  - "Wire orchestrator with real scoreAllDimensions + rewriteTextFull as deps"
+  - "Integration session: orchestrator ↔ evaluation + rewriter end-to-end"
+  - "Wave 4 integration: full system (shell drives orchestrator through store)"
+
+files:
+  created:
+    - .devcontext/decisions/ADR-001-target-scores-record.md
+    - .devcontext/decisions/ADR-002-rewrite-types-to-shared.md
+    - src/orchestrator/convergence.ts
+    - src/orchestrator/loop.ts
+    - tests/unit/orchestrator.test.ts
+  modified:
+    - shared/types.ts
+    - src/rewriter/prompt.ts
+    - src/rewriter/stream.ts
+    - src/rewriter/index.ts
+    - tests/unit/rewriter.test.ts
+    - src/orchestrator/index.ts
+    - .qlty/hooks/pre-commit.sh
+    - .qlty/hooks/pre-push.sh
+    - README.md
+    - CLAUDE.md
+    - .devcontext/modules.md
+    - .devcontext/phase.md

@@ -1,0 +1,116 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: SUCCESS
+---
+goal: Phase 4 Construction — Wave 1 (dimensions, evaluation, chart) + Wave 2 (rewriter) + infra (qlty)
+now: Begin Wave 3 (orchestrator module) then Wave 4 (shell)
+
+test: "npm run typecheck && npx vitest run"
+
+done_this_session:
+  - task: Set up qlty CLI with ESLint 9, Prettier, osv-scanner, pre-commit/pre-push hooks
+    files: [.qlty/qlty.toml, eslint.config.mjs, package.json]
+  - task: Prettier formatting pass on all existing files
+    files: []
+  - task: "Wave 1: dimensions module — generateDimensions via AI SDK generateObject + Drizzle CRUD (21 tests)"
+    files:
+      [
+        src/dimensions/generate.ts,
+        src/dimensions/crud.ts,
+        src/dimensions/index.ts,
+        tests/unit/dimensions.test.ts,
+      ]
+  - task: "Wave 1: evaluation module — G-Eval scoring, normalization, caching (31 tests)"
+    files:
+      [
+        src/evaluation/score.ts,
+        src/evaluation/normalize.ts,
+        src/evaluation/cache.ts,
+        src/evaluation/index.ts,
+        tests/unit/evaluation.test.ts,
+      ]
+  - task: "Wave 1: chart module — SpiderChart with Chart.js + dragdata, drag/lock behavior (15 tests)"
+    files:
+      [
+        src/chart/SpiderChart.tsx,
+        src/chart/types.ts,
+        src/chart/helpers.ts,
+        src/chart/index.ts,
+        tests/unit/chart.test.tsx,
+      ]
+  - task: "Wave 1 integration: dimensions → evaluation pipeline (3 tests)"
+    files: [tests/integration/dimensions-evaluation.test.ts]
+  - task: "Wave 2: rewriter module — meta-prompt construction + streamText (17 tests)"
+    files:
+      [
+        src/rewriter/prompt.ts,
+        src/rewriter/stream.ts,
+        src/rewriter/index.ts,
+        tests/unit/rewriter.test.ts,
+      ]
+
+blockers: []
+
+questions:
+  - "RewriteContext/RewritePrompt types are defined locally in rewriter module — should move to shared/types.ts but that requires contract change + ADR per invariant #5"
+  - "TargetScores is Map<string,number> in shared/types.ts but Record<string,number> in store and rewriter — needs reconciliation"
+
+decisions:
+  - qlty_eslint9: "qlty manages ESLint 9 + Prettier via extra_packages config; eslint.config.mjs (not .js) needed for qlty's isolated cache"
+  - locked_dims_rewriter: "Locked dimensions force target=current in prompt to avoid contradictory instructions to the LLM"
+  - wave1_parallel: "dimensions, evaluation, chart built via parallel sub-agents; chart added helpers.ts for pure utility functions"
+  - pglite_test_pattern: "Tests use real in-memory PGlite instances with vi.doMock('@/db') — no Drizzle mocking needed"
+
+findings:
+  - qlty_path: "qlty installs to ~/.qlty/bin — must be on PATH for git hooks to work; added to ~/.bashrc but fish users need manual config"
+  - qlty_esm_config: "eslint.config.mjs (not .js) required because qlty runs ESLint in isolated cache without project's type:module context"
+  - qlty_extra_packages: "extra_packages requires name@version format; mutually exclusive with package_file"
+  - kraken_silent_fail: "kraken sub-agents sometimes complete with no output and no files created — retry works; root cause unknown"
+
+worked:
+  - "Parallel agent spawning for Wave 1 — dimensions agent succeeded first try, evaluation and chart needed retry"
+  - "critic agent review of rewriter caught real bug (locked dim logic) and missing tests"
+  - "Direct implementation (rewriter) was faster than agent delegation for single focused modules"
+
+failed:
+  - "kraken agents for evaluation and chart returned no output on first attempt — had to retry"
+
+next:
+  - "Wave 3: orchestrator module — evaluate→rewrite loop, convergence detection, step coordination"
+  - "Wave 4: shell module — app layout, panels, intent input, version timeline, wire everything"
+  - "Integration sessions after each wave"
+  - "Contract change session: move RewriteContext/RewritePrompt to shared/types.ts with ADR"
+  - "Reconcile Map vs Record for TargetScores across shared/store/rewriter"
+  - "Update CLAUDE.md module statuses and phase tracker"
+
+files:
+  created:
+    - .qlty/qlty.toml
+    - .qlty/.gitignore
+    - eslint.config.mjs
+    - src/dimensions/generate.ts
+    - src/dimensions/crud.ts
+    - src/evaluation/score.ts
+    - src/evaluation/normalize.ts
+    - src/evaluation/cache.ts
+    - src/chart/SpiderChart.tsx
+    - src/chart/types.ts
+    - src/chart/helpers.ts
+    - src/rewriter/prompt.ts
+    - src/rewriter/stream.ts
+    - tests/unit/dimensions.test.ts
+    - tests/unit/evaluation.test.ts
+    - tests/unit/chart.test.tsx
+    - tests/unit/rewriter.test.ts
+    - tests/integration/dimensions-evaluation.test.ts
+  modified:
+    - package.json
+    - package-lock.json
+    - CLAUDE.md
+    - .devcontext/phase.md
+    - src/dimensions/index.ts
+    - src/evaluation/index.ts
+    - src/chart/index.ts
+    - src/rewriter/index.ts
