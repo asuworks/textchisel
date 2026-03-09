@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+
 interface ControlBarProps {
   canEvaluate: boolean;
   canRefine: boolean;
@@ -23,27 +25,23 @@ export function ControlBar({
 
   return (
     <div className="flex items-center gap-3">
-      <button
+      <Button
+        variant="secondary"
         onClick={onEvaluate}
         disabled={!canEvaluate || busy}
-        className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isEvaluating ? "Evaluating…" : "Evaluate"}
-      </button>
-      <button
-        onClick={onRefine}
-        disabled={!canRefine || busy}
-        className="rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-      >
+      </Button>
+      <Button onClick={onRefine} disabled={!canRefine || busy}>
         {isRefining ? "Refining…" : "Refine"}
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="outline"
         onClick={onOrchestrate}
         disabled={!canOrchestrate || busy}
-        className="rounded-md bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isRefining ? "Auto-Refining…" : "Auto-Refine"}
-      </button>
+      </Button>
     </div>
   );
 }

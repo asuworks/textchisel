@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface IntentPanelProps {
   intent: string;
@@ -19,36 +21,40 @@ export function IntentPanel({
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-medium text-gray-700">
+      <label className="text-sm font-medium text-foreground">
         Writing Intent
       </label>
       {isEditing || !hasDimensions ? (
         <>
-          <textarea
+          <Textarea
             value={intent}
             onChange={(e) => onIntentChange(e.target.value)}
             placeholder="Describe the text you want to write (e.g., 'A professional email declining a meeting invitation')"
             rows={3}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
             disabled={isGenerating}
+            className="text-sm"
           />
-          <button
+          <Button
             onClick={onGenerate}
             disabled={!intent.trim() || isGenerating}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="w-full"
           >
-            {isGenerating ? "Generating…" : "Generate Dimensions"}
-          </button>
+            {isGenerating ? "Generating\u2026" : "Generate"}
+          </Button>
         </>
       ) : (
         <div className="flex items-start gap-2">
-          <p className="flex-1 text-sm text-gray-600 italic">{intent}</p>
-          <button
+          <p className="flex-1 text-sm italic text-muted-foreground">
+            {intent}
+          </p>
+          <Button
+            variant="link"
+            size="sm"
             onClick={() => setIsEditing(true)}
-            className="shrink-0 text-xs text-blue-600 hover:text-blue-800"
+            className="h-auto shrink-0 p-0 text-xs"
           >
             Edit
-          </button>
+          </Button>
         </div>
       )}
     </div>

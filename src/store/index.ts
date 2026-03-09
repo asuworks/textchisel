@@ -2,34 +2,64 @@ import { create } from "zustand";
 import { devtools, persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { temporal } from "zundo";
-import type { SessionStatus } from "@shared/types";
+import type { Dimension, EvaluationScore, SessionStatus } from "@shared/types";
 
 // --- State shape ---
 
-interface PromptState {
-  systemPrompt: string;
-  userTemplate: string;
-  setSystemPrompt: (prompt: string) => void;
-  setUserTemplate: (template: string) => void;
+interface SessionState {
+  sessionId: string | null;
+  intent: string;
+  dimensions: Dimension[];
+  currentText: string;
+  currentScores: Record<string, EvaluationScore>;
+  streamingText: string;
+  error: string | null;
+  sessionStatus: SessionStatus;
 }
 
 interface EvaluationState {
   targetScores: Record<string, number>;
-  lockedDimensions: Set<string>;
-  setTargetScore: (dimensionId: string, score: number) => void;
-  toggleLock: (dimensionId: string) => void;
+  lockedDimensions: Record<string, boolean>;
 }
 
 interface UIState {
-  activeSessionId: string | null;
-  sessionStatus: SessionStatus | null;
   sidebarOpen: boolean;
-  setActiveSession: (id: string | null) => void;
-  setSessionStatus: (status: SessionStatus | null) => void;
+}
+
+interface Actions {
+  // Session actions
+  setSessionId: (id: string | null) => void;
+  setIntent: (intent: string) => void;
+  setDimensions: (dims: Dimension[]) => void;
+  setCurrentText: (text: string) => void;
+  setCurrentScores: (scores: Record<string, EvaluationScore>) => void;
+  setStreamingText: (text: string) => void;
+  setError: (error: string | null) => void;
+  setSessionStatus: (status: SessionStatus) => void;
+  clearError: () => void;
+
+  // Dimension CRUD actions
+  updateDimension: (
+    id: string,
+    updates: Partial<
+      Pick<
+        Dimension,
+        "name" | "description" | "rubric" | "evalPrompt" | "rewriteHint"
+      >
+    >,
+  ) => void;
+  addDimension: (dim: Dimension) => void;
+  removeDimension: (id: string) => void;
+
+  // Evaluation actions
+  setTargetScore: (dimensionId: string, score: number) => void;
+  toggleLock: (dimensionId: string) => void;
+
+  // UI actions
   toggleSidebar: () => void;
 }
 
-export type AppState = PromptState & EvaluationState & UIState;
+export type AppState = SessionState & EvaluationState & UIState & Actions;
 
 // --- Store ---
 // Middleware order (outside → inside): devtools → persist → temporal → immer
@@ -39,57 +69,114 @@ export const useAppStore = create<AppState>()(
     persist(
       temporal(
         immer((set) => ({
-          // --- Prompt slice ---
-          systemPrompt: "",
-          userTemplate: "",
-          setSystemPrompt: (prompt) =>
+          // --- Session state ---
+          sessionId: null,
+          intent: "",
+          dimensions: [],
+          currentText: "",
+          currentScores: {},
+          streamingText: "",
+          error: null,
+          sessionStatus: "idle" as SessionStatus,
+
+          setSessionId: (id) =>
             set((state) => {
-              state.systemPrompt = prompt;
+              state.sessionId = id;
             }),
-          setUserTemplate: (template) =>
+          setIntent: (intent) =>
             set((state) => {
-              state.userTemplate = template;
+              state.intent = intent;
+            }),
+          setDimensions: (dims) =>
+            set((state) => {
+              state.dimensions = dims;
+            }),
+          setCurrentText: (text) =>
+            set((state) => {
+              state.currentText = text;
+            }),
+          setCurrentScores: (scores) =>
+            set((state) => {
+              state.currentScores = scores;
+            }),
+          setStreamingText: (text) =>
+            set((state) => {
+              state.streamingText = text;
+            }),
+          setError: (error) =>
+            set((state) => {
+              state.error = error;
+            }),
+          setSessionStatus: (status) =>
+            set((state) => {
+              state.sessionStatus = status;
+            }),
+          clearError: () =>
+            set((state) => {
+              state.error = null;
+              state.sessionStatus = "idle";
             }),
 
-          // --- Evaluation slice ---
+          // --- Dimension CRUD ---
+          updateDimension: (id, updates) =>
+            set((state) => {
+              const dim = state.dimensions.find((d) => d.id === id);
+              if (dim) {
+                // If substantive fields change (not just meta-prompt updates),
+                // clear cached Tier 1 meta-prompts — they describe the old rubric
+                const substantiveChange =
+                  "rubric" in updates ||
+                  "name" in updates ||
+                  "description" in updates;
+                const metaPromptUpdate =
+                  "evalPrompt" in updates || "rewriteHint" in updates;
+                if (substantiveChange && !metaPromptUpdate) {
+                  dim.evalPrompt = null;
+                  dim.rewriteHint = null;
+                }
+                Object.assign(dim, updates);
+                // Clear stale score — rubric/definition changed, old evaluation is invalid
+                delete state.currentScores[id];
+              }
+            }),
+          addDimension: (dim) =>
+            set((state) => {
+              state.dimensions.push(dim);
+            }),
+          removeDimension: (id) =>
+            set((state) => {
+              state.dimensions = state.dimensions.filter((d) => d.id !== id);
+              delete state.targetScores[id];
+              delete state.currentScores[id];
+              delete state.lockedDimensions[id];
+            }),
+
+          // --- Evaluation state ---
           targetScores: {},
-          lockedDimensions: new Set<string>(),
+          lockedDimensions: {},
           setTargetScore: (dimensionId, score) =>
             set((state) => {
               state.targetScores[dimensionId] = score;
             }),
           toggleLock: (dimensionId) =>
             set((state) => {
-              if (state.lockedDimensions.has(dimensionId)) {
-                state.lockedDimensions.delete(dimensionId);
-              } else {
-                state.lockedDimensions.add(dimensionId);
-              }
+              state.lockedDimensions[dimensionId] =
+                !state.lockedDimensions[dimensionId];
             }),
 
-          // --- UI slice ---
-          activeSessionId: null,
-          sessionStatus: null,
+          // --- UI state ---
           sidebarOpen: true,
-          setActiveSession: (id) =>
-            set((state) => {
-              state.activeSessionId = id;
-            }),
-          setSessionStatus: (status) =>
-            set((state) => {
-              state.sessionStatus = status;
-            }),
           toggleSidebar: () =>
             set((state) => {
               state.sidebarOpen = !state.sidebarOpen;
             }),
         })),
         {
-          // Temporal: only track data state, not UI
+          // Temporal: only track user-authored state for undo/redo
           partialize: (state) => ({
-            systemPrompt: state.systemPrompt,
-            userTemplate: state.userTemplate,
+            intent: state.intent,
             targetScores: state.targetScores,
+            lockedDimensions: state.lockedDimensions,
           }),
           limit: 50,
         },
@@ -99,9 +186,13 @@ export const useAppStore = create<AppState>()(
         name: "textchisel-storage",
         storage: createJSONStorage(() => localStorage),
         partialize: (state) => ({
-          systemPrompt: state.systemPrompt,
-          userTemplate: state.userTemplate,
+          sessionId: state.sessionId,
+          intent: state.intent,
+          dimensions: state.dimensions,
+          currentText: state.currentText,
+          currentScores: state.currentScores,
           targetScores: state.targetScores,
+          lockedDimensions: state.lockedDimensions,
           sidebarOpen: state.sidebarOpen,
         }),
       },

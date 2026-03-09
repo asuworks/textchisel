@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -11,7 +11,7 @@ import {
 import { Radar } from "react-chartjs-2";
 import ChartJSDragDataPlugin from "chartjs-plugin-dragdata";
 import type { SpiderChartProps } from "./types";
-import { clampScore, isLocked } from "./helpers";
+import { clampScore, isLocked, maxRubricLevel } from "./helpers";
 
 // Register Chart.js components and drag plugin
 ChartJS.register(
@@ -24,15 +24,96 @@ ChartJS.register(
 );
 ChartJS.register(ChartJSDragDataPlugin);
 
-// Dataset index constant (target dataset is the draggable one)
-const TARGET_DATASET = 1;
+/** Internal Chart.js type for rendered point label positions (includes bounding box) */
+interface PointLabelItem {
+  x: number;
+  y: number;
+  textAlign: string;
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** Get actual rendered label positions from Chart.js internals */
+function getLabelItems(scale: RadialLinearScale): PointLabelItem[] | null {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (scale as any)._pointLabelItems ?? null;
+}
+
+// Returns the label index near (clientX, clientY), or -1 if none.
+// Uses the bounding box directly — no center calculation needed.
+function labelIndexNear(
+  chart: ChartJS<"radar">,
+  clientX: number,
+  clientY: number,
+): number {
+  const scale = chart.scales.r as RadialLinearScale;
+  if (!scale) return -1;
+  const items = getLabelItems(scale);
+  if (!items) return -1;
+  const rect = chart.canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  const y = clientY - rect.top;
+  const pad = 6;
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (
+      x >= it.left - pad &&
+      x <= it.right + pad &&
+      y >= it.top - pad &&
+      y <= it.bottom + pad
+    ) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+// Shared mutable ref for the currently hovered label index (-1 = none)
+let hoveredLabelIndex = -1;
+
+// Plugin: draws a rounded-rect highlight behind the hovered label text
+const labelHoverPlugin = {
+  id: "underlineLabels", // reuse id to override stale HMR registration
+  afterDraw(chart: ChartJS) {
+    if (hoveredLabelIndex < 0) return;
+    const scale = chart.scales.r as RadialLinearScale;
+    if (!scale) return;
+    const items = getLabelItems(scale);
+    if (!items || hoveredLabelIndex >= items.length) return;
+    const item = items[hoveredLabelIndex];
+    const ctx = chart.ctx;
+    const pad = 4;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(
+      item.left - pad,
+      item.top - pad,
+      item.right - item.left + pad * 2,
+      item.bottom - item.top + pad * 2,
+      4,
+    );
+    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+    ctx.fill();
+    ctx.restore();
+  },
+};
+ChartJS.register(labelHoverPlugin);
+
+// Target dataset index — target is datasets[0], current is datasets[1]
+const TARGET_DATASET = 0;
 
 /**
- * Spider/radar chart for visualizing current scores vs draggable target scores.
+ * Spider/radar chart visualizing current scores vs draggable target scores.
  *
- * - Dataset 0 (blue, filled): Current evaluation scores (NOT draggable)
- * - Dataset 1 (orange/gold, dashed): Target scores (draggable)
- * - Locked dimensions show a different point style and cannot be dragged
+ * Visual hierarchy (dual-layer):
+ * - Dataset 1 — Current scores: faded slate border, 6% fill, circle markers, NOT draggable.
+ *   Drawn second (order: 2, behind).
+ * - Dataset 0 — Target scores: dashed amber border, 8% fill, circle markers, DRAGGABLE.
+ *   Drawn first (order: 1, on top). Locked points shown in grey with rectRot (diamond) shape.
+ *   Click a point to toggle lock for that dimension.
  */
 export function SpiderChart({
   dimensions,
@@ -41,12 +122,19 @@ export function SpiderChart({
   lockedDimensions,
   onTargetChange,
   onLockToggle,
+  onDimensionClick,
 }: SpiderChartProps) {
+  // Ref to the underlying Chart.js instance for hit-testing on click
+  const chartRef = useRef<ChartJS<"radar">>(null);
+
   // Sort dimensions by sortOrder for consistent axis ordering
   const sortedDimensions = useMemo(
     () => [...dimensions].sort((a, b) => a.sortOrder - b.sortOrder),
     [dimensions],
   );
+
+  // Dynamic scale max based on rubric levels
+  const scaleMax = useMemo(() => maxRubricLevel(dimensions), [dimensions]);
 
   // Map dimension IDs in sorted order for index-based lookups
   const dimensionIds = useMemo(
@@ -60,7 +148,7 @@ export function SpiderChart({
     const currentData = sortedDimensions.map((d) => currentScores[d.id] ?? 1);
     const targetData = sortedDimensions.map((d) => targetScores[d.id] ?? 1);
 
-    // Per-point styling for locked vs unlocked on the target dataset
+    // Per-point styling for target dataset: locked = grey rectRot, unlocked = amber circle
     const targetPointStyles = sortedDimensions.map((d) =>
       isLocked(lockedDimensions, d.id)
         ? ("rectRot" as const)
@@ -69,42 +157,46 @@ export function SpiderChart({
     const targetPointColors = sortedDimensions.map((d) =>
       isLocked(lockedDimensions, d.id)
         ? "rgba(160, 160, 160, 0.8)"
-        : "rgba(255, 165, 0, 1)",
+        : "rgba(245, 158, 11, 0.9)",
     );
 
     return {
       labels,
       datasets: [
-        {
-          label: "Current Score",
-          data: currentData,
-          backgroundColor: "rgba(54, 162, 235, 0.15)",
-          borderColor: "rgba(54, 162, 235, 1)",
-          borderWidth: 2,
-          pointBackgroundColor: "rgba(54, 162, 235, 1)",
-          pointBorderColor: "#fff",
-          pointRadius: 6,
-          pointHoverRadius: 8,
-          pointHitRadius: 25,
-          fill: true,
-          dragData: false, // Current scores are not draggable
-          order: 1,
-        },
+        // Target dataset: foreground (order: 1, on top), draggable
         {
           label: "Target Score",
           data: targetData,
-          backgroundColor: "rgba(255, 165, 0, 0.08)",
-          borderColor: "rgba(255, 165, 0, 0.6)",
+          backgroundColor: "rgba(245, 158, 11, 0.08)",
+          borderColor: "rgba(245, 158, 11, 0.8)",
           borderWidth: 2,
           borderDash: [6, 3],
           pointBackgroundColor: targetPointColors,
           pointBorderColor: "#fff",
-          pointRadius: 5,
-          pointHoverRadius: 7,
+          pointBorderWidth: 1.5,
+          pointRadius: 6,
+          pointHoverRadius: 8,
           pointHitRadius: 25,
           pointStyle: targetPointStyles,
           fill: true,
-          dragData: true, // Target scores are draggable
+          dragData: true,
+          order: 1,
+        },
+        // Current dataset: background (order: 2, behind), read-only, faded
+        {
+          label: "Current Score",
+          data: currentData,
+          backgroundColor: "rgba(100, 116, 139, 0.06)",
+          borderColor: "rgba(100, 116, 139, 0.35)",
+          borderWidth: 1.5,
+          pointBackgroundColor: "rgba(100, 116, 139, 0.35)",
+          pointBorderColor: "transparent",
+          pointBorderWidth: 0,
+          pointRadius: 4,
+          pointHoverRadius: 4,
+          pointHitRadius: 0,
+          fill: true,
+          dragData: false,
           order: 2,
         },
       ],
@@ -112,8 +204,6 @@ export function SpiderChart({
   }, [sortedDimensions, currentScores, targetScores, lockedDimensions]);
 
   // Stable callback refs for drag handlers
-  // DragDataEvent = MouseEvent | TouchEvent from chartjs-plugin-dragdata
-  // ChartDataItemType<"radar"> = number | null
   const handleDragStart = useCallback(
     (
       _e: MouseEvent | TouchEvent,
@@ -121,12 +211,10 @@ export function SpiderChart({
       index: number,
       _value: number | null,
     ): boolean | void => {
-      // Only allow dragging on the target dataset
       if (datasetIndex !== TARGET_DATASET) return false;
-      // Block dragging on locked dimensions
       if (isLocked(lockedDimensions, dimensionIds[index])) return false;
     },
-    [lockedDimensions, dimensionIds],
+    [lockedDimensions, dimensionIds, scaleMax],
   );
 
   const handleDrag = useCallback(
@@ -136,10 +224,9 @@ export function SpiderChart({
       _index: number,
       value: number | null,
     ): boolean | void => {
-      // Reject null values or drags outside the valid range; magnet.to handles rounding
-      if (value == null || value < 0.5 || value > 5.5) return false;
+      if (value == null || value < 0.5 || value > scaleMax + 0.5) return false;
     },
-    [],
+    [scaleMax],
   );
 
   const handleDragEnd = useCallback(
@@ -150,51 +237,75 @@ export function SpiderChart({
       value: number | null,
     ): void => {
       if (onTargetChange && dimensionIds[index] && value != null) {
-        onTargetChange(dimensionIds[index], clampScore(value));
+        onTargetChange(dimensionIds[index], clampScore(value, scaleMax));
       }
     },
-    [onTargetChange, dimensionIds],
+    [onTargetChange, dimensionIds, scaleMax],
   );
 
   const handleClick = useCallback(
-    (_event: React.MouseEvent<HTMLCanvasElement>) => {
-      // onClick for lock toggle is handled via the chart's native click
-      // but Chart.js click detection on radar points requires chart instance access.
-      // For now, lock toggling is expected to happen via the onLockToggle callback
-      // wired from outside (e.g., a context menu or button per dimension).
-      // A future enhancement could use getElementsAtEventForMode here.
-      void onLockToggle;
+    (event: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!chartRef.current) return;
+      const chart = chartRef.current;
+
+      // Check if a data point was clicked → toggle lock
+      const elements = chart.getElementsAtEventForMode(
+        event.nativeEvent,
+        "nearest",
+        { intersect: true },
+        false,
+      );
+      if (elements.length > 0) {
+        const dimId = dimensionIds[elements[0].index];
+        if (dimId && onLockToggle) onLockToggle(dimId);
+        return;
+      }
+
+      // Check if a point label (dimension name) was clicked → open dimension
+      if (!onDimensionClick) return;
+      const idx = labelIndexNear(chart, event.clientX, event.clientY);
+      if (idx >= 0 && dimensionIds[idx]) {
+        const scale = chart.scales.r as RadialLinearScale;
+        const items = getLabelItems(scale);
+        const rect = chart.canvas.getBoundingClientRect();
+        const item = items?.[idx];
+        if (!item) return;
+        // Anchor popover at center of the label bounding box
+        const cx = (item.left + item.right) / 2;
+        const cy = (item.top + item.bottom) / 2;
+        const anchorRect = new DOMRect(rect.left + cx, rect.top + cy, 0, 0);
+        onDimensionClick(dimensionIds[idx], anchorRect);
+      }
     },
-    [onLockToggle],
+    [onLockToggle, onDimensionClick, dimensionIds],
   );
 
   // Build chart options
   const options = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       scales: {
         r: {
           min: 1,
-          max: 5,
+          max: scaleMax,
           ticks: {
             stepSize: 1,
             backdropColor: "transparent",
-            color: "#888",
-            font: { size: 10 },
-            // Only show integer ticks
+            color: "#666",
+            font: { size: 11 },
             callback: (tickValue: string | number) => {
               const v =
                 typeof tickValue === "string"
                   ? parseInt(tickValue, 10)
                   : tickValue;
-              return Number.isInteger(v) ? v : "";
+              return Number.isInteger(v) ? String(v) : "";
             },
           },
           pointLabels: {
-            color: "#333",
-            font: { size: 13, weight: "bold" as const },
-            padding: 10,
+            color: "#1a1a1a",
+            font: { size: 12, weight: "bold" as const },
+            padding: 24,
           },
           grid: {
             color: "rgba(0, 0, 0, 0.08)",
@@ -213,18 +324,59 @@ export function SpiderChart({
         duration: 300,
         easing: "easeOutQuart" as const,
       },
+      layout: {
+        padding: { top: 16, bottom: 16, left: 40, right: 40 },
+      },
       plugins: {
         legend: {
           display: true,
           position: "top" as const,
-          labels: { usePointStyle: true, padding: 15 },
+          labels: {
+            usePointStyle: true,
+            padding: 16,
+            font: { size: 12 },
+          },
         },
         tooltip: {
+          maxWidth: 240,
+          backgroundColor: "hsl(0 0% 100%)",
+          titleColor: "hsl(0 0% 9%)",
+          bodyColor: "hsl(0 0% 45%)",
+          borderColor: "hsl(0 0% 90%)",
+          borderWidth: 1,
+          cornerRadius: 6,
+          padding: 10,
+          titleFont: { size: 12, weight: "bold" as const },
+          bodyFont: { size: 12 },
+          displayColors: false,
           callbacks: {
             label: (ctx: {
               dataset: { label?: string };
               parsed: { r: number };
-            }) => `${ctx.dataset.label ?? ""}: ${ctx.parsed.r}/5`,
+              dataIndex: number;
+            }) => {
+              const score = ctx.parsed.r;
+              const dim = sortedDimensions[ctx.dataIndex];
+              const rubricDesc = dim?.rubric?.[String(Math.round(score))] ?? "";
+              const base = `${ctx.dataset.label ?? ""}: ${score}/${scaleMax}`;
+              if (!rubricDesc) return base;
+              // Wrap description into lines of ~35 chars to keep tooltip compact
+              const full = `${base} — ${rubricDesc}`;
+              if (full.length <= 40) return full;
+              const lines = [base];
+              const words = rubricDesc.split(" ");
+              let line = "";
+              for (const word of words) {
+                if (line && (line + " " + word).length > 35) {
+                  lines.push(line);
+                  line = word;
+                } else {
+                  line = line ? line + " " + word : word;
+                }
+              }
+              if (line) lines.push(line);
+              return lines;
+            },
           },
         },
         dragData: {
@@ -237,16 +389,42 @@ export function SpiderChart({
         },
       },
     }),
-    [handleDragStart, handleDrag, handleDragEnd],
+    [handleDragStart, handleDrag, handleDragEnd, sortedDimensions, scaleMax],
   );
+
+  const handleMouseMove = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!chartRef.current) return;
+      const chart = chartRef.current;
+      const idx = labelIndexNear(chart, event.clientX, event.clientY);
+      chart.canvas.style.cursor = idx >= 0 ? "pointer" : "";
+      if (idx !== hoveredLabelIndex) {
+        hoveredLabelIndex = idx;
+        chart.draw();
+      }
+    },
+    [],
+  );
+
+  const handleMouseLeave = useCallback(() => {
+    if (!chartRef.current) return;
+    if (hoveredLabelIndex >= 0) {
+      hoveredLabelIndex = -1;
+      chartRef.current.draw();
+    }
+    chartRef.current.canvas.style.cursor = "";
+  }, []);
 
   return (
     <div
+      style={{ width: "100%", height: "100%" }}
       onClick={
         handleClick as unknown as React.MouseEventHandler<HTMLDivElement>
       }
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
     >
-      <Radar data={data} options={options} />
+      <Radar ref={chartRef} data={data} options={options} />
     </div>
   );
 }
