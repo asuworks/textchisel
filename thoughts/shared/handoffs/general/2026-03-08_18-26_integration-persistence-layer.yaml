@@ -1,0 +1,70 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: PARTIAL_PLUS
+---
+goal: Integration session 1 — PGlite persistence for sessions, dimensions, and prompt versions
+now: Integration session 2 — Phases 4-5 (move status to Zustand store, test with real LLM calls)
+
+test: "npx vitest run && npx tsc --noEmit"
+
+done_this_session:
+  - task: "Created integration plan (8 phases) with premortem risk analysis"
+    files: [thoughts/shared/plans/integration-plan.md]
+  - task: "Phase 1: Async boot — initDatabase() before React render in main.tsx"
+    files: [src/main.tsx]
+  - task: "Phase 1: Session CRUD — createSession, getSession in new db/queries.ts"
+    files: [src/db/queries.ts, src/db/index.ts]
+  - task: "Phase 2: Dimension persistence — handleGenerate creates PGlite session, persists dimensions with real UUIDs"
+    files: [src/shell/App.tsx]
+  - task: "Phase 3: Prompt version persistence — handleRefine saves immutable PromptVersion after each rewrite"
+    files: [src/shell/App.tsx, src/db/queries.ts]
+  - task: "14 new integration tests (6 session lifecycle, 8 prompt versions)"
+    files:
+      [
+        tests/integration/session-lifecycle.test.ts,
+        tests/integration/prompt-versions.test.ts,
+      ]
+
+blockers: []
+
+questions:
+  - "Phase 4 store wiring: plan recommends minimal approach (only move status to Zustand). Confirm this vs full store migration?"
+  - "Phase 5 LLM testing: which provider to test with first? (need OPENAI_API_KEY or ANTHROPIC_API_KEY in .env)"
+
+decisions:
+  - async_boot_over_loading_state: "Chose await initDatabase() before createRoot() rather than BootLoader component — simpler, PGlite init is fast"
+  - new_session_per_generation: "Re-generating dimensions creates a new session (immutable history), old session preserved in PGlite"
+  - queries_in_db_module: "Session and prompt version CRUD in src/db/queries.ts — follows same pattern as dimensions/crud.ts importing getDb from @/db"
+
+findings:
+  - premortem_tigers_addressed: "2 tigers found — PGlite init timing (HIGH, fixed with async boot) and streaming protocol mismatch (MEDIUM, deferred to Phase 7)"
+  - streaming_protocol_issue: "server/routes/llm.ts:91 uses pipeDataStreamToResponse (Vercel AI data stream format) but client api.ts:97 expects raw text via TextDecoderStream — must fix in Phase 7 before enabling streaming"
+  - agent_delegation_slower: "Fourth session confirming direct implementation faster than agent delegation for this project — kraken returned no output"
+
+worked:
+  - "Direct implementation for focused, well-scoped integration work"
+  - "Following existing test pattern (in-memory PGlite + vi.doMock for getDb)"
+  - "Running typecheck + tests in parallel for fast feedback"
+
+failed:
+  - "kraken agent returned no output when spawned for implementation — direct implementation was used instead"
+
+next:
+  - "Phase 4: Move status from useState to Zustand store (minimal — just status, not full data migration)"
+  - "Phase 5: Create scripts/smoke-test-llm.ts, test with real API key"
+  - "Phase 6: Add Auto-Refine button (orchestrator E2E via apiOrchestrate)"
+  - "Phase 7: Fix streaming protocol mismatch (toTextStreamResponse), enable streaming rewrite"
+  - "Phase 8: Error boundary, loading state, docs update, final handoff"
+
+files:
+  created:
+    - src/db/queries.ts
+    - tests/integration/session-lifecycle.test.ts
+    - tests/integration/prompt-versions.test.ts
+    - thoughts/shared/plans/integration-plan.md
+  modified:
+    - src/main.tsx
+    - src/db/index.ts
+    - src/shell/App.tsx

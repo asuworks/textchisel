@@ -1,0 +1,69 @@
+---
+session: integration
+date: 2026-03-08
+status: complete
+outcome: COMPLETE
+---
+goal: Integration session 2 — Phases 4-8 (store wiring, orchestrator E2E, streaming fix, error boundary)
+now: Manual LLM smoke test with real API key, then version timeline UI
+
+test: "npx vitest run && npx tsc --noEmit"
+
+done_this_session:
+  - task: "Phase 4: Moved status from useState to Zustand store (sessionStatus/setSessionStatus)"
+    files: [src/shell/App.tsx, src/store/index.ts]
+  - task: "Phase 4: Updated SessionStatus shared type to match UI states (idle, generating, evaluating, refining, error)"
+    files: [shared/types.ts]
+  - task: "Phase 5: Created LLM smoke test script"
+    files: [scripts/smoke-test-llm.ts]
+  - task: "Phase 6: Added handleOrchestrate + Auto-Refine button (orchestrator E2E wiring)"
+    files: [src/shell/App.tsx, src/shell/ControlBar.tsx]
+  - task: "Phase 6: Updated ControlBar tests for new auto-refine button (1 new test)"
+    files: [tests/unit/shell.test.tsx]
+  - task: "Phase 7: Fixed streaming protocol — pipeDataStreamToResponse → pipeTextStreamToResponse"
+    files: [server/routes/llm.ts]
+  - task: "Phase 8: Added ErrorBoundary component wrapping App in main.tsx"
+    files: [src/shell/ErrorBoundary.tsx, src/main.tsx]
+  - task: "Phase 8: Updated CLAUDE.md — module statuses to done, phase to Integration"
+    files: [CLAUDE.md]
+
+blockers: []
+
+questions:
+  - "LLM smoke test needs API key — run `npx tsx scripts/smoke-test-llm.ts` with server running and .env configured"
+
+decisions:
+  - session_status_type_update: "Changed SessionStatus from (drafting, evaluating, refining, done) to (idle, generating, evaluating, refining, error) — matches actual UI states"
+  - orchestrate_saves_version: "handleOrchestrate saves final result as a prompt version, same as handleRefine"
+  - plain_text_streaming: "Server streams plain text (pipeTextStreamToResponse) not Vercel AI data stream format — client reads via TextDecoderStream"
+
+findings:
+  - direct_implementation_confirmed: "Fifth session confirming direct implementation faster than agent delegation for this project"
+
+worked:
+  - "Direct implementation for focused integration work"
+  - "Updating tests immediately after changing component interfaces"
+
+failed: []
+
+next:
+  - "Run smoke test with real LLM (npx tsx scripts/smoke-test-llm.ts with server + API key)"
+  - "Version timeline component (show prompt version history per session)"
+  - "Provider config UI (model/provider selector)"
+  - "useLiveQuery for reactive PGlite data (currently load-on-action)"
+  - "Full store migration (move dimensions, currentText to store for undo/redo)"
+
+files:
+  created:
+    - scripts/smoke-test-llm.ts
+    - src/shell/ErrorBoundary.tsx
+    - thoughts/shared/handoffs/general/2026-03-08_18-44_integration-phases-4-8.yaml
+  modified:
+    - src/shell/App.tsx
+    - src/shell/ControlBar.tsx
+    - src/store/index.ts
+    - shared/types.ts
+    - server/routes/llm.ts
+    - src/main.tsx
+    - tests/unit/shell.test.tsx
+    - CLAUDE.md

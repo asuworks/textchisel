@@ -31,10 +31,11 @@ export type LockSet = Set<string>;
 // --- Session status ---
 
 export const SESSION_STATUS = {
-  DRAFTING: "drafting",
+  IDLE: "idle",
+  GENERATING: "generating",
   EVALUATING: "evaluating",
   REFINING: "refining",
-  DONE: "done",
+  ERROR: "error",
 } as const;
 
 export type SessionStatus =

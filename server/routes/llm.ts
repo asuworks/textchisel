@@ -88,7 +88,7 @@ llmRouter.post("/rewrite", async (req, res) => {
       targetScores: targetScores ?? {},
       lockedDimensionIds: new Set(lockedDimensionIds ?? []),
     });
-    result.pipeDataStreamToResponse(res);
+    result.pipeTextStreamToResponse(res);
   } catch (err) {
     console.error("rewrite error:", err);
     res.status(500).json({ error: String(err) });

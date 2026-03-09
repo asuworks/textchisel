@@ -229,82 +229,63 @@ describe("TextPanel", () => {
 // --- ControlBar ---
 
 describe("ControlBar", () => {
-  it("should render evaluate and refine buttons", () => {
-    render(
-      <ControlBar
-        canEvaluate={true}
-        canRefine={true}
-        isEvaluating={false}
-        isRefining={false}
-        onEvaluate={vi.fn()}
-        onRefine={vi.fn()}
-      />,
-    );
+  const defaults = {
+    canEvaluate: true,
+    canRefine: true,
+    canOrchestrate: true,
+    isEvaluating: false,
+    isRefining: false,
+    onEvaluate: vi.fn(),
+    onRefine: vi.fn(),
+    onOrchestrate: vi.fn(),
+  };
+
+  it("should render evaluate, refine, and auto-refine buttons", () => {
+    render(<ControlBar {...defaults} />);
     expect(
-      screen.getByRole("button", { name: /evaluate/i }),
+      screen.getByRole("button", { name: /^evaluate$/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /refine/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^refine$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /auto-refine/i }),
+    ).toBeInTheDocument();
   });
 
   it("should disable evaluate when canEvaluate is false", () => {
-    render(
-      <ControlBar
-        canEvaluate={false}
-        canRefine={false}
-        isEvaluating={false}
-        isRefining={false}
-        onEvaluate={vi.fn()}
-        onRefine={vi.fn()}
-      />,
-    );
-    expect(screen.getByRole("button", { name: /evaluate/i })).toBeDisabled();
+    render(<ControlBar {...defaults} canEvaluate={false} canRefine={false} />);
+    expect(screen.getByRole("button", { name: /^evaluate$/i })).toBeDisabled();
   });
 
-  it("should disable both buttons when evaluating", () => {
-    render(
-      <ControlBar
-        canEvaluate={true}
-        canRefine={true}
-        isEvaluating={true}
-        isRefining={false}
-        onEvaluate={vi.fn()}
-        onRefine={vi.fn()}
-      />,
-    );
+  it("should disable all buttons when evaluating", () => {
+    render(<ControlBar {...defaults} isEvaluating={true} />);
     expect(screen.getByRole("button", { name: /evaluating/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /refine/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /^refine$/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /auto-refine/i })).toBeDisabled();
   });
 
   it("should call onEvaluate when evaluate clicked", () => {
     const onEvaluate = vi.fn();
     render(
-      <ControlBar
-        canEvaluate={true}
-        canRefine={false}
-        isEvaluating={false}
-        isRefining={false}
-        onEvaluate={onEvaluate}
-        onRefine={vi.fn()}
-      />,
+      <ControlBar {...defaults} canRefine={false} onEvaluate={onEvaluate} />,
     );
-    fireEvent.click(screen.getByRole("button", { name: /evaluate/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^evaluate$/i }));
     expect(onEvaluate).toHaveBeenCalledOnce();
   });
 
   it("should call onRefine when refine clicked", () => {
     const onRefine = vi.fn();
-    render(
-      <ControlBar
-        canEvaluate={true}
-        canRefine={true}
-        isEvaluating={false}
-        isRefining={false}
-        onEvaluate={vi.fn()}
-        onRefine={onRefine}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: /refine/i }));
+    render(<ControlBar {...defaults} onRefine={onRefine} />);
+    fireEvent.click(screen.getByRole("button", { name: /^refine$/i }));
     expect(onRefine).toHaveBeenCalledOnce();
+  });
+
+  it("should call onOrchestrate when auto-refine clicked", () => {
+    const onOrchestrate = vi.fn();
+    render(<ControlBar {...defaults} onOrchestrate={onOrchestrate} />);
+    fireEvent.click(screen.getByRole("button", { name: /auto-refine/i }));
+    expect(onOrchestrate).toHaveBeenCalledOnce();
   });
 });
 

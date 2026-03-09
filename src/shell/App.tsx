@@ -8,9 +8,12 @@ import { ChartPanel } from "./ChartPanel";
 import { TextPanel } from "./TextPanel";
 import { DimensionList } from "./DimensionList";
 import { ControlBar } from "./ControlBar";
-import { apiGenerateDimensions, apiEvaluate, apiRewriteFull } from "./api";
-
-type Status = "idle" | "generating" | "evaluating" | "refining" | "error";
+import {
+  apiGenerateDimensions,
+  apiEvaluate,
+  apiRewriteFull,
+  apiOrchestrate,
+} from "./api";
 
 export default function App() {
   // Session state (PGlite persistence)
@@ -22,9 +25,11 @@ export default function App() {
     Record<string, EvaluationScore>
   >({});
   const [streamingText, setStreamingText] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
 
+  // Status lives in Zustand store (accessible without prop drilling)
+  const status = useAppStore((s) => s.sessionStatus) ?? "idle";
+  const setStatus = useAppStore((s) => s.setSessionStatus);
   const targetScores = useAppStore((s) => s.targetScores);
   const lockedDimensions = useAppStore((s) => s.lockedDimensions);
   const setTargetScore = useAppStore((s) => s.setTargetScore);
@@ -119,6 +124,55 @@ export default function App() {
     sessionId,
   ]);
 
+  const handleOrchestrate = useCallback(async () => {
+    setStatus("refining");
+    setError(null);
+    try {
+      const result = await apiOrchestrate({
+        intent,
+        currentText,
+        dimensions,
+        currentScores,
+        targetScores,
+        lockedDimensionIds: Array.from(lockedDimensions),
+        maxIterations: 3,
+        convergenceTolerance: 1,
+        lockTolerance: 1,
+      });
+
+      setCurrentText(result.finalText);
+      setCurrentScores(result.finalScores);
+
+      // Save final version to PGlite
+      if (sessionId) {
+        const versionNum = await getNextVersionNum(sessionId);
+        await createPromptVersion({
+          sessionId,
+          versionNum,
+          systemPrompt: "",
+          userTemplate: intent,
+          generatedText: result.finalText,
+          scores: Object.fromEntries(
+            Object.entries(result.finalScores).map(([id, s]) => [id, s.score]),
+          ),
+        });
+      }
+
+      setStatus("idle");
+    } catch (err) {
+      setError(String(err));
+      setStatus("error");
+    }
+  }, [
+    intent,
+    currentText,
+    dimensions,
+    currentScores,
+    targetScores,
+    lockedDimensions,
+    sessionId,
+  ]);
+
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Header */}
@@ -166,10 +220,12 @@ export default function App() {
             <ControlBar
               canEvaluate={hasDimensions && hasText}
               canRefine={hasScores}
+              canOrchestrate={hasScores}
               isEvaluating={status === "evaluating"}
               isRefining={status === "refining"}
               onEvaluate={handleEvaluate}
               onRefine={handleRefine}
+              onOrchestrate={handleOrchestrate}
             />
           </div>
 
