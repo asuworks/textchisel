@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { LanguageModel } from "ai";
-import type { Dimension, EvaluationScore, RewriteContext } from "@shared/types";
+import type { Dimension, RewriteContext } from "@shared/types";
 import { buildRewritePrompt } from "@/rewriter/prompt";
 
 // --- Test fixtures ---
@@ -261,6 +261,7 @@ describe("rewriteTextFull", () => {
       get text() {
         return Promise.reject(new Error("model unavailable"));
       },
+      // eslint-disable-next-line require-yield
       textStream: (async function* () {
         throw new Error("model unavailable");
       })(),

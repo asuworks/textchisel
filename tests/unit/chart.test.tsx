@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import React from "react";
 
 // --- ResizeObserver mock for jsdom (Chart.js responsive mode needs it) ---

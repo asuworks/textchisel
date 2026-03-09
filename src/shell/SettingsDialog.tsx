@@ -17,12 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { useSettings, getModelsForProvider } from "./useSettings";
 import type { AppSettings } from "./useSettings";
 

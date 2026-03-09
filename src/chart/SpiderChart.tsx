@@ -214,7 +214,7 @@ export function SpiderChart({
       if (datasetIndex !== TARGET_DATASET) return false;
       if (isLocked(lockedDimensions, dimensionIds[index])) return false;
     },
-    [lockedDimensions, dimensionIds, scaleMax],
+    [lockedDimensions, dimensionIds],
   );
 
   const handleDrag = useCallback(

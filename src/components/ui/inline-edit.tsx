@@ -30,9 +30,11 @@ export function InlineEdit({
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Sync draft when external value changes while not editing
+  /* eslint-disable react-hooks/set-state-in-effect -- intentional prop-to-state sync */
   useEffect(() => {
     if (!editing) setDraft(value);
   }, [value, editing]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Focus input when entering edit mode
   useEffect(() => {

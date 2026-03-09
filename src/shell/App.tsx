@@ -28,7 +28,6 @@ import { Minus, Plus, Settings2, Trash2 } from "lucide-react";
 import { IntentPanel } from "./IntentPanel";
 import { ChartPanel } from "./ChartPanel";
 import { TextPanel } from "./TextPanel";
-import { DimensionList } from "./DimensionList";
 import { SettingsDialog } from "./SettingsDialog";
 import {
   apiGenerateDimensions,
@@ -323,6 +322,7 @@ export default function App() {
     lockedDimensions,
     sessionId,
     setCurrentText,
+    setCurrentScores,
     setStreamingText,
     setStatus,
     setError,
