@@ -1,0 +1,81 @@
+---
+session: general
+date: 2026-03-08
+status: complete
+outcome: PARTIAL_MINUS
+---
+goal: Integration sessions 1+2 complete — all 8 phases done, smoke test passing with real LLM
+now: Thorough PRD + architecture review, then create comprehensive plan for remaining MVP features and redesign
+
+test: "npx vitest run && npx tsc --noEmit"
+
+done_this_session:
+  - task: "Phase 4: Moved status from local useState to Zustand store (sessionStatus/setSessionStatus)"
+    files: [src/shell/App.tsx, shared/types.ts]
+  - task: "Phase 5: Created LLM smoke test script — verified all 4 endpoints work with real OpenAI calls"
+    files: [scripts/smoke-test-llm.ts]
+  - task: "Phase 6: Added handleOrchestrate + Auto-Refine button for orchestrator E2E"
+    files:
+      [src/shell/App.tsx, src/shell/ControlBar.tsx, tests/unit/shell.test.tsx]
+  - task: "Phase 7: Fixed streaming protocol — pipeDataStreamToResponse → pipeTextStreamToResponse"
+    files: [server/routes/llm.ts]
+  - task: "Phase 8: Added ErrorBoundary, updated CLAUDE.md module statuses"
+    files: [src/shell/ErrorBoundary.tsx, src/main.tsx, CLAUDE.md]
+  - task: "Fixed rewriteTextFull stream stall — actively consume textStream instead of await result.text"
+    files: [src/rewriter/stream.ts, tests/unit/rewriter.test.ts]
+  - task: "Fixed PGlite Vite bundling — exclude from optimizeDeps to prevent WASM corruption"
+    files: [vite.config.ts]
+
+blockers: []
+
+questions:
+  - "PRD describes rich rubric types (ordinal, count, taxonomic, etc.) but current implementation uses simple 1-5 integer scoring — how much rubric sophistication for MVP?"
+  - "Architecture doc specifies useLiveQuery for reactive data but current implementation uses load-on-action — worth adding now or defer?"
+  - "PRD §9.2 says 'No custom rubric editing in V1' but does MVP need dimension accept/reject flow before committing?"
+  - "Architecture doc has DimensionProposal as separate phase before workspace — current flow skips this. Redesign needed?"
+
+decisions:
+  - session_status_type_update: "Changed SessionStatus from (drafting, evaluating, refining, done) to (idle, generating, evaluating, refining, error) — matches actual UI flow"
+  - stream_consumption_fix: "rewriteTextFull must actively iterate textStream rather than just await result.text — prevents stall with AI SDK 4 + Node.js 24"
+  - pglite_vite_exclude: "PGlite must be excluded from Vite optimizeDeps — esbuild corrupts WASM/data bundles"
+
+findings:
+  - prd_mvp_gap: "PRD §9.2 defines 7 MVP features. Missing: version timeline UI, export button, auto-evaluate after generation, dimension proposal accept/reject flow"
+  - architecture_gap: "Architecture doc specifies components not built: VersionTimeline, DimensionProposal, ExportButton, provider config UI, cost tracking"
+  - stream_stall_root_cause: "Vercel AI SDK streamText result.text can stall if textStream is not actively consumed — observed with AI SDK 4.x on Node 24"
+  - direct_implementation_confirmed: "Fifth session confirming direct implementation faster than agent delegation for this project"
+
+worked:
+  - "Direct implementation for focused integration work"
+  - "Adding debug logging to narrow down stall location"
+  - "Running typecheck + tests in parallel for fast feedback"
+
+failed:
+  - "kraken agent returned no output (confirmed pattern across multiple sessions)"
+
+next:
+  - "START HERE: Thorough review of .devcontext/textchisel-prd.md and .devcontext/architecture.md"
+  - "Create comprehensive plan covering: (a) remaining MVP features, (b) UI redesign needs, (c) missing architecture components"
+  - "Key MVP gaps to plan for: version timeline UI, export button, auto-evaluate after generation, dimension proposal flow"
+  - "Architecture gaps to plan for: useLiveQuery reactive data, provider config UI, eval step caching, lock fidelity retry"
+  - "Consider whether current simplified data model (1-5 integers, simple rubric JSONB) needs enrichment per PRD rubric specs"
+  - "Plan should follow methodology (.devcontext/method.md) — we're in Phase 4 Construction, integration sessions"
+
+files:
+  created:
+    - scripts/smoke-test-llm.ts
+    - src/shell/ErrorBoundary.tsx
+    - thoughts/shared/handoffs/general/2026-03-08_18-44_integration-phases-4-8.yaml
+    - thoughts/shared/handoffs/general/2026-03-08_19-25_integration-complete-plan-next.yaml
+  modified:
+    - src/shell/App.tsx
+    - src/shell/ControlBar.tsx
+    - src/store/index.ts
+    - src/rewriter/stream.ts
+    - shared/types.ts
+    - server/routes/llm.ts
+    - src/main.tsx
+    - vite.config.ts
+    - tests/unit/shell.test.tsx
+    - tests/unit/rewriter.test.ts
+    - CLAUDE.md
