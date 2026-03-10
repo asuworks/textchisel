@@ -1,0 +1,94 @@
+---
+session: general
+date: 2026-03-09
+status: complete
+outcome: PARTIAL_MINUS
+---
+goal: "Settings module (temp/maxTokens/connection test), chart centering, UI polish (legend, font, lock icons, tooltips, CSS grid rubric)"
+now: "Commit uncommitted changes; smoke test settings with real API key; generate Tier 1 meta-prompts for dims added via modal"
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "3 commits for prior work: prompt enhancement, UI polish, UX guide"
+    files: []
+  - task: "Settings module: temperature slider (0-2), maxTokens input, connection test button with status indicator"
+    files:
+      [
+        src/shell/SettingsDialog.tsx,
+        src/shell/useSettings.ts,
+        src/shell/api.ts,
+        server/routes/llm.ts,
+      ]
+  - task: "Fix custom model ID not persisting — updateSettings only resets model when provider actually changed AND no explicit model in update"
+    files: [src/shell/useSettings.ts]
+  - task: "Wire getModelConfig() to all LLM API calls including AddDimensionDialog (was missing)"
+    files: [src/shell/AddDimensionDialog.tsx, server/routes/llm.ts]
+  - task: "wrapLanguageModel + defaultSettingsMiddleware applies user temperature/maxOutputTokens as defaults on server"
+    files: [server/routes/llm.ts]
+  - task: "Chart centering — maintainAspectRatio:true, flex centering on container, reduced padding"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "HTML legend outside Chart.js canvas (amber dot + 'Target Score', slate dot + 'Current Score')"
+    files: [src/shell/ChartPanel.tsx]
+  - task: "Geist Sans font for chart labels — ChartJS.defaults.font.family, pointLabels, ticks"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Lock toggle → Lock/Unlock icons from lucide-react (replaced Switch)"
+    files: [src/shell/App.tsx]
+  - task: "Tooltips on lock icon, trash icon, and score display in dimension popover"
+    files: [src/shell/App.tsx]
+  - task: "CSS grid rubric level rows (3-col x 2-row) in both popover and AddDimensionDialog"
+    files: [src/shell/App.tsx, src/shell/AddDimensionDialog.tsx]
+  - task: "server/model.ts createModel — already had 4-param version; fixed return type to any for ai@6 compat"
+    files: [server/model.ts]
+
+blockers: []
+
+questions:
+  - "Should settings be stored in PGlite instead of localStorage? (deferred — localStorage works for single-user)"
+
+decisions:
+  - localStorage_settings: "Keep settings in localStorage via useSyncExternalStore — simpler than PGlite for single-user app"
+  - maintainAspectRatio_true: "Changed from false to true — fixes radar chart pushed down in tall panels"
+  - html_legend: "Moved legend outside Chart.js canvas as HTML elements — more control, consistent styling"
+  - lock_icons: "Lock/Unlock lucide icons instead of Switch toggle — clearer affordance"
+  - css_grid_rubric: "3-col x 2-row grid (level# + rubric + trash / empty + example + action-stack) — aligned action icons vertically"
+  - ai_sdk_v6_compat: "LanguageModelV1 not exported from ai@6; used any return type with comment. maxOutputTokens replaces maxTokens"
+
+findings:
+  - ai_sdk_v6_types: "ai@6 LanguageModel type requires V2/V3 but providers return V1 — use any or import from @ai-sdk/provider"
+  - defaultSettingsMiddleware: "Requires { settings: { ... } } wrapper object, not flat params"
+  - slider_onValueChange: "Returns number | readonly number[] — use Array.isArray guard"
+  - chartjs_font_weight: "FontSpec doesn't accept string '600' — must be number 600"
+  - geist_already_wired: "@fontsource-variable/geist already in project as --font-sans; no need for separate geist npm package"
+
+worked:
+  - "maintainAspectRatio:true + flex centering for chart positioning"
+  - "CSS grid grid-cols-[auto_1fr_auto] for rubric level rows — clean alignment"
+  - "useSyncExternalStore for reactive localStorage settings"
+  - "wrapLanguageModel + defaultSettingsMiddleware for injecting user preferences server-side"
+
+failed:
+  - "LanguageModelV1 import from 'ai' — doesn't exist in v6"
+  - "maxTokens in generateText — v6 uses maxOutputTokens"
+  - "Flex layout for rubric rows with stacked actions — couldn't align action icons across levels"
+
+next:
+  - "Commit all uncommitted changes (settings, chart, UI polish)"
+  - "Smoke test settings with real API key (connection test, generation, evaluation)"
+  - "Generate Tier 1 meta-prompts for dimensions added via AddDimensionDialog modal"
+  - "Persist manual example edits to DB"
+  - "Design taint/staleness queue for dimension edits"
+  - "Phase 2: State architecture refactor — move remaining App.tsx useState to Zustand"
+  - "Phase 5: Auto-evaluation + streaming display"
+  - "Phase 6: Version timeline + diffs"
+
+files:
+  modified:
+    - server/model.ts
+    - server/routes/llm.ts
+    - src/shell/useSettings.ts
+    - src/shell/SettingsDialog.tsx
+    - src/shell/api.ts
+    - src/chart/SpiderChart.tsx
+    - src/shell/ChartPanel.tsx
+    - src/shell/App.tsx
+    - src/shell/AddDimensionDialog.tsx
