@@ -24,6 +24,7 @@ import {
   apiGenerateExamples,
   apiGenerateSuggestions,
 } from "./api";
+import { getModelConfig } from "./useSettings";
 import type { Dimension } from "@shared/types";
 
 type Step = "name" | "generating" | "editor";
@@ -80,7 +81,11 @@ export function AddDimensionDialog({
     setGeneratingSuggestions(true);
     try {
       const existingNames = dimensions.map((d) => d.name);
-      const result = await apiGenerateSuggestions(intent, existingNames);
+      const result = await apiGenerateSuggestions(
+        intent,
+        existingNames,
+        getModelConfig(),
+      );
       setSuggestedDimensions(result.dimensions);
     } catch {
       // silent
@@ -117,7 +122,11 @@ export function AddDimensionDialog({
     if (!nameInput.trim()) return;
     setStep("generating");
     try {
-      const result = await apiGenerateSingleDimension(nameInput.trim(), intent);
+      const result = await apiGenerateSingleDimension(
+        nameInput.trim(),
+        intent,
+        getModelConfig(),
+      );
       setDraft({
         name: result.name,
         description: result.description,
@@ -173,6 +182,7 @@ export function AddDimensionDialog({
           },
           intent,
           levels,
+          getModelConfig(),
         );
         updateDraft({ examples: { ...draft.examples, ...newExamples } });
       } catch {
@@ -431,62 +441,98 @@ function RubricEditor({
           const isGenerating = generatingExamples.has(level);
 
           return (
-            <div key={level} className="group flex items-start gap-2.5 py-2">
+            <div
+              key={level}
+              className="group grid grid-cols-[auto_1fr_auto] items-start gap-x-2.5 gap-y-0.5 py-2"
+            >
               {/* Level number */}
               <span className="w-3 shrink-0 pt-1 text-xs font-bold text-foreground/60">
                 {level}
               </span>
 
-              {/* Content */}
-              <div className="min-w-0 flex-1 space-y-0.5">
-                {/* Rubric description */}
-                <InlineEdit
-                  value={desc}
-                  onCommit={(text) =>
-                    onRubricChange({ ...rubric, [level]: text })
-                  }
-                  className="text-xs text-muted-foreground"
-                  placeholder={`Level ${level}…`}
-                />
-
-                {/* Example row */}
-                {example != null ? (
-                  <div className="flex items-center gap-1.5">
-                    <InlineEdit
-                      value={example}
-                      onCommit={(text) =>
-                        onExamplesChange({ ...examples, [level]: text })
-                      }
-                      className="min-w-0 flex-1 text-[10px] italic text-muted-foreground/60"
-                      placeholder={`Example for level ${level}…`}
-                    />
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-foreground"
-                            disabled={isGenerating}
-                            onClick={() => onGenerateExamples([level])}
-                          />
-                        }
-                      >
-                        <Sparkles
-                          className={`h-1.5 w-1.5 ${isGenerating ? "animate-spin" : ""}`}
+              {/* Rubric — col 2, row 1 */}
+              <InlineEdit
+                value={desc}
+                onCommit={(text) =>
+                  onRubricChange({ ...rubric, [level]: text })
+                }
+                className="min-w-0 text-xs text-muted-foreground"
+                placeholder={`Level ${level}…`}
+              />
+              {/* Trash — col 3, row 1 */}
+              <div className="flex flex-col items-center">
+                {levelCount > 2 ? (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 text-muted-foreground/20 hover:text-destructive"
+                          onClick={() => {
+                            const remaining = entries
+                              .filter(([l]) => l !== level)
+                              .map(([, d], i) => [String(i + 1), d] as const);
+                            onRubricChange(Object.fromEntries(remaining));
+                            if (examples) {
+                              const newExamples: Record<string, string> = {};
+                              entries
+                                .filter(([l]) => l !== level)
+                                .map(([l]) => l)
+                                .forEach((oldKey, i) => {
+                                  if (examples[oldKey] != null)
+                                    newExamples[String(i + 1)] =
+                                      examples[oldKey];
+                                });
+                              onExamplesChange(
+                                Object.keys(newExamples).length > 0
+                                  ? newExamples
+                                  : null,
+                              );
+                            }
+                          }}
                         />
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        Regenerate example
-                      </TooltipContent>
-                    </Tooltip>
+                      }
+                    >
+                      <Trash2 className="h-2 w-2" />
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Delete level</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className="h-4 w-4" />
+                )}
+              </div>
+              {/* Empty col 1, row 2 */}
+              <div />
+              {/* Example — col 2, row 2 */}
+              {example != null ? (
+                <InlineEdit
+                  value={example}
+                  onCommit={(text) =>
+                    onExamplesChange({ ...examples, [level]: text })
+                  }
+                  className="min-w-0 text-[10px] italic text-muted-foreground/60"
+                  placeholder={`Example for level ${level}…`}
+                />
+              ) : (
+                <button
+                  className="justify-self-start rounded px-1 py-0.5 text-[10px] italic text-muted-foreground/40 hover:text-foreground"
+                  onClick={() => onExamplesChange({ ...examples, [level]: "" })}
+                >
+                  + add
+                </button>
+              )}
+              {/* Example actions — col 3, row 2 */}
+              <div className="flex flex-col items-center gap-0.5">
+                {example != null ? (
+                  <>
                     <Tooltip>
                       <TooltipTrigger
                         render={
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-destructive"
+                            className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-destructive"
                             onClick={() => {
                               const newExamples = { ...examples };
                               delete newExamples[level];
@@ -503,24 +549,13 @@ function RubricEditor({
                       </TooltipTrigger>
                       <TooltipContent side="top">Remove example</TooltipContent>
                     </Tooltip>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      className="rounded px-1 py-1 leading-snug text-[10px] italic text-muted-foreground/40 hover:text-foreground"
-                      onClick={() =>
-                        onExamplesChange({ ...examples, [level]: "" })
-                      }
-                    >
-                      + add
-                    </button>
                     <Tooltip>
                       <TooltipTrigger
                         render={
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-foreground"
+                            className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-foreground"
                             disabled={isGenerating}
                             onClick={() => onGenerateExamples([level])}
                           />
@@ -531,52 +566,31 @@ function RubricEditor({
                         />
                       </TooltipTrigger>
                       <TooltipContent side="top">
-                        Generate example
+                        Regenerate example
                       </TooltipContent>
                     </Tooltip>
-                  </div>
+                  </>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-foreground"
+                          disabled={isGenerating}
+                          onClick={() => onGenerateExamples([level])}
+                        />
+                      }
+                    >
+                      <Sparkles
+                        className={`h-1.5 w-1.5 ${isGenerating ? "animate-spin" : ""}`}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent side="top">Generate example</TooltipContent>
+                  </Tooltip>
                 )}
               </div>
-
-              {/* Delete level — top-aligned */}
-              {levelCount > 2 && (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/20 hover:text-destructive"
-                        onClick={() => {
-                          const remaining = entries
-                            .filter(([l]) => l !== level)
-                            .map(([, d], i) => [String(i + 1), d] as const);
-                          onRubricChange(Object.fromEntries(remaining));
-                          if (examples) {
-                            const newExamples: Record<string, string> = {};
-                            const oldKeys = entries
-                              .filter(([l]) => l !== level)
-                              .map(([l]) => l);
-                            oldKeys.forEach((oldKey, i) => {
-                              if (examples[oldKey] != null) {
-                                newExamples[String(i + 1)] = examples[oldKey];
-                              }
-                            });
-                            onExamplesChange(
-                              Object.keys(newExamples).length > 0
-                                ? newExamples
-                                : null,
-                            );
-                          }
-                        }}
-                      />
-                    }
-                  >
-                    <Trash2 className="h-2 w-2" />
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Delete level</TooltipContent>
-                </Tooltip>
-              )}
             </div>
           );
         })}

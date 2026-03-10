@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/resizable";
 import { Popover, PopoverContent } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { InlineEdit } from "@/components/ui/inline-edit";
 import {
   Tooltip,
@@ -29,11 +28,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Plus, Settings2, Sparkles, Trash2, X } from "lucide-react";
+import {
+  Lock,
+  Plus,
+  Settings2,
+  Sparkles,
+  Trash2,
+  Unlock,
+  X,
+} from "lucide-react";
 import { IntentPanel } from "./IntentPanel";
 import { ChartPanel } from "./ChartPanel";
 import { TextPanel } from "./TextPanel";
 import { SettingsDialog } from "./SettingsDialog";
+import { getModelConfig } from "./useSettings";
 import { AddDimensionDialog } from "./AddDimensionDialog";
 import {
   apiGenerateDimensions,
@@ -119,6 +127,7 @@ export default function App() {
           },
           intent,
           levels,
+          getModelConfig(),
         );
         const merged = { ...selectedDim.examples, ...newExamples };
         useAppStore
@@ -149,7 +158,7 @@ export default function App() {
     setStatus("generating");
     setError(null);
     try {
-      const result = await apiGenerateDimensions(intent);
+      const result = await apiGenerateDimensions(intent, getModelConfig());
       const session = await createSession(intent);
       const sid = session?.id ?? crypto.randomUUID();
       setSessionId(sid);
@@ -182,6 +191,7 @@ export default function App() {
                 rubric: dim.rubric,
               },
               intent,
+              getModelConfig(),
             );
             const updated = {
               ...dim,
@@ -211,19 +221,22 @@ export default function App() {
 
       // Generate initial text based on intent and dimensions (use dimsWithPrompts for Tier 1 rewriteHints)
       setStatus("refining");
-      const text = await apiRewriteFull({
-        intent,
-        currentText: "",
-        dimensions: dimsWithPrompts,
-        currentScores: {},
-        targetScores: targets,
-        lockedDimensionIds: [],
-      });
+      const text = await apiRewriteFull(
+        {
+          intent,
+          currentText: "",
+          dimensions: dimsWithPrompts,
+          currentScores: {},
+          targetScores: targets,
+          lockedDimensionIds: [],
+        },
+        getModelConfig(),
+      );
       setCurrentText(text);
 
       // Auto-evaluate the generated text (use dimsWithPrompts for Tier 1 evalPrompts)
       setStatus("evaluating");
-      const scores = await apiEvaluate(text, dimsWithPrompts);
+      const scores = await apiEvaluate(text, dimsWithPrompts, getModelConfig());
       setCurrentScores(scores);
 
       if (sid) {
@@ -260,7 +273,11 @@ export default function App() {
     setStatus("evaluating");
     setError(null);
     try {
-      const scores = await apiEvaluate(currentText, dimensions);
+      const scores = await apiEvaluate(
+        currentText,
+        dimensions,
+        getModelConfig(),
+      );
       setCurrentScores(scores);
       setStatus("idle");
     } catch (err) {
@@ -273,18 +290,21 @@ export default function App() {
     setStatus("refining");
     setError(null);
     try {
-      const text = await apiRewriteFull({
-        intent,
-        currentText: "",
-        dimensions,
-        currentScores: {},
-        targetScores,
-        lockedDimensionIds: [],
-      });
+      const text = await apiRewriteFull(
+        {
+          intent,
+          currentText: "",
+          dimensions,
+          currentScores: {},
+          targetScores,
+          lockedDimensionIds: [],
+        },
+        getModelConfig(),
+      );
       setCurrentText(text);
 
       setStatus("evaluating");
-      const scores = await apiEvaluate(text, dimensions);
+      const scores = await apiEvaluate(text, dimensions, getModelConfig());
       setCurrentScores(scores);
 
       if (sessionId) {
@@ -322,30 +342,36 @@ export default function App() {
     setError(null);
     try {
       // Tier 2: generate transition-aware rewrite plan
-      const plan = await apiRewritePlan({
-        intent,
-        currentText,
-        dimensions,
-        currentScores,
-        targetScores,
-        lockedDimensionIds: lockedIds(lockedDimensions),
-      });
+      const plan = await apiRewritePlan(
+        {
+          intent,
+          currentText,
+          dimensions,
+          currentScores,
+          targetScores,
+          lockedDimensionIds: lockedIds(lockedDimensions),
+        },
+        getModelConfig(),
+      );
 
-      const text = await apiRewriteFull({
-        intent,
-        currentText,
-        dimensions,
-        currentScores,
-        targetScores,
-        lockedDimensionIds: lockedIds(lockedDimensions),
-        rewritePlan: plan,
-      });
+      const text = await apiRewriteFull(
+        {
+          intent,
+          currentText,
+          dimensions,
+          currentScores,
+          targetScores,
+          lockedDimensionIds: lockedIds(lockedDimensions),
+          rewritePlan: plan,
+        },
+        getModelConfig(),
+      );
       setCurrentText(text);
       setStreamingText("");
 
       // Auto-evaluate the rewritten text
       setStatus("evaluating");
-      const newScores = await apiEvaluate(text, dimensions);
+      const newScores = await apiEvaluate(text, dimensions, getModelConfig());
       setCurrentScores(newScores);
 
       if (sessionId) {
@@ -386,17 +412,20 @@ export default function App() {
       setStatus("refining");
       setError(null);
       try {
-        const result = await apiOrchestrate({
-          intent,
-          currentText,
-          dimensions,
-          currentScores,
-          targetScores,
-          lockedDimensionIds: lockedIds(lockedDimensions),
-          maxIterations: maxIter,
-          convergenceTolerance: 1,
-          lockTolerance: 1,
-        });
+        const result = await apiOrchestrate(
+          {
+            intent,
+            currentText,
+            dimensions,
+            currentScores,
+            targetScores,
+            lockedDimensionIds: lockedIds(lockedDimensions),
+            maxIterations: maxIter,
+            convergenceTolerance: 1,
+            lockTolerance: 1,
+          },
+          getModelConfig(),
+        );
 
         setCurrentText(result.finalText);
         setCurrentScores(result.finalScores);
@@ -501,7 +530,7 @@ export default function App() {
                   side="bottom"
                   sideOffset={8}
                   anchor={virtualAnchor}
-                  className="w-80 px-5 py-3"
+                  className="w-110 px-5 py-3"
                 >
                   {selectedDim && (
                     <div className="space-y-2">
@@ -516,64 +545,106 @@ export default function App() {
                           }
                           className="min-w-0 flex-1 text-sm font-semibold"
                         />
-                        {selectedDim.rubric &&
-                          (() => {
-                            const maxLevel = Object.keys(
-                              selectedDim.rubric,
-                            ).length;
-                            const score = currentScores[selectedDim.id]?.score;
-                            return score != null ? (
-                              <span className="shrink-0 text-sm font-medium text-muted-foreground/60">
-                                {score}/{maxLevel}
-                              </span>
-                            ) : null;
-                          })()}
-                        <Switch
-                          checked={!!lockedDimensions[selectedDim.id]}
-                          onCheckedChange={() =>
-                            useAppStore.getState().toggleLock(selectedDim.id)
-                          }
-                          className="scale-75"
-                        />
-                        <AlertDialog>
-                          <AlertDialogTrigger
-                            render={
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                              />
-                            }
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Remove dimension
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Remove &ldquo;{selectedDim.name}&rdquo;? This
-                                will remove it from all future evaluations.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel autoFocus>
-                                Cancel
-                              </AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => {
-                                  useAppStore
-                                    .getState()
-                                    .removeDimension(selectedDim.id);
-                                  setPopoverOpen(false);
-                                }}
+                        <TooltipProvider>
+                          {selectedDim.rubric &&
+                            (() => {
+                              const maxLevel = Object.keys(
+                                selectedDim.rubric,
+                              ).length;
+                              const score =
+                                currentScores[selectedDim.id]?.score;
+                              const target = targetScores[selectedDim.id];
+                              return score != null ? (
+                                <Tooltip>
+                                  <TooltipTrigger
+                                    render={
+                                      <span className="shrink-0 cursor-default text-sm font-medium text-muted-foreground/60" />
+                                    }
+                                  >
+                                    {score}/{maxLevel}
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    Current: {score} / Target: {target ?? score}
+                                  </TooltipContent>
+                                </Tooltip>
+                              ) : null;
+                            })()}
+                          <Tooltip>
+                            <TooltipTrigger
+                              render={
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 shrink-0 text-muted-foreground"
+                                  onClick={() =>
+                                    useAppStore
+                                      .getState()
+                                      .toggleLock(selectedDim.id)
+                                  }
+                                />
+                              }
+                            >
+                              {lockedDimensions[selectedDim.id] ? (
+                                <Lock className="h-3.5 w-3.5" />
+                              ) : (
+                                <Unlock className="h-3.5 w-3.5 opacity-40" />
+                              )}
+                            </TooltipTrigger>
+                            <TooltipContent side="top">
+                              {lockedDimensions[selectedDim.id]
+                                ? "Unlock dimension"
+                                : "Lock dimension"}
+                            </TooltipContent>
+                          </Tooltip>
+                          <AlertDialog>
+                            <Tooltip>
+                              <TooltipTrigger
+                                render={
+                                  <AlertDialogTrigger
+                                    render={
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                                      />
+                                    }
+                                  />
+                                }
                               >
-                                Remove
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top">
+                                Remove dimension
+                              </TooltipContent>
+                            </Tooltip>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Remove dimension
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Remove &ldquo;{selectedDim.name}&rdquo;? This
+                                  will remove it from all future evaluations.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel autoFocus>
+                                  Cancel
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => {
+                                    useAppStore
+                                      .getState()
+                                      .removeDimension(selectedDim.id);
+                                    setPopoverOpen(false);
+                                  }}
+                                >
+                                  Remove
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </TooltipProvider>
                       </div>
 
                       {/* Description */}
@@ -609,7 +680,7 @@ export default function App() {
                                   return (
                                     <div
                                       key={level}
-                                      className={`flex items-start gap-2.5 -mx-5 px-5 py-2 transition-colors ${isTarget ? "bg-slate-100 dark:bg-slate-800/30" : ""}`}
+                                      className={`grid grid-cols-[auto_1fr_auto] items-start gap-x-2.5 gap-y-0.5 -mx-5 px-5 py-2 transition-colors ${isTarget ? "bg-slate-100 dark:bg-slate-800/30" : ""}`}
                                     >
                                       {/* Level number — click to set as target */}
                                       <button
@@ -624,78 +695,169 @@ export default function App() {
                                       >
                                         {level}
                                       </button>
-                                      {/* Content */}
+                                      {/* Rubric */}
+                                      <InlineEdit
+                                        value={desc}
+                                        onCommit={(text) => {
+                                          const rubric = {
+                                            ...selectedDim.rubric,
+                                            [level]: text,
+                                          };
+                                          useAppStore
+                                            .getState()
+                                            .updateDimension(selectedDim.id, {
+                                              rubric,
+                                            });
+                                        }}
+                                        className="min-w-0 text-xs text-muted-foreground"
+                                        placeholder={`Level ${level}…`}
+                                      />
+                                      {/* Trash — col 3, row 1 */}
                                       <TooltipProvider>
-                                        <div className="min-w-0 flex-1 space-y-0.5">
-                                          {/* Rubric description */}
+                                        <div className="flex flex-col items-center">
+                                          {levelCount > 2 ? (
+                                            <Tooltip>
+                                              <TooltipTrigger
+                                                render={
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-4 w-4 text-muted-foreground/20 hover:text-destructive"
+                                                    onClick={() => {
+                                                      const remaining = entries
+                                                        .filter(
+                                                          ([l]) => l !== level,
+                                                        )
+                                                        .map(
+                                                          ([, d], i) =>
+                                                            [
+                                                              String(i + 1),
+                                                              d,
+                                                            ] as const,
+                                                        );
+                                                      const rubric =
+                                                        Object.fromEntries(
+                                                          remaining,
+                                                        );
+                                                      const oldExamples =
+                                                        selectedDim.examples ??
+                                                        {};
+                                                      const newExamples: Record<
+                                                        string,
+                                                        string
+                                                      > = {};
+                                                      entries
+                                                        .filter(
+                                                          ([l]) => l !== level,
+                                                        )
+                                                        .map(([l]) => l)
+                                                        .forEach(
+                                                          (oldKey, i) => {
+                                                            if (
+                                                              oldExamples[
+                                                                oldKey
+                                                              ] != null
+                                                            )
+                                                              newExamples[
+                                                                String(i + 1)
+                                                              ] =
+                                                                oldExamples[
+                                                                  oldKey
+                                                                ];
+                                                          },
+                                                        );
+                                                      useAppStore
+                                                        .getState()
+                                                        .updateDimension(
+                                                          selectedDim.id,
+                                                          {
+                                                            rubric,
+                                                            examples:
+                                                              Object.keys(
+                                                                newExamples,
+                                                              ).length > 0
+                                                                ? newExamples
+                                                                : null,
+                                                          },
+                                                        );
+                                                      const curTarget =
+                                                        targetScores[
+                                                          selectedDim.id
+                                                        ];
+                                                      if (
+                                                        curTarget != null &&
+                                                        curTarget >
+                                                          remaining.length
+                                                      )
+                                                        setTargetScore(
+                                                          selectedDim.id,
+                                                          remaining.length,
+                                                        );
+                                                    }}
+                                                  />
+                                                }
+                                              >
+                                                <Trash2 className="h-2 w-2" />
+                                              </TooltipTrigger>
+                                              <TooltipContent side="top">
+                                                Delete level
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          ) : (
+                                            <div className="h-4 w-4" />
+                                          )}
+                                        </div>
+                                        {/* Empty col 1, row 2 */}
+                                        <div />
+                                        {/* Example — col 2, row 2 */}
+                                        {example != null ? (
                                           <InlineEdit
-                                            value={desc}
+                                            value={example}
                                             onCommit={(text) => {
-                                              const rubric = {
-                                                ...selectedDim.rubric,
+                                              const examples = {
+                                                ...selectedDim.examples,
                                                 [level]: text,
                                               };
                                               useAppStore
                                                 .getState()
                                                 .updateDimension(
                                                   selectedDim.id,
-                                                  { rubric },
+                                                  { examples },
                                                 );
                                             }}
-                                            className="text-xs text-muted-foreground"
-                                            placeholder={`Level ${level}…`}
+                                            className="min-w-0 text-[10px] italic text-muted-foreground/60"
+                                            placeholder={`Example for level ${level}…`}
                                           />
-                                          {/* Example row — inline with action buttons */}
+                                        ) : (
+                                          <button
+                                            className="justify-self-start rounded px-1 py-0.5 text-[10px] italic text-muted-foreground/40 hover:text-foreground"
+                                            onClick={() => {
+                                              const examples = {
+                                                ...selectedDim.examples,
+                                                [level]: "",
+                                              };
+                                              useAppStore
+                                                .getState()
+                                                .updateDimension(
+                                                  selectedDim.id,
+                                                  { examples },
+                                                );
+                                            }}
+                                          >
+                                            + add
+                                          </button>
+                                        )}
+                                        {/* Example actions — col 3, row 2 */}
+                                        <div className="flex flex-col items-center gap-0.5">
                                           {example != null ? (
-                                            <div className="flex items-center gap-1.5">
-                                              <InlineEdit
-                                                value={example}
-                                                onCommit={(text) => {
-                                                  const examples = {
-                                                    ...selectedDim.examples,
-                                                    [level]: text,
-                                                  };
-                                                  useAppStore
-                                                    .getState()
-                                                    .updateDimension(
-                                                      selectedDim.id,
-                                                      { examples },
-                                                    );
-                                                }}
-                                                className="min-w-0 flex-1 text-[10px] italic text-muted-foreground/60"
-                                                placeholder={`Example for level ${level}…`}
-                                              />
+                                            <>
                                               <Tooltip>
                                                 <TooltipTrigger
                                                   render={
                                                     <Button
                                                       variant="ghost"
                                                       size="icon"
-                                                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-foreground"
-                                                      disabled={isGenerating}
-                                                      onClick={() =>
-                                                        handleGenerateExamples([
-                                                          level,
-                                                        ])
-                                                      }
-                                                    />
-                                                  }
-                                                >
-                                                  <Sparkles
-                                                    className={`h-1.5 w-1.5 ${isGenerating ? "animate-spin" : ""}`}
-                                                  />
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top">
-                                                  Regenerate example
-                                                </TooltipContent>
-                                              </Tooltip>
-                                              <Tooltip>
-                                                <TooltipTrigger
-                                                  render={
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="icon"
-                                                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-destructive"
+                                                      className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-destructive"
                                                       onClick={() => {
                                                         const examples = {
                                                           ...selectedDim.examples,
@@ -718,39 +880,19 @@ export default function App() {
                                                     />
                                                   }
                                                 >
-                                                  <X className="h-2 w-2" />
+                                                  <X className="h-1.5 w-1.5" />
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top">
                                                   Remove example
                                                 </TooltipContent>
                                               </Tooltip>
-                                            </div>
-                                          ) : (
-                                            <div className="flex items-center gap-1.5">
-                                              <button
-                                                className="rounded px-1 py-1 leading-snug text-[10px] italic text-muted-foreground/40 hover:text-foreground"
-                                                onClick={() => {
-                                                  const examples = {
-                                                    ...selectedDim.examples,
-                                                    [level]: "",
-                                                  };
-                                                  useAppStore
-                                                    .getState()
-                                                    .updateDimension(
-                                                      selectedDim.id,
-                                                      { examples },
-                                                    );
-                                                }}
-                                              >
-                                                + add
-                                              </button>
                                               <Tooltip>
                                                 <TooltipTrigger
                                                   render={
                                                     <Button
                                                       variant="ghost"
                                                       size="icon"
-                                                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground/30 hover:text-foreground"
+                                                      className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-foreground"
                                                       disabled={isGenerating}
                                                       onClick={() =>
                                                         handleGenerateExamples([
@@ -765,105 +907,38 @@ export default function App() {
                                                   />
                                                 </TooltipTrigger>
                                                 <TooltipContent side="top">
-                                                  Generate example
+                                                  Regenerate example
                                                 </TooltipContent>
                                               </Tooltip>
-                                            </div>
+                                            </>
+                                          ) : (
+                                            <Tooltip>
+                                              <TooltipTrigger
+                                                render={
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-3.5 w-3.5 text-muted-foreground/30 hover:text-foreground"
+                                                    disabled={isGenerating}
+                                                    onClick={() =>
+                                                      handleGenerateExamples([
+                                                        level,
+                                                      ])
+                                                    }
+                                                  />
+                                                }
+                                              >
+                                                <Sparkles
+                                                  className={`h-1.5 w-1.5 ${isGenerating ? "animate-spin" : ""}`}
+                                                />
+                                              </TooltipTrigger>
+                                              <TooltipContent side="top">
+                                                Generate example
+                                              </TooltipContent>
+                                            </Tooltip>
                                           )}
                                         </div>
                                       </TooltipProvider>
-                                      {/* Delete level — vertically centered */}
-                                      {levelCount > 2 && (
-                                        <Tooltip>
-                                          <TooltipProvider>
-                                            <TooltipTrigger
-                                              render={
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  className="mt-1 h-4 w-4 shrink-0 text-muted-foreground/20 hover:text-destructive"
-                                                  onClick={() => {
-                                                    const remaining = entries
-                                                      .filter(
-                                                        ([l]) => l !== level,
-                                                      )
-                                                      .map(
-                                                        ([, d], i) =>
-                                                          [
-                                                            String(i + 1),
-                                                            d,
-                                                          ] as const,
-                                                      );
-                                                    const rubric =
-                                                      Object.fromEntries(
-                                                        remaining,
-                                                      );
-                                                    const oldExamples =
-                                                      selectedDim.examples ??
-                                                      {};
-                                                    const newExamples: Record<
-                                                      string,
-                                                      string
-                                                    > = {};
-                                                    const oldKeys = entries
-                                                      .filter(
-                                                        ([l]) => l !== level,
-                                                      )
-                                                      .map(([l]) => l);
-                                                    oldKeys.forEach(
-                                                      (oldKey, i) => {
-                                                        if (
-                                                          oldExamples[oldKey] !=
-                                                          null
-                                                        ) {
-                                                          newExamples[
-                                                            String(i + 1)
-                                                          ] =
-                                                            oldExamples[oldKey];
-                                                        }
-                                                      },
-                                                    );
-                                                    useAppStore
-                                                      .getState()
-                                                      .updateDimension(
-                                                        selectedDim.id,
-                                                        {
-                                                          rubric,
-                                                          examples:
-                                                            Object.keys(
-                                                              newExamples,
-                                                            ).length > 0
-                                                              ? newExamples
-                                                              : null,
-                                                        },
-                                                      );
-                                                    const newMax =
-                                                      remaining.length;
-                                                    const curTarget =
-                                                      targetScores[
-                                                        selectedDim.id
-                                                      ];
-                                                    if (
-                                                      curTarget != null &&
-                                                      curTarget > newMax
-                                                    ) {
-                                                      setTargetScore(
-                                                        selectedDim.id,
-                                                        newMax,
-                                                      );
-                                                    }
-                                                  }}
-                                                />
-                                              }
-                                            >
-                                              <Trash2 className="h-2 w-2" />
-                                            </TooltipTrigger>
-                                            <TooltipContent side="top">
-                                              Delete level
-                                            </TooltipContent>
-                                          </TooltipProvider>
-                                        </Tooltip>
-                                      )}
                                     </div>
                                   );
                                 })}
