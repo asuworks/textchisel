@@ -15,7 +15,7 @@ interface ModelConfig {
 /** Generate evaluation dimensions from user intent */
 export async function apiGenerateDimensions(
   intent: string,
-  config?: ModelConfig,
+  config?: ModelConfig & { count?: number },
 ): Promise<GeneratedDimensions> {
   const res = await fetch("/api/llm/dimensions/generate", {
     method: "POST",
@@ -25,6 +25,46 @@ export async function apiGenerateDimensions(
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "Failed to generate dimensions");
+  }
+  return res.json();
+}
+
+/** Generate 3 suggestion dimensions complementing existing ones */
+export async function apiGenerateSuggestions(
+  intent: string,
+  existingNames: string[],
+  config?: ModelConfig,
+): Promise<GeneratedDimensions> {
+  const res = await fetch("/api/llm/dimensions/suggest", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ intent, existingNames, ...config }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Failed to generate suggestions");
+  }
+  return res.json();
+}
+
+/** Generate a single dimension's description + rubric from a name */
+export async function apiGenerateSingleDimension(
+  name: string,
+  intent: string,
+  config?: ModelConfig,
+): Promise<{
+  name: string;
+  description: string;
+  rubric: Record<string, string>;
+}> {
+  const res = await fetch("/api/llm/dimensions/generate-single", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, intent, ...config }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Failed to generate dimension");
   }
   return res.json();
 }
@@ -118,6 +158,29 @@ export async function apiGenerateDimensionPrompts(
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || "Failed to generate dimension prompts");
+  }
+  return res.json();
+}
+
+/** Generate calibration examples for specific rubric levels (or all) */
+export async function apiGenerateExamples(
+  dimension: {
+    name: string;
+    description: string;
+    rubric: Record<string, string>;
+  },
+  intent: string,
+  levels?: string[],
+  config?: ModelConfig,
+): Promise<Record<string, string>> {
+  const res = await fetch("/api/llm/prompts/examples", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dimension, intent, levels, ...config }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || "Failed to generate examples");
   }
   return res.json();
 }

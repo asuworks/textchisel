@@ -4,6 +4,84 @@
 
 ---
 
+## Data Flow Diagram
+
+```mermaid
+flowchart TD
+    subgraph ui ["Client — React 19"]
+        A["Intent Input"]
+        B["SpiderChart
+        Chart.js + dragdata
+        drag · lock · targets"]
+        G["store — Zustand + Zundo
+        prompt · evaluation · ui slices
+        devtools→persist→temporal→immer"]
+    end
+
+    subgraph processing ["Server — Express + Vercel AI SDK"]
+        C["dimensions
+        generateObject → Dimension[]
+        + Drizzle CRUD"]
+        D["evaluation
+        G-Eval scoring · normalize · cache
+        generateObject per dimension"]
+        E["rewriter
+        meta-prompt construction
+        streamText → revised text"]
+        F["orchestrator
+        evaluate↔rewrite loop
+        convergence · lock fidelity"]
+    end
+
+    subgraph data ["Storage — PGlite (embedded Postgres)"]
+        H[("sessions · dimensions
+        prompt_versions · eval_step_cache
+        Drizzle ORM")]
+    end
+
+    subgraph llm ["LLM Providers"]
+        I["OpenAI · Anthropic · Ollama
+        via Vercel AI SDK"]
+    end
+
+    subgraph contracts ["Shared Contracts"]
+        J["shared/
+        Zod schemas · Drizzle tables · TS types
+        RewriteContext · EvaluationScore"]
+    end
+
+    %% Initial flow: intent → dimensions → evaluation → chart
+    A -->|"① intent"| C
+    C -->|"② dimensions + text"| D
+    D -->|"③ scores 1–5"| B
+
+    %% Refinement loop: drag → orchestrator → chart update
+    B -->|"④ drag targets"| G
+    G -->|"targets + locks"| F
+    F -->|"RewriteContext"| E
+    E -->|"new text"| F
+    F -->|"text + dims"| D
+    D -->|"scores"| F
+    F -..->|"⑤ loop until converged
+    or max iterations"| F
+    F -->|"final text + scores"| G
+    G --> B
+
+    %% LLM calls
+    C -->|generateObject| I
+    D -->|generateObject| I
+    E -->|streamText| I
+
+    %% Persistence
+    C --> H
+    D -->|"eval cache"| H
+
+    %% Contracts feed all modules
+    J -..-> C & D & E & F & G
+```
+
+---
+
 ## Confirmed Tech Stack
 
 | Component         | Choice                                                                  |

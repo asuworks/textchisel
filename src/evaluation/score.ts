@@ -40,9 +40,19 @@ export async function scoreDimension(
 
   let prompt: string;
 
+  // Build calibration anchors from examples if available
+  let examplesSection = "";
+  if (dimension.examples) {
+    const exampleLines = Object.entries(dimension.examples)
+      .sort(([a], [b]) => Number(a) - Number(b))
+      .map(([level, ex]) => `  Level ${level}: "${ex}"`)
+      .join("\n");
+    examplesSection = `\n\nCalibration anchors (text that would score at each level):\n${exampleLines}`;
+  }
+
   if (dimension.evalPrompt) {
     // Tier 1: use generated evaluation methodology
-    prompt = `${dimension.evalPrompt}
+    prompt = `${dimension.evalPrompt}${examplesSection}
 
 Text to evaluate:
 """
@@ -64,14 +74,18 @@ Apply the methodology above. Keep your reasoning brief (2-3 sentences).`;
     prompt = `Evaluate the following text on the dimension "${dimension.name}".
 
 Dimension: ${dimension.name}
-Description: ${dimension.description}${rubricSection}
+Description: ${dimension.description}${rubricSection}${examplesSection}
 
 Text to evaluate:
 """
 ${text}
 """
 
-Evaluate step-by-step: (1) identify what the rubric measures, (2) find concrete evidence in the text, (3) match evidence to the rubric level that fits best. Apply the rubric literally — do not default to a generic quality judgment. Keep your reasoning brief (2-3 sentences).`;
+Evaluate step-by-step:
+(1) Quote the 1-2 specific passages most relevant to this dimension.
+(2) Classify what you found against the rubric levels — which level does your evidence match?
+(3) Assign the score that matches your evidence, not your overall quality impression.
+Apply the rubric literally — do not default to a generic quality judgment. Keep your reasoning brief (2-3 sentences).`;
   }
 
   const { object } = await generateObject({

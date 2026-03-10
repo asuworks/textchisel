@@ -52,12 +52,50 @@ Rubric:
   "4": "Binary forced choice ('Are you free Tuesday or Thursday?')"
   "5": "Presumptive close ('I'll send the calendar invite for Tuesday')"
 
-Make dimensions specific to the user's stated intent. Each dimension should be independently measurable — high performance on one should not imply high performance on another.
+Example — for intent "Write a horror story for teens":
+
+Dimension: "Dread Pacing"
+Description: "How long threats linger unresolved before payoff"
+Rubric:
+  "1": "Each threat introduced and resolved within the same paragraph"
+  "2": "Threats linger 1-2 paragraphs before resolution"
+  "3": "Threats build across 3-5 paragraphs with false resolutions"
+  "4": "Multiple unresolved threats overlap, resolved only at climax"
+  "5": "Central threat introduced early and never fully resolved — lingering dread"
+
+Dimension: "Sensory Grounding"
+Description: "How many senses the prose engages per scene"
+Rubric:
+  "1": "Visual descriptions only — no other senses"
+  "2": "Visual + one other sense (usually sound)"
+  "3": "Three senses per scene (e.g., sight, sound, smell)"
+  "4": "Four senses woven naturally into action"
+  "5": "All five senses present; synesthetic blending (e.g., 'the darkness tasted metallic')"
+
+Example — for intent "Write installation instructions for a CLI tool":
+
+Dimension: "Prerequisite Explicitness"
+Description: "How thoroughly the text enumerates what the reader needs before starting"
+Rubric:
+  "1": "No prerequisites mentioned — assumes reader has everything"
+  "2": "Lists tool names without versions ('requires Node.js')"
+  "3": "Lists tools with version ranges and OS compatibility"
+  "4": "Includes verification commands ('run node -v to confirm')"
+  "5": "Full environment setup: tools, versions, verification, and troubleshooting for common mismatches"
+
+IMPORTANT — User-specified dimensions:
+If the user's intent contains lines starting with "#", treat each as a user-requested dimension. Use the text after "#" as the dimension name (or as guidance for naming). If the user provides rubric levels (e.g., "1: ...", "2: ...") under a "#" line, use them as-is for that dimension's rubric. Generate proper descriptions and fill in any missing rubric levels, but ALWAYS honor the user's explicit dimension requests first. Only generate additional dimensions if the user's "#" lines don't cover enough aspects of the intent (aim for 4-6 total).
+
+If the intent contains no "#" lines, generate all dimensions yourself as described above.
+
+Make dimensions specific to the user's stated intent. Each dimension should be independently measurable — high performance on one should not imply high performance on another. Verify that improving one dimension does not mechanically force another to change; if it does, redesign them as truly independent axes.
 
 The rubric object must have exactly keys "1", "2", "3", "4", "5" with string descriptions as values.`;
 
 export interface GenerateDimensionsOptions {
   model: LanguageModel;
+  /** Total number of dimensions to generate (default: 4-6 via system prompt) */
+  count?: number;
 }
 
 /**
@@ -69,6 +107,58 @@ export interface GenerateDimensionsOptions {
  * @param options - Options including the AI model to use
  * @returns Generated dimensions with names, descriptions, and rubrics
  */
+/**
+ * Generate a single dimension with description and rubric, given a dimension name and intent.
+ * Used when a user types their own dimension name in the "Add Dimension" dialog.
+ */
+/**
+ * Generate suggestion dimensions that complement existing ones.
+ * Returns 3 new dimensions orthogonal to what already exists.
+ */
+export async function generateSuggestionDimensions(
+  intent: string,
+  existingNames: string[],
+  options: { model: LanguageModel },
+): Promise<GeneratedDimensions> {
+  const { object } = await generateObject({
+    model: options.model,
+    schema: DimensionGenerationSchema,
+    schemaName: "DimensionGeneration",
+    schemaDescription:
+      "Evaluation dimensions for scoring text against a writing intent",
+    system: SYSTEM_PROMPT,
+    prompt: `Generate exactly 3 NEW evaluation dimensions for text written with the following intent:\n\n"${intent}"\n\nThese dimensions ALREADY EXIST — do NOT duplicate or overlap with them:\n${existingNames.map((n) => `- ${n}`).join("\n")}\n\nGenerate 3 dimensions that cover DIFFERENT aspects not yet measured by the existing set.`,
+    temperature: 0.6,
+    maxRetries: 3,
+  });
+
+  return object;
+}
+
+export async function generateSingleDimension(
+  name: string,
+  intent: string,
+  options: { model: LanguageModel },
+): Promise<{
+  name: string;
+  description: string;
+  rubric: Record<string, string>;
+}> {
+  const { object } = await generateObject({
+    model: options.model,
+    schema: DimensionGenerationSchema,
+    schemaName: "DimensionGeneration",
+    schemaDescription:
+      "Evaluation dimensions for scoring text against a writing intent",
+    system: SYSTEM_PROMPT,
+    prompt: `Generate exactly 1 evaluation dimension named "${name}" for text written with the following intent:\n\n"${intent}"\n\nThe dimension MUST be named "${name}" (or a close variant). Generate a description and a full 5-level rubric for it.`,
+    temperature: 0.4,
+    maxRetries: 3,
+  });
+
+  return object.dimensions[0];
+}
+
 export async function generateDimensions(
   intent: string,
   options: GenerateDimensionsOptions,
@@ -77,6 +167,10 @@ export async function generateDimensions(
     throw new Error("Intent must be a non-empty string");
   }
 
+  const countInstruction = options.count
+    ? `\n\nGenerate exactly ${options.count} dimensions.`
+    : "";
+
   const { object } = await generateObject({
     model: options.model,
     schema: DimensionGenerationSchema,
@@ -84,7 +178,7 @@ export async function generateDimensions(
     schemaDescription:
       "Evaluation dimensions for scoring text against a writing intent",
     system: SYSTEM_PROMPT,
-    prompt: `Generate evaluation dimensions for text written with the following intent:\n\n"${intent}"`,
+    prompt: `Generate evaluation dimensions for text written with the following intent:\n\n"${intent}"${countInstruction}`,
     temperature: 0.4,
     maxRetries: 3,
   });

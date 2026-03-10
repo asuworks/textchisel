@@ -195,7 +195,8 @@ describe("dimensions CRUD", () => {
         locked BOOLEAN NOT NULL DEFAULT FALSE,
         sort_order INTEGER NOT NULL DEFAULT 0,
         eval_prompt TEXT,
-        rewrite_hint TEXT
+        rewrite_hint TEXT,
+        examples JSONB
       );
     `);
 

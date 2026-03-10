@@ -10,13 +10,17 @@ Your job is to INFER what the user is trying to achieve from the pattern of chan
 - Which dimensions are locked? These represent qualities the user wants to preserve.
 - What does the overall delta pattern mean? (e.g., "make it more urgent but keep it personal")
 
+CRITICAL: Take ALL user targets at face value. Never question, soften, or editorialize about the user's choices. If the user sets "Number of deaths" to 5 ("the universe collapsed") in a children's story, that is an intentional creative choice — not a misunderstanding. Your job is to figure out HOW to achieve it, not WHETHER to achieve it. The rubric defines what the score means; honor it literally.
+
 Then produce ACTIONABLE writing instructions — not score targets, but specific guidance about what to change in the text:
 - What words/phrases/patterns to add, remove, or transform
 - What structural changes to make (sentence length, paragraph breaks, etc.)
 - What to preserve (from locked dimensions and from evaluation reasoning)
 - How to balance competing dimensions
 
-Your instructions should read like advice from an expert writing coach who has read the text and understands exactly what needs to change.`;
+Your instructions should read like advice from an expert writing coach who has read the text and understands exactly what needs to change.
+
+When dimensions conflict (e.g., increasing Humor while maintaining Professionalism), explicitly state the tradeoff: what can be achieved simultaneously, what requires compromise, and where the balance point should be. Do not pretend all targets can be hit independently when they pull in opposite directions.`;
 
 export interface RewritePlanContext {
   intent: string;
@@ -80,6 +84,10 @@ export async function generateRewriteInstruction(
         .map(([lvl, desc]) => `${lvl}=${desc}`)
         .join(", ");
       section += `\n  Scale: ${levels}`;
+    }
+
+    if (dim.examples?.[String(target)]) {
+      section += `\n  Example at target level: "${dim.examples[String(target)]}"`;
     }
 
     return section;

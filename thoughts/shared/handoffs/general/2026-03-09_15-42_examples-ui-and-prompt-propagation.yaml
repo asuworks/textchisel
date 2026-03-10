@@ -1,0 +1,125 @@
+---
+session: general
+date: 2026-03-09
+status: complete
+outcome: PARTIAL_PLUS
+---
+goal: Few-shot examples UI + prompt propagation + popover redesign + Add Dimension modal
+now: Manual LLM smoke test with API key; persist example edits to DB; taint/staleness queue design
+
+test: npm run typecheck && npx vitest run
+
+done_this_session:
+  - task: "Strengthened auto-classification prompt — named authors/genres/styles always get examples"
+    files: [src/prompts/generate.ts]
+  - task: "New generateExamples() function — lighter prompt for example-only generation"
+    files: [src/prompts/generate.ts]
+  - task: "Server route POST /api/llm/prompts/examples + API client apiGenerateExamples()"
+    files: [server/routes/llm.ts, src/shell/api.ts]
+  - task: "Per-example UI: edit (InlineEdit), delete (X), regenerate (Sparkles)"
+    files: [src/shell/App.tsx]
+  - task: "Per-dimension 'Generate examples' button for all levels at once"
+    files: [src/shell/App.tsx]
+  - task: "Popover redesign: score color-coded in header, click-to-set-target with sage bg, vertical action layout"
+    files: [src/shell/App.tsx]
+  - task: "Tooltips on all popover action buttons and TextPanel buttons"
+    files: [src/shell/App.tsx, src/shell/TextPanel.tsx]
+  - task: "Delete level button per rubric level (re-keys remaining levels + examples sequentially)"
+    files: [src/shell/App.tsx]
+  - task: "Examples propagated to ALL prompt call sites (was only in evaluation)"
+    files: [src/rewriter/prompt.ts, src/prompts/rewrite-planner.ts]
+  - task: "rewriteHint propagated to rewriter fallback prompt (was missing)"
+    files: [src/rewriter/prompt.ts]
+  - task: "IntentPanel redesign — minimal shadcn style, font-mono matching TextPanel, ScrollArea"
+    files: [src/shell/IntentPanel.tsx]
+  - task: "TextPanel — ScrollArea, borderless textarea, tooltips on all buttons"
+    files: [src/shell/TextPanel.tsx]
+  - task: "Deleted dead code: DimensionList.tsx, ControlBar.tsx, cleaned barrel + tests"
+    files:
+      [
+        src/shell/DimensionList.tsx,
+        src/shell/ControlBar.tsx,
+        src/shell/index.ts,
+        tests/unit/shell.test.tsx,
+      ]
+  - task: "Add Dimension modal — multi-step dialog with precomputed suggestions"
+    files:
+      [
+        src/shell/AddDimensionDialog.tsx,
+        src/shell/ChartPanel.tsx,
+        src/shell/App.tsx,
+        src/store/index.ts,
+      ]
+  - task: "Generate 3 extra dimensions as suggestions for Add Dimension modal"
+    files:
+      [
+        src/dimensions/generate.ts,
+        server/routes/llm.ts,
+        src/shell/api.ts,
+        src/shell/App.tsx,
+      ]
+  - task: "Single-dimension rubric generation endpoint (POST /api/llm/dimensions/generate-single)"
+    files: [src/dimensions/generate.ts, server/routes/llm.ts, src/shell/api.ts]
+  - task: "ChartPanel refactored — onAddDimension prop replaces inline handleAdd"
+    files: [src/shell/ChartPanel.tsx]
+
+blockers: []
+
+questions:
+  - "Should examples be more directive in prompts? Currently 'Example at target level' — user expected verbatim copying"
+  - "Should manual example edits persist to DB? Currently store-only (lost on hard refresh if PGlite unavailable)"
+
+decisions:
+  - explicit_schema_for_examples: "z.record() fails as top-level generateObject schema. Built z.object with explicit level keys dynamically"
+  - examples_show_target_only: "Rewriter/planner prompts show only the target level's example, not all levels, to keep prompts focused"
+  - click_to_target: "Replaced editable number input with click-on-level to set target. Sage/green background indicates target level"
+  - sparkles_for_both: "Sparkles icon used for both generate and regenerate (no RefreshCw)"
+  - add_dim_modal_flow: "Step 1: name input + suggestion chips. Step 2 (generating): skeleton. Step 3: full rubric editor with inline examples"
+  - suggestions_as_chips: "Precomputed dims shown as rounded-pill chips with chevron, not card blocks"
+  - extra_dim_count: "Generate 9 dims total (6 shown + 3 suggestions), split in handleGenerate"
+
+findings:
+  - prompt_propagation_gap: "Examples were only used in evaluation (score.ts). Rewriter and planner had no access. Fixed: all 4 consumer call sites now include examples"
+  - rewriteHint_gap: "rewriteHint was missing from rewriter fallback prompt (prompt.ts:58-88). Only planner had it. Fixed."
+  - empty_string_falsy: "example ? ... treated '' as no-example. Fixed to example != null"
+  - z_record_top_level: "z.record() as top-level schema for generateObject returns {} or fails validation. Must wrap in z.object()"
+
+worked:
+  - "Dynamic z.object schema with explicit keys for example generation"
+  - "TooltipProvider + Tooltip wrapping buttons with render prop pattern (base-ui)"
+  - "Click-to-target UX — simpler than number input, more discoverable"
+  - "Multi-step dialog with skeleton loading state between name→editor"
+  - "Suggestion chips with ChevronRight affordance — compact and discoverable"
+  - "Inline examples under each rubric level (not grouped at bottom)"
+failed:
+  - "z.record() as top-level generateObject schema — models return empty objects"
+  - "z.object({ examples: z.record() }) — models still return {} without populating the nested record"
+  - "Collapsible examples section at bottom of rubric editor — user wanted inline under each level"
+
+next:
+  - "Design smart taint/staleness queue — when user changes intent, rubric, examples, or targets, mark generated text as stale"
+  - "Discovery interview needed: what actions taint text? What triggers auto-eval vs auto-regenerate? Debounce strategy?"
+  - "Consider: taint levels (cosmetic=re-eval only, structural=regenerate), event coalescing, undo interaction"
+  - "Manual LLM smoke test with API key to verify all prompt improvements end-to-end"
+  - "Persist manual example edits to DB via dbUpdateDimension (currently store-only in popover onCommit handlers)"
+  - "Generate Tier 1 meta-prompts (evalPrompt/rewriteHint) for dims added via Add Dimension modal"
+
+files:
+  created: [src/shell/AddDimensionDialog.tsx]
+  modified:
+    [
+      src/store/index.ts,
+      src/dimensions/generate.ts,
+      server/routes/llm.ts,
+      src/shell/api.ts,
+      src/shell/App.tsx,
+      src/shell/ChartPanel.tsx,
+      src/prompts/generate.ts,
+      src/rewriter/prompt.ts,
+      src/prompts/rewrite-planner.ts,
+      src/shell/IntentPanel.tsx,
+      src/shell/TextPanel.tsx,
+      src/shell/index.ts,
+      tests/unit/shell.test.tsx,
+    ]
+  deleted: [src/shell/DimensionList.tsx, src/shell/ControlBar.tsx]

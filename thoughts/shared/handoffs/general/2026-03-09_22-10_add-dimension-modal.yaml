@@ -1,0 +1,76 @@
+---
+session: general
+date: 2026-03-09
+status: complete
+outcome: SUCCEEDED
+---
+goal: Add Dimension modal with suggestion generation, single-dim rubric gen, and UX polish
+now: Stage and commit all changes (3 commits), update handoff docs
+
+test: npm run typecheck && npx vitest run
+
+done_this_session:
+  - task: "Add Dimension modal — multi-step dialog: name input → skeleton → rubric editor"
+    files: [src/shell/AddDimensionDialog.tsx]
+  - task: "Generate suggestions button — creates 3 dims complementing existing ones"
+    files: [src/dimensions/generate.ts, server/routes/llm.ts, src/shell/api.ts]
+  - task: "Single dimension rubric generation endpoint"
+    files: [src/dimensions/generate.ts, server/routes/llm.ts, src/shell/api.ts]
+  - task: "Store: suggestedDimensions state, setSuggestedDimensions, consumeSuggestion"
+    files: [src/store/index.ts]
+  - task: "ChartPanel refactored — onAddDimension prop, removed inline handleAdd"
+    files: [src/shell/ChartPanel.tsx]
+  - task: "Suggestion chips with tooltip descriptions, regenerate button always visible"
+    files: [src/shell/AddDimensionDialog.tsx]
+  - task: "Deferred suggestion consumption — only consumed on confirm, not on click"
+    files: [src/shell/AddDimensionDialog.tsx]
+  - task: "Separated per-level vs generate-all example loading states"
+    files: [src/shell/AddDimensionDialog.tsx, src/shell/App.tsx]
+  - task: "Fixed ChartPanel dur→cycle typo from external edit"
+    files: [src/shell/ChartPanel.tsx]
+
+blockers: []
+
+questions:
+  - "Should dims added via modal also get Tier 1 meta-prompts (evalPrompt/rewriteHint) auto-generated?"
+
+decisions:
+  - suggestion_on_demand: "Suggestions generated on-demand via button, not precomputed during initial generation"
+  - deferred_consume: "Suggestion chips only consumed on 'Add to chart' confirm, not on selection"
+  - separate_loading_states: "Per-level sparkle and generate-all sparkle have independent loading state"
+  - modal_steps: "3 steps: name (with suggestions) → generating skeleton → rubric editor"
+
+findings:
+  - count_param_kept: "count param on generateDimensions kept but not used in handleGenerate (was for split approach, now unused)"
+
+worked:
+  - "TooltipProvider wrapping each suggestion chip for description preview"
+  - "Skeleton loading state between name→editor step"
+  - "generateSuggestionDimensions with existing names exclusion"
+  - "Additive Set updates for generatingExamples (spread prev + new levels)"
+failed:
+  - "Initial approach: generate 9 dims upfront, split 6+3 — user preferred on-demand generation"
+  - "Collapsible examples section at bottom — user wanted inline under each rubric level"
+
+next:
+  - "Stage and commit all changes in 3 commits: (1) prompt enhancement + propagation, (2) add dimension modal, (3) handoffs + docs"
+  - "Generate Tier 1 meta-prompts for dims added via Add Dimension modal"
+  - "Persist manual example edits to DB"
+  - "Design taint/staleness queue"
+  - "Clean up unused count param from apiGenerateDimensions if not needed"
+
+files:
+  created:
+    [
+      src/shell/AddDimensionDialog.tsx,
+      thoughts/shared/handoffs/general/2026-03-09_22-10_add-dimension-modal.yaml,
+    ]
+  modified:
+    [
+      src/store/index.ts,
+      src/dimensions/generate.ts,
+      server/routes/llm.ts,
+      src/shell/api.ts,
+      src/shell/App.tsx,
+      src/shell/ChartPanel.tsx,
+    ]

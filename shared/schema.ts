@@ -35,6 +35,7 @@ export const dimensions = pgTable("dimensions", {
   sortOrder: integer("sort_order").notNull().default(0),
   evalPrompt: text("eval_prompt"),
   rewriteHint: text("rewrite_hint"),
+  examples: jsonb("examples").$type<Record<string, string>>(),
 });
 
 // --- Prompt Versions (immutable snapshots) ---

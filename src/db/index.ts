@@ -86,6 +86,7 @@ async function doInit(): Promise<{ pglite: AnyPGlite; db: ReturnType<typeof driz
   await pglite.exec(`
     ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS eval_prompt TEXT;
     ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS rewrite_hint TEXT;
+    ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS examples JSONB;
   `)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

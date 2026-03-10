@@ -65,6 +65,7 @@ export async function updateDimension(
       | "locked"
       | "evalPrompt"
       | "rewriteHint"
+      | "examples"
     >
   >,
 ): Promise<Dimension | null> {

@@ -1,0 +1,96 @@
+---
+session: general
+date: 2026-03-09
+status: partial
+outcome: PARTIAL_PLUS
+---
+goal: "PGlite resilience (worker mode + ensureDb + graceful degradation) and chart label hover fix (bounding box)"
+now: "Test PGlite worker in browser; API key smoke test for meta-prompting pipeline; delete unused ControlBar.tsx and drawer components"
+
+test: "npx tsc --noEmit && npx vitest run"
+
+done_this_session:
+  - task: "PGlite worker mode: tries Web Worker first, falls back to direct, then graceful degradation"
+    files: [src/db/index.ts, src/db/pglite.worker.ts]
+  - task: "Replace synchronous getDb() with async ensureDb() returning null on failure"
+    files:
+      [
+        src/db/index.ts,
+        src/db/queries.ts,
+        src/dimensions/crud.ts,
+        src/evaluation/cache.ts,
+      ]
+  - task: "All DB consumers handle null gracefully (empty arrays, null returns, no-ops)"
+    files: [src/db/queries.ts, src/dimensions/crud.ts, src/evaluation/cache.ts]
+  - task: "App.tsx generates client-side UUIDs when DB unavailable"
+    files: [src/shell/App.tsx]
+  - task: "Chart label hover: replaced misaligned circle with rounded-rect using _pointLabelItems bounding box"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Label hit-testing: uses left/top/right/bottom bounding box instead of center+radius"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Popover anchor: uses bounding box center instead of labelCenter() calculation"
+    files: [src/chart/SpiderChart.tsx]
+  - task: "Updated all test mocks from getDb to ensureDb"
+    files:
+      [
+        tests/unit/dimensions.test.ts,
+        tests/unit/evaluation.test.ts,
+        tests/integration/dimensions-evaluation.test.ts,
+        tests/integration/prompt-versions.test.ts,
+        tests/integration/session-lifecycle.test.ts,
+      ]
+  - task: "4 logical commits: shadcn+meta-prompting, UI redesign, PGlite resilience, tests+handoffs"
+    files: []
+
+blockers:
+  - "PGlite WASM memory error persists in WSL2 — WebAssembly.Memory could not allocate. Worker mode may help (untested in browser yet)"
+
+questions:
+  - "Does PGlite Web Worker actually resolve the WASM memory issue in WSL2, or is it a system-level memory constraint?"
+  - "Should we consider switching to sql.js (SQLite WASM) which has much smaller memory footprint?"
+
+decisions:
+  - ensureDb_returns_null: "ensureDb() returns null instead of throwing when PGlite unavailable — consumers handle gracefully with defaults"
+  - worker_first: "Try PGlite in Web Worker first (separate memory space), fall back to direct, then localStorage-only"
+  - bounding_box_hover: "Use _pointLabelItems.left/top/right/bottom for hover highlight instead of computed center — eliminates alignment issues"
+  - client_uuid_fallback: "App.tsx uses crypto.randomUUID() when createSession/createDimensions return null"
+
+findings:
+  - pointLabelItems_bbox: "Chart.js _pointLabelItems has left/top/right/bottom bounding box — use directly for hit-testing and highlights, never compute center manually"
+  - wasm_memory_not_idb: "WASM memory allocation failure is NOT caused by corrupted IndexedDB — clearing IDB doesn't help. It's a system memory constraint"
+  - pglite_worker_export: "PGlite has @electric-sql/pglite/worker with PGliteWorker class that runs in Web Worker"
+
+worked:
+  - "Using _pointLabelItems bounding box (left/top/right/bottom) directly for rounded-rect highlight — perfectly aligned"
+  - "ensureDb() pattern: async, returns null on failure, consumers use early-return guards"
+  - "Idempotent initPromise with reset on failure for retry capability"
+
+failed:
+  - "labelCenter() with textAlign offset for circle highlight — consistently misaligned across 3+ attempts"
+  - "Clearing IndexedDB to fix WASM memory — the error is at WASM instantiation, before any IDB access"
+
+next:
+  - "Test PGlite worker in browser — verify if Web Worker resolves WASM memory in WSL2"
+  - "If worker fails too: consider sql.js or accept localStorage-only mode"
+  - "API key smoke test for meta-prompting pipeline (carried over 3+ sessions)"
+  - "Delete unused ControlBar.tsx and drawer components (src/components/ui/drawer.tsx, sheet.tsx)"
+  - "Phase 2: State architecture refactor — move remaining App.tsx useState to Zustand"
+  - "Phase 5: Auto-evaluation + streaming display"
+  - "Phase 6: Version timeline + diffs"
+
+files:
+  created:
+    - src/db/pglite.worker.ts
+  modified:
+    - src/db/index.ts
+    - src/db/queries.ts
+    - src/dimensions/crud.ts
+    - src/evaluation/cache.ts
+    - src/shell/App.tsx
+    - src/chart/SpiderChart.tsx
+    - src/main.tsx
+    - tests/unit/dimensions.test.ts
+    - tests/unit/evaluation.test.ts
+    - tests/integration/dimensions-evaluation.test.ts
+    - tests/integration/prompt-versions.test.ts
+    - tests/integration/session-lifecycle.test.ts

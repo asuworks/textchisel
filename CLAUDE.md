@@ -33,8 +33,8 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 
 ## Current Phase
 
-**Phase 5 (Integration)** — IN PROGRESS
-Phases 1-8 of integration plan complete: PGlite persistence, store wiring, orchestrator E2E, streaming fix, error boundary. Remaining: manual LLM smoke test verification (requires API key).
+**Phase 6 (Prompt Enhancement)** — COMPLETE
+Prompt quality improvements across all 5 LLM call sites. Few-shot examples per rubric level (auto-classified: only categorical/stylistic/qualitative rubrics get examples). Evidence-first evaluation. Target-prominent initial generation. User-specified dimensions via `#` lines in intent. Conflict resolution in rewrite planner. Remaining: manual LLM smoke test verification (requires API key).
 
 See `.devcontext/phase.md` for detailed progress.
 

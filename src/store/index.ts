@@ -22,8 +22,16 @@ interface EvaluationState {
   lockedDimensions: Record<string, boolean>;
 }
 
+/** Suggested dimension (precomputed but not yet added to session) */
+export interface SuggestedDimension {
+  name: string;
+  description: string;
+  rubric: Record<string, string>;
+}
+
 interface UIState {
   sidebarOpen: boolean;
+  suggestedDimensions: SuggestedDimension[];
 }
 
 interface Actions {
@@ -44,7 +52,12 @@ interface Actions {
     updates: Partial<
       Pick<
         Dimension,
-        "name" | "description" | "rubric" | "evalPrompt" | "rewriteHint"
+        | "name"
+        | "description"
+        | "rubric"
+        | "evalPrompt"
+        | "rewriteHint"
+        | "examples"
       >
     >,
   ) => void;
@@ -57,6 +70,8 @@ interface Actions {
 
   // UI actions
   toggleSidebar: () => void;
+  setSuggestedDimensions: (dims: SuggestedDimension[]) => void;
+  consumeSuggestion: (index: number) => void;
 }
 
 export type AppState = SessionState & EvaluationState & UIState & Actions;
@@ -166,9 +181,18 @@ export const useAppStore = create<AppState>()(
 
           // --- UI state ---
           sidebarOpen: true,
+          suggestedDimensions: [],
           toggleSidebar: () =>
             set((state) => {
               state.sidebarOpen = !state.sidebarOpen;
+            }),
+          setSuggestedDimensions: (dims) =>
+            set((state) => {
+              state.suggestedDimensions = dims;
+            }),
+          consumeSuggestion: (index) =>
+            set((state) => {
+              state.suggestedDimensions.splice(index, 1);
             }),
         })),
         {
@@ -194,6 +218,7 @@ export const useAppStore = create<AppState>()(
           targetScores: state.targetScores,
           lockedDimensions: state.lockedDimensions,
           sidebarOpen: state.sidebarOpen,
+          suggestedDimensions: state.suggestedDimensions,
         }),
       },
     ),

@@ -80,6 +80,14 @@ Apply the instructions above. Output only the rewritten text.`,
       }
     }
 
+    if (dim.rewriteHint) {
+      line += `\n  Writing guide: ${dim.rewriteHint}`;
+    }
+
+    if (dim.examples?.[String(target)]) {
+      line += `\n  Example at target level: "${dim.examples[String(target)]}"`;
+    }
+
     if (currentScores[dim.id]?.reasoning) {
       line += `\n  Current assessment: ${currentScores[dim.id].reasoning}`;
     }
@@ -103,26 +111,35 @@ ${dimensionLines.join("\n\n")}
 
 Rewrite the text to move scores toward the targets. For locked dimensions, maintain the current quality level. Focus most effort on dimensions with the largest positive deltas.`;
   } else {
-    // Initial generation — build lines that emphasize rubric at target level
+    // Initial generation — target level is prominent, scale is context
     const initialLines = sorted.map((dim) => {
       const target = targetScores[dim.id] ?? 3;
       let line = `- **${dim.name}** (${dim.description})`;
-      line += `\n  Target score: ${target}/5`;
       if (dim.rubric) {
         const rubricAtTarget = dim.rubric[String(target)];
         if (rubricAtTarget) {
-          line += ` — "${rubricAtTarget}"`;
+          line += `\n  → HIT THIS (${target}/5): "${rubricAtTarget}"`;
+        } else {
+          line += `\n  → Target: ${target}/5`;
         }
-        // Show full rubric scale for context
-        const levels = Object.entries(dim.rubric)
+        // Show scale as compact context
+        const contextLevels = Object.entries(dim.rubric)
           .sort(([a], [b]) => Number(a) - Number(b))
+          .filter(([lvl]) => lvl !== String(target))
           .map(([lvl, desc]) => `${lvl}=${desc}`)
           .join(", ");
-        line += `\n  Scale: ${levels}`;
+        if (contextLevels) {
+          line += `\n  Scale context: ${contextLevels}`;
+        }
+      } else {
+        line += `\n  → Target: ${target}/5`;
       }
       // Include Tier 1 writing guide when available
       if (dim.rewriteHint) {
         line += `\n  Writing guide: ${dim.rewriteHint}`;
+      }
+      if (dim.examples?.[String(target)]) {
+        line += `\n  Example at target level: "${dim.examples[String(target)]}"`;
       }
       return line;
     });

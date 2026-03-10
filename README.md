@@ -1,108 +1,91 @@
 # textchisel
 
-A prompt engineering workbench that helps users iteratively refine LLM prompts through visual feedback. Describe your writing intent, get evaluation dimensions, score text on a spider chart, drag chart points to set targets, and watch the system rewrite toward your goals.
+A visual workbench for shaping AI-generated text. Tell it what you want to write, then drag a chart to control _how_ it's written.
 
-## Architecture
+> **Technical details?** See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, architecture, and development guide.
 
-```mermaid
-flowchart TD
-    subgraph ui ["Client — React 19"]
-        A["Intent Input"]
-        B["SpiderChart
-        Chart.js + dragdata
-        drag · lock · targets"]
-        G["store — Zustand + Zundo
-        prompt · evaluation · ui slices
-        devtools→persist→temporal→immer"]
-    end
+## The Problem
 
-    subgraph processing ["Server — Express + Vercel AI SDK"]
-        C["dimensions
-        generateObject → Dimension[]
-        + Drizzle CRUD"]
-        D["evaluation
-        G-Eval scoring · normalize · cache
-        generateObject per dimension"]
-        E["rewriter
-        meta-prompt construction
-        streamText → revised text"]
-        F["orchestrator
-        evaluate↔rewrite loop
-        convergence · lock fidelity"]
-    end
+When you ask an AI to write something, you get one version. If it's not right, you rewrite your prompt and try again. You're navigating a huge space of possible outputs by typing words into a box and hoping.
 
-    subgraph data ["Storage — PGlite (embedded Postgres)"]
-        H[("sessions · dimensions
-        prompt_versions · eval_step_cache
-        Drizzle ORM")]
-    end
+textchisel gives you a map of that space — and lets you steer.
 
-    subgraph llm ["LLM Providers"]
-        I["OpenAI · Anthropic · Ollama
-        via Vercel AI SDK"]
-    end
+## How It Works
 
-    subgraph contracts ["Shared Contracts"]
-        J["shared/
-        Zod schemas · Drizzle tables · TS types
-        RewriteContext · EvaluationScore"]
-    end
+### 1. Describe what you want
 
-    %% Initial flow: intent → dimensions → evaluation → chart
-    A -->|"① intent"| C
-    C -->|"② dimensions + text"| D
-    D -->|"③ scores 1–5"| B
+You type a writing intent in plain language:
 
-    %% Refinement loop: drag → orchestrator → chart update
-    B -->|"④ drag targets"| G
-    G -->|"targets + locks"| F
-    F -->|"RewriteContext"| E
-    E -->|"new text"| F
-    F -->|"text + dims"| D
-    D -->|"scores"| F
-    F -..->|"⑤ loop until converged
-    or max iterations"| F
-    F -->|"final text + scores"| G
-    G --> B
+> "Write a bedtime story for a 5-year-old about a penguin who wants to fly"
 
-    %% LLM calls
-    C -->|generateObject| I
-    D -->|generateObject| I
-    E -->|streamText| I
+### 2. The system figures out what "good" means
 
-    %% Persistence
-    C --> H
-    D -->|"eval cache"| H
+An AI reads your intent and generates **evaluation dimensions** — the qualities that matter for this specific piece of writing. For the penguin story, it might create:
 
-    %% Contracts feed all modules
-    J -..-> C & D & E & F & G
-```
+| Dimension           | What it measures                                    |
+| ------------------- | --------------------------------------------------- |
+| Imagination         | How creative and fantastical the story elements are |
+| Emotional Warmth    | How comforting and tender the narrative feels       |
+| Humor               | How funny and playful the writing is                |
+| Age-Appropriateness | How well it matches a 5-year-old's comprehension    |
+| Narrative Arc       | How complete the beginning-middle-end structure is  |
 
-### Data flow
+Each dimension comes with a **rubric** — a scale from 1 to 5 with written descriptions of what each level means. This isn't a vague "rate 1-5" — level 3 of Humor means something specific and different from level 3 of Emotional Warmth. For stylistic and qualitative dimensions, the system also generates **calibration examples** — short text samples that show what each rubric level looks like in practice.
 
-1. User describes writing **intent** (e.g. "Write a cold email to a Series B investor")
-2. **dimensions** module generates 3 evaluation dimensions with rubrics via LLM
-3. **evaluation** module scores the text on each dimension using G-Eval (1–5 scale)
-4. Scores appear on the **spider chart** — user drags points to set target scores, locks dimensions to preserve
-5. **orchestrator** runs the refinement loop:
-   - **rewriter** constructs a meta-prompt from current scores, targets, and locks, then streams revised text
-   - **evaluation** re-scores the new text
-   - Loop repeats until scores converge to targets or max iterations reached
-   - Lock fidelity is checked each iteration — deviations on locked dimensions are flagged
+You can also **specify your own dimensions** by adding `#` lines to your intent:
 
-### Module boundaries
+> Write a bedtime story for a 5-year-old about a penguin who wants to fly
+> \# Emotional Warmth
+> \# Number of deaths in the story
+> 1: one death
+> 2: 3-5 deaths
+> 5: the universe collapsed
 
-All modules import types exclusively from `shared/`. Peer modules (dimensions, evaluation, chart) never import from each other. The orchestrator receives scoring and rewriting functions via dependency injection rather than importing them directly.
+### 3. First draft, scored
 
-### Tech stack
+The system writes a first draft and immediately scores it against every dimension. A spider chart (radar chart) displays the results — you can see at a glance where the text is strong and where it falls short.
 
-| Layer    | Technology                                         |
-| -------- | -------------------------------------------------- |
-| Frontend | React 19, Vite, Tailwind CSS v4                    |
-| State    | Zustand + Zundo (undo/redo), PGlite `useLiveQuery` |
-| Chart    | Chart.js + chartjs-plugin-dragdata                 |
-| LLM      | Vercel AI SDK (`generateObject`, `streamText`)     |
-| Database | PGlite (embedded Postgres) + Drizzle ORM           |
-| Server   | Express (serves UI + proxies LLM calls)            |
-| Quality  | qlty CLI (ESLint 9 + Prettier + osv-scanner)       |
-| Tests    | Vitest + jsdom + @testing-library/react            |
+### 4. Drag to reshape
+
+Here's the key interaction: **you drag the chart points to set targets**.
+
+Want more humor and less emotional warmth? Pull the Humor axis to 5 and Warmth down to 1. The chart now shows two overlapping shapes — where the text _is_ (current scores) and where you want it to _be_ (your targets).
+
+### 5. The system rewrites to match
+
+Hit "Refine" and the AI rewrites the text to hit your targets. It doesn't just retry randomly — it knows exactly which dimensions to push up and which to pull back, guided by the rubrics. The sentimental penguin story becomes a slapstick comedy where the penguin keeps crashing into things.
+
+### 6. Keep going
+
+Each rewrite is scored again. Drag again. Refine again. Every version is saved as an immutable snapshot — you can always go back. The loop continues until the text feels right.
+
+## What makes this different from "just prompting"
+
+- **You see the quality space.** Instead of guessing what to type, you see dimensions on a chart and drag toward what you want.
+- **The rubrics are specific.** The AI generates precise, per-dimension scoring criteria — not generic "rate this 1-5."
+- **It's a closed loop.** Score, adjust targets, rewrite, re-score. The system converges toward your intent rather than random-walking through prompt variations.
+- **Every version is preserved.** You never lose a good draft while chasing a better one.
+
+## Where this is useful
+
+textchisel is most powerful when the same intent needs to produce different text depending on audience, channel, or tone:
+
+- **Marketing** — Generate A/B copy variants by dragging urgency, trust, and brand voice to different positions
+- **Legal** — Same clause rewritten for lawyers (high precision) vs. consumers (high readability)
+- **Medical** — Turn clinical notes into patient instructions by adjusting literacy level and anxiety reduction
+- **Education** — Explain a concept to a 10-year-old vs. a PhD student — same topic, different depth and vocabulary
+- **HR / diplomacy** — Find the right blend of directness and warmth for difficult conversations
+- **Documentation** — Same feature described as a quickstart, API reference, or tutorial
+- **Support** — Match empathy and policy strictness to complaint severity
+
+The common pattern: **any writing task where quality is multi-dimensional and audience-dependent**.
+
+## Try it
+
+> Write a bedtime story for a 5-year-old about a penguin who wants to fly
+
+Enter this as your intent. Watch the dimensions appear. Drag the chart around. See how the same story transforms as you move through the space of possible versions.
+
+## License
+
+MIT

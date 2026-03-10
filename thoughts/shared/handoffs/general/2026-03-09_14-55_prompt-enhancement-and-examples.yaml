@@ -1,0 +1,112 @@
+---
+session: general
+date: 2026-03-09
+status: complete
+outcome: PARTIAL_MINUS
+---
+goal: Prompt enhancement across all 5 LLM call sites + few-shot examples per rubric level
+now: Add ability to manually add/auto-generate few-shot examples for rubrics that don't have them
+
+test: npm run typecheck && npx vitest run
+
+done_this_session:
+  - task: "Diverse few-shot examples in dimension generation system prompt (horror, CLI docs + orthogonality check)"
+    files: [src/dimensions/generate.ts]
+  - task: "User-specified dimensions via # lines in intent — explicit instruction, not emergent behavior"
+    files: [src/dimensions/generate.ts]
+  - task: "Evidence-first evaluation — quote→classify→score pattern in fallback template"
+    files: [src/evaluation/score.ts]
+  - task: "Deterministic evalPrompt instruction (count/identify/classify, not assess/consider)"
+    files: [src/prompts/generate.ts]
+  - task: "Conflict resolution + no-editorializing in rewrite planner"
+    files: [src/prompts/rewrite-planner.ts]
+  - task: "Target-prominent initial generation — HIT THIS format with scale as context"
+    files: [src/rewriter/prompt.ts]
+  - task: "Few-shot examples feature — schema, prompt, DB migration, eval anchors, UI"
+    files:
+      [
+        shared/schema.ts,
+        shared/types.ts,
+        src/prompts/generate.ts,
+        src/db/index.ts,
+        src/evaluation/score.ts,
+        src/shell/App.tsx,
+        src/dimensions/crud.ts,
+        src/store/index.ts,
+      ]
+  - task: "Auto-classify rubric types — only categorical/stylistic/qualitative get examples, count/density skip"
+    files: [src/prompts/generate.ts]
+  - task: "Examples visible inline in Popover under each rubric level (editable via InlineEdit)"
+    files: [src/shell/App.tsx]
+  - task: "README split — non-technical README.md + technical CONTRIBUTING.md"
+    files: [README.md, CONTRIBUTING.md]
+  - task: "Mermaid diagram moved to architecture.md"
+    files: [.devcontext/architecture.md]
+  - task: "Test migrations updated for examples JSONB column"
+    files:
+      [
+        tests/unit/dimensions.test.ts,
+        tests/integration/dimensions-evaluation.test.ts,
+        tests/integration/prompt-versions.test.ts,
+        tests/integration/session-lifecycle.test.ts,
+      ]
+
+blockers: []
+
+questions:
+  - "Should DimensionList.tsx be deleted? Confirmed dead code (exported but never imported)"
+
+decisions:
+  - examples_optional: "Zod schema uses .optional() — LLM auto-classifies rubric type and skips examples for count/density rubrics"
+  - no_structured_planner: "Dropped structured rewrite planner (preserve/add/remove/transform) — free-form instructions work fine, added conflict sentence instead"
+  - no_iteration_history: "Deferred iteration history in refine loop — wait for real usage patterns before adding complexity"
+  - hash_line_parsing: "Made # dimension hints an explicit instruction rather than emergent LLM behavior"
+
+findings:
+  - rubric_type_classification: "Count-based and density rubrics don't need examples (numbers are the anchor). Categorical/stylistic/qualitative do."
+  - editorializing_problem: "Rewrite planner was second-guessing user targets ('seems to be a misunderstanding'). Fixed with explicit 'take at face value' instruction."
+  - target_prominence: "LLMs drift toward middle scores when shown full rubric scale equally. Leading with target level improves first-generation quality."
+
+worked:
+  - "Auto-classification of rubric types for example generation"
+  - "Evidence-first evaluation pattern (quote→classify→score)"
+  - "Explicit # line parsing instruction"
+failed:
+  - "Emergent # line parsing broke when system prompt grew with more few-shot examples"
+
+next:
+  - "Add UI to manually add few-shot examples for rubrics that don't have them (e.g., an 'Add example' button per level)"
+  - "Add auto-generate button to generate examples on demand for dimensions missing them"
+  - "Delete DimensionList.tsx (confirmed dead code)"
+  - "Manual LLM smoke test with API key to verify all prompt improvements"
+  - "Consider: should examples be shown/hidden with a toggle, or always visible when present?"
+
+files:
+  created:
+    [
+      CONTRIBUTING.md,
+      thoughts/shared/handoffs/general/2026-03-09_14-55_prompt-enhancement-and-examples.yaml,
+    ]
+  modified:
+    [
+      README.md,
+      CLAUDE.md,
+      .devcontext/architecture.md,
+      shared/schema.ts,
+      shared/types.ts,
+      src/dimensions/generate.ts,
+      src/evaluation/score.ts,
+      src/prompts/generate.ts,
+      src/prompts/rewrite-planner.ts,
+      src/rewriter/prompt.ts,
+      src/db/index.ts,
+      src/shell/App.tsx,
+      src/shell/ChartPanel.tsx,
+      src/shell/DimensionList.tsx,
+      src/dimensions/crud.ts,
+      src/store/index.ts,
+      tests/unit/dimensions.test.ts,
+      tests/integration/dimensions-evaluation.test.ts,
+      tests/integration/prompt-versions.test.ts,
+      tests/integration/session-lifecycle.test.ts,
+    ]

@@ -1,7 +1,14 @@
 import { Router } from "express";
 import { createModel } from "../model.js";
-import { generateDimensions } from "../../src/dimensions/generate.js";
-import { generateDimensionPrompts } from "../../src/prompts/generate.js";
+import {
+  generateDimensions,
+  generateSingleDimension,
+  generateSuggestionDimensions,
+} from "../../src/dimensions/generate.js";
+import {
+  generateDimensionPrompts,
+  generateExamples,
+} from "../../src/prompts/generate.js";
 import { generateRewriteInstruction } from "../../src/prompts/rewrite-planner.js";
 import { scoreAllDimensions } from "../../src/evaluation/score.js";
 import { rewriteText, rewriteTextFull } from "../../src/rewriter/stream.js";
@@ -24,16 +31,57 @@ function getModelConfig(body: Record<string, unknown>) {
 // Body: { intent: string, provider?, modelId? }
 llmRouter.post("/dimensions/generate", async (req, res) => {
   try {
-    const { intent } = req.body;
+    const { intent, count } = req.body;
     if (!intent || typeof intent !== "string") {
       res.status(400).json({ error: "intent is required" });
       return;
     }
     const model = getModelConfig(req.body);
-    const result = await generateDimensions(intent, { model });
+    const result = await generateDimensions(intent, {
+      model,
+      count: typeof count === "number" ? count : undefined,
+    });
     res.json(result);
   } catch (err) {
     console.error("dimensions/generate error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/llm/dimensions/generate-single
+// Body: { name: string, intent: string, provider?, modelId? }
+llmRouter.post("/dimensions/generate-single", async (req, res) => {
+  try {
+    const { name, intent } = req.body;
+    if (!name || !intent) {
+      res.status(400).json({ error: "name and intent are required" });
+      return;
+    }
+    const model = getModelConfig(req.body);
+    const result = await generateSingleDimension(name, intent, { model });
+    res.json(result);
+  } catch (err) {
+    console.error("dimensions/generate-single error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/llm/dimensions/suggest
+// Body: { intent: string, existingNames: string[], provider?, modelId? }
+llmRouter.post("/dimensions/suggest", async (req, res) => {
+  try {
+    const { intent, existingNames } = req.body;
+    if (!intent || !Array.isArray(existingNames)) {
+      res.status(400).json({ error: "intent and existingNames are required" });
+      return;
+    }
+    const model = getModelConfig(req.body);
+    const result = await generateSuggestionDimensions(intent, existingNames, {
+      model,
+    });
+    res.json(result);
+  } catch (err) {
+    console.error("dimensions/suggest error:", err);
     res.status(500).json({ error: String(err) });
   }
 });
@@ -81,6 +129,31 @@ llmRouter.post("/prompts/generate", async (req, res) => {
     res.json(result);
   } catch (err) {
     console.error("prompts/generate error:", err);
+    res.status(500).json({ error: String(err) });
+  }
+});
+
+// POST /api/llm/prompts/examples
+// Body: { dimension: { name, description, rubric }, intent, levels?: string[], provider?, modelId? }
+llmRouter.post("/prompts/examples", async (req, res) => {
+  try {
+    const { dimension, intent, levels } = req.body;
+    if (!dimension || !intent) {
+      res.status(400).json({ error: "dimension and intent are required" });
+      return;
+    }
+    const model = getModelConfig(req.body);
+    const examples = await generateExamples({
+      name: dimension.name,
+      description: dimension.description,
+      rubric: dimension.rubric,
+      intent,
+      model,
+      levels: levels ?? undefined,
+    });
+    res.json(examples);
+  } catch (err) {
+    console.error("prompts/examples error:", err);
     res.status(500).json({ error: String(err) });
   }
 });

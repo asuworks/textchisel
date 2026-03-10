@@ -100,6 +100,12 @@ export const DimensionPromptsSchema = z.object({
     .describe(
       "Writing guide: what this dimension controls and how text changes at each level",
     ),
+  examples: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe(
+      "One short example sentence (1-2 sentences) per rubric level that would score at that level. Keys are rubric level numbers as strings.",
+    ),
 });
 
 export type DimensionPrompts = z.infer<typeof DimensionPromptsSchema>;
