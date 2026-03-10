@@ -247,6 +247,47 @@ The user must be able to distinguish editable from read-only elements at a glanc
 - Escape reverts to the previous value. Enter/blur commits.
 - Tab should advance to the next editable field (standard form behavior).
 
+### 3.2.1 InlineEdit Implementation Rules (Learned)
+
+These rules were established through iterative refinement. Follow them for ALL `InlineEdit` usage.
+
+**Zero layout shift between read/edit modes:**
+
+| Rule                                                                  | Why                                                                                   |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Use a plain `<textarea>` — NOT the shadcn `<Textarea>` component      | shadcn Textarea bakes in `text-base md:text-sm` which overrides caller font sizes     |
+| Both modes must be `display: block`                                   | A `<span>` (inline) and `<textarea>` (block) have different sizing in flex containers |
+| Caller's `className` applies to BOTH modes via a shared class string  | Font size, weight, color must be identical in read and edit modes                     |
+| Never put `w-full` in shared classes                                  | Breaks `flex-1` callers — let the parent flex/grid control width                      |
+| Use `ring-inset` for focus/edit rings                                 | Outset rings push neighboring elements, causing layout shift                          |
+| Ring opacity should be very low: `ring-ring/20`, focus `ring-ring/30` | Subtle, doesn't visually dominate the content                                         |
+| Use `[field-sizing:content]` on the textarea                          | Auto-sizes height to match content, like the read-mode span                           |
+| Add `maxHeight` prop (default `max-h-24`) with `overflow-y-auto`      | Prevents long text from infinitely growing the container                              |
+| Use `leading-snug` not fixed `leading-5`                              | Line-height must scale with font size — fixed breaks at `text-[10px]`                 |
+| Use `py-1` padding, `rounded`                                         | Consistent box model for all font sizes                                               |
+
+**Popover/dialog level rows — layout rules:**
+
+| Rule                                      | Implementation                                                                               |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Row layout: `[number] [content] [delete]` | Three siblings in a flex row                                                                 |
+| Row alignment: `items-start`              | Number and trash align to top, content flows naturally                                       |
+| Number + trash: `pt-1` / `mt-1` offset    | Aligns with InlineEdit's `py-1` internal padding                                             |
+| Full-width target highlight               | `-mx-{popover-padding} px-{popover-padding}` — negative margin bleeds to edges, no `rounded` |
+| Target color: slate not green             | `bg-slate-100 dark:bg-slate-800/30` — neutral, not semantic                                  |
+| Level number: `cursor-pointer` on hover   | Indicates clickability for setting target                                                    |
+| Score display: muted                      | `text-muted-foreground/60 font-medium` — informational, not attention-grabbing               |
+| "+ add" button box model                  | Must match InlineEdit's `rounded px-1 py-1 leading-snug` to prevent height change on switch  |
+
+**Icon sizing consistency:**
+
+| Context                             | Icon size                      |
+| ----------------------------------- | ------------------------------ |
+| Inline action buttons (example row) | `h-1.5 w-1.5` (Sparkles, X)    |
+| Level delete (trash)                | `h-2 w-2` (Trash2)             |
+| Footer action buttons               | `h-2.5 w-2.5` (Plus, Sparkles) |
+| Header delete (dimension)           | `h-3.5 w-3.5` (Trash2)         |
+
 **For always-editable fields (intent textarea):**
 
 - Show a persistent border. This is a primary input; it should look like an input at all times.
