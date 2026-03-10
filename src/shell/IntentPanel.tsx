@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 
 interface IntentPanelProps {
   intent: string;
   onIntentChange: (intent: string) => void;
   onGenerate: () => void;
   isGenerating: boolean;
-  hasDimensions: boolean;
 }
 
 export function IntentPanel({
@@ -15,48 +15,30 @@ export function IntentPanel({
   onIntentChange,
   onGenerate,
   isGenerating,
-  hasDimensions,
 }: IntentPanelProps) {
-  const [isEditing, setIsEditing] = useState(!hasDimensions);
-
   return (
-    <div className="space-y-3">
-      <label className="text-sm font-medium text-foreground">
-        Writing Intent
-      </label>
-      {isEditing || !hasDimensions ? (
-        <>
-          <Textarea
-            value={intent}
-            onChange={(e) => onIntentChange(e.target.value)}
-            placeholder="Describe the text you want to write (e.g., 'A professional email declining a meeting invitation')"
-            rows={3}
-            disabled={isGenerating}
-            className="text-sm"
-          />
-          <Button
-            onClick={onGenerate}
-            disabled={!intent.trim() || isGenerating}
-            className="w-full"
-          >
-            {isGenerating ? "Generating\u2026" : "Generate"}
-          </Button>
-        </>
-      ) : (
-        <div className="flex items-start gap-2">
-          <p className="flex-1 text-sm italic text-muted-foreground">
-            {intent}
-          </p>
-          <Button
-            variant="link"
-            size="sm"
-            onClick={() => setIsEditing(true)}
-            className="h-auto shrink-0 p-0 text-xs"
-          >
-            Edit
-          </Button>
-        </div>
-      )}
+    <div className="flex h-full flex-col gap-3">
+      <h2 className="shrink-0 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        Intent
+      </h2>
+      <ScrollArea className="min-h-0 flex-1">
+        <Textarea
+          value={intent}
+          onChange={(e) => onIntentChange(e.target.value)}
+          placeholder="Describe the text you want to write…"
+          disabled={isGenerating}
+          className="min-h-full resize-none border-0 bg-transparent px-0 font-mono text-sm shadow-none focus-visible:ring-0"
+        />
+      </ScrollArea>
+      <Separator className="shrink-0" />
+      <Button
+        onClick={onGenerate}
+        disabled={!intent.trim() || isGenerating}
+        size="sm"
+        className="w-full shrink-0"
+      >
+        {isGenerating ? "Generating\u2026" : "Generate"}
+      </Button>
     </div>
   );
 }

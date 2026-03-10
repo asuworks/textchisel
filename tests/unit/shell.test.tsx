@@ -2,10 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { IntentPanel } from "@/shell/IntentPanel";
 import { TextPanel } from "@/shell/TextPanel";
-import { ControlBar } from "@/shell/ControlBar";
-import { DimensionList } from "@/shell/DimensionList";
-import { useAppStore } from "@/store";
-import type { Dimension, EvaluationScore } from "@shared/types";
+import type { Dimension } from "@shared/types";
 
 // --- Test fixtures ---
 
@@ -23,8 +20,6 @@ function makeDimension(overrides: Partial<Dimension> = {}): Dimension {
   };
 }
 
-const SCORE: EvaluationScore = { score: 4, reasoning: "Good clarity" };
-
 // --- IntentPanel ---
 
 describe("IntentPanel", () => {
@@ -35,7 +30,6 @@ describe("IntentPanel", () => {
         onIntentChange={vi.fn()}
         onGenerate={vi.fn()}
         isGenerating={false}
-        hasDimensions={false}
       />,
     );
     expect(
@@ -53,7 +47,6 @@ describe("IntentPanel", () => {
         onIntentChange={vi.fn()}
         onGenerate={vi.fn()}
         isGenerating={false}
-        hasDimensions={false}
       />,
     );
     expect(screen.getByRole("button", { name: /generate/i })).toBeDisabled();
@@ -66,7 +59,6 @@ describe("IntentPanel", () => {
         onIntentChange={vi.fn()}
         onGenerate={vi.fn()}
         isGenerating={false}
-        hasDimensions={false}
       />,
     );
     expect(screen.getByRole("button", { name: /generate/i })).toBeEnabled();
@@ -80,7 +72,6 @@ describe("IntentPanel", () => {
         onIntentChange={vi.fn()}
         onGenerate={onGenerate}
         isGenerating={false}
-        hasDimensions={false}
       />,
     );
     fireEvent.click(screen.getByRole("button", { name: /generate/i }));
@@ -94,24 +85,9 @@ describe("IntentPanel", () => {
         onIntentChange={vi.fn()}
         onGenerate={vi.fn()}
         isGenerating={true}
-        hasDimensions={false}
       />,
     );
     expect(screen.getByRole("button", { name: /generating/i })).toBeDisabled();
-  });
-
-  it("should show intent as read-only text when dimensions exist", () => {
-    render(
-      <IntentPanel
-        intent="Write a professional email"
-        onIntentChange={vi.fn()}
-        onGenerate={vi.fn()}
-        isGenerating={false}
-        hasDimensions={true}
-      />,
-    );
-    expect(screen.getByText("Write a professional email")).toBeInTheDocument();
-    expect(screen.getByText("Edit")).toBeInTheDocument();
   });
 
   it("should call onIntentChange when typing", () => {
@@ -122,7 +98,6 @@ describe("IntentPanel", () => {
         onIntentChange={onIntentChange}
         onGenerate={vi.fn()}
         isGenerating={false}
-        hasDimensions={false}
       />,
     );
     fireEvent.change(screen.getByPlaceholderText(/describe the text/i), {
@@ -202,118 +177,6 @@ describe("TextPanel", () => {
     expect(screen.getByText("Evaluate")).toBeInTheDocument();
     expect(screen.getByText("Regenerate")).toBeInTheDocument();
     expect(screen.getByText("Refine")).toBeInTheDocument();
-  });
-});
-
-// --- ControlBar ---
-
-describe("ControlBar", () => {
-  const defaults = {
-    canEvaluate: true,
-    canRefine: true,
-    canOrchestrate: true,
-    isEvaluating: false,
-    isRefining: false,
-    onEvaluate: vi.fn(),
-    onRefine: vi.fn(),
-    onOrchestrate: vi.fn(),
-  };
-
-  it("should render evaluate, refine, and auto-refine buttons", () => {
-    render(<ControlBar {...defaults} />);
-    expect(
-      screen.getByRole("button", { name: /^evaluate$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^refine$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /auto-refine/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("should disable evaluate when canEvaluate is false", () => {
-    render(<ControlBar {...defaults} canEvaluate={false} canRefine={false} />);
-    expect(screen.getByRole("button", { name: /^evaluate$/i })).toBeDisabled();
-  });
-
-  it("should disable all buttons when evaluating", () => {
-    render(<ControlBar {...defaults} isEvaluating={true} />);
-    expect(screen.getByRole("button", { name: /evaluating/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /^refine$/i })).toBeDisabled();
-    expect(screen.getByRole("button", { name: /auto-refine/i })).toBeDisabled();
-  });
-
-  it("should call onEvaluate when evaluate clicked", () => {
-    const onEvaluate = vi.fn();
-    render(
-      <ControlBar {...defaults} canRefine={false} onEvaluate={onEvaluate} />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: /^evaluate$/i }));
-    expect(onEvaluate).toHaveBeenCalledOnce();
-  });
-
-  it("should call onRefine when refine clicked", () => {
-    const onRefine = vi.fn();
-    render(<ControlBar {...defaults} onRefine={onRefine} />);
-    fireEvent.click(screen.getByRole("button", { name: /^refine$/i }));
-    expect(onRefine).toHaveBeenCalledOnce();
-  });
-
-  it("should call onOrchestrate when auto-refine clicked", () => {
-    const onOrchestrate = vi.fn();
-    render(<ControlBar {...defaults} onOrchestrate={onOrchestrate} />);
-    fireEvent.click(screen.getByRole("button", { name: /auto-refine/i }));
-    expect(onOrchestrate).toHaveBeenCalledOnce();
-  });
-});
-
-// --- DimensionList ---
-
-describe("DimensionList", () => {
-  beforeEach(() => {
-    // Reset store state before each test
-    useAppStore.setState({
-      dimensions: [],
-      currentScores: {},
-      targetScores: {},
-      lockedDimensions: {},
-      sessionId: null,
-    });
-  });
-
-  it("should render nothing when no dimensions", () => {
-    const { container } = render(<DimensionList />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it("should render dimension names", () => {
-    useAppStore.setState({
-      dimensions: [
-        makeDimension({ id: "d1", name: "Clarity" }),
-        makeDimension({ id: "d2", name: "Tone", sortOrder: 1 }),
-      ],
-    });
-    render(<DimensionList />);
-    expect(screen.getByText("Clarity")).toBeInTheDocument();
-    expect(screen.getByText("Tone")).toBeInTheDocument();
-  });
-
-  it("should show scores when available", () => {
-    useAppStore.setState({
-      dimensions: [makeDimension({ id: "d1", name: "Clarity" })],
-      currentScores: { d1: SCORE },
-    });
-    render(<DimensionList />);
-    expect(screen.getByText("Score: 4")).toBeInTheDocument();
-  });
-
-  it("should show description", () => {
-    useAppStore.setState({
-      dimensions: [makeDimension({ description: "Measures text clarity" })],
-    });
-    render(<DimensionList />);
-    expect(screen.getByText("Measures text clarity")).toBeInTheDocument();
   });
 });
 

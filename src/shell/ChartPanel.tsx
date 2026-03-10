@@ -1,10 +1,79 @@
-import { useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SpiderChart } from "@/chart/SpiderChart";
 import { useAppStore } from "@/store";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Dimension, EvaluationScore } from "@shared/types";
+
+function GeneratingAnimation() {
+  return (
+    <svg
+      viewBox="-100 -100 200 200"
+      className="h-[48rem] w-[48rem] text-foreground"
+      aria-label="Generating…"
+    >
+      <defs>
+        <filter id="tc-glow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+        <radialGradient id="tc-sphere-grad" cx="40%" cy="35%" r="60%">
+          {/* Slow emerge from mist → visible → fade back into mist */}
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.01">
+            <animate
+              attributeName="stop-opacity"
+              values="0.01;0.01;0.06;0.14;0.18;0.18;0.18;0.14;0.06;0.01;0.01"
+              keyTimes="0;0.05;0.15;0.25;0.35;0.45;0.55;0.65;0.75;0.85;1"
+              dur="18s"
+              repeatCount="indefinite"
+            />
+          </stop>
+          <stop offset="60%" stopColor="currentColor" stopOpacity="0.01">
+            <animate
+              attributeName="stop-opacity"
+              values="0.01;0.01;0.03;0.06;0.08;0.08;0.08;0.06;0.03;0.01;0.01"
+              keyTimes="0;0.05;0.15;0.25;0.35;0.45;0.55;0.65;0.75;0.85;1"
+              dur="18s"
+              repeatCount="indefinite"
+            />
+          </stop>
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          <animate
+            attributeName="cx"
+            values="35%;65%;50%;35%"
+            dur="12s"
+            repeatCount="indefinite"
+          />
+          <animate
+            attributeName="cy"
+            values="30%;40%;65%;30%"
+            dur="12s"
+            repeatCount="indefinite"
+          />
+        </radialGradient>
+      </defs>
+
+      {/* Core sphere — glowing with radial gradient */}
+      <circle
+        cx="0"
+        cy="0"
+        r="32"
+        fill="url(#tc-sphere-grad)"
+        filter="url(#tc-glow)"
+      >
+        <animate
+          attributeName="r"
+          values="30;34;30"
+          dur="5s"
+          repeatCount="indefinite"
+        />
+      </circle>
+    </svg>
+  );
+}
 
 const MAX_DIMENSIONS = 12;
 
@@ -12,43 +81,44 @@ interface ChartPanelProps {
   dimensions: Dimension[];
   currentScores: Record<string, EvaluationScore>;
   onDimensionClick?: (dimensionId: string, anchorRect: DOMRect) => void;
+  onAddDimension?: () => void;
 }
 
 export function ChartPanel({
   dimensions,
   currentScores,
   onDimensionClick,
+  onAddDimension,
 }: ChartPanelProps) {
   const targetScores = useAppStore((s) => s.targetScores);
   const lockedDimensions = useAppStore((s) => s.lockedDimensions);
   const setTargetScore = useAppStore((s) => s.setTargetScore);
   const toggleLock = useAppStore((s) => s.toggleLock);
-  const addDimension = useAppStore((s) => s.addDimension);
-  const sessionId = useAppStore((s) => s.sessionId);
   const status = useAppStore((s) => s.sessionStatus);
+  const [debugAnim, setDebugAnim] = useState(false);
+  // Transition: "anim" → "fading" (1s fade) → "waiting" (1s blank) → "chart"
+  const [phase, setPhase] = useState<"anim" | "fading" | "waiting" | "chart">(
+    "chart",
+  );
+  const prevGenerating = useRef(false);
 
-  const handleAdd = useCallback(() => {
-    const newDim: Dimension = {
-      id: crypto.randomUUID(),
-      sessionId: sessionId ?? "",
-      name: "New Dimension",
-      description: "Describe what this dimension measures",
-      rubric: {
-        "1": "Poor",
-        "2": "Below average",
-        "3": "Average",
-        "4": "Good",
-        "5": "Excellent",
-      },
-      weight: 1.0,
-      sortOrder: dimensions.length,
-      locked: false,
-      evalPrompt: null,
-      rewriteHint: null,
-    };
-    addDimension(newDim);
-    setTargetScore(newDim.id, 3);
-  }, [sessionId, dimensions.length, addDimension, setTargetScore]);
+  const isGenerating = debugAnim || status === "generating";
+
+  useEffect(() => {
+    if (isGenerating) {
+      setPhase("anim");
+      prevGenerating.current = true;
+    } else if (prevGenerating.current) {
+      prevGenerating.current = false;
+      setPhase("fading");
+      const fadeTimer = setTimeout(() => setPhase("waiting"), 1000);
+      const chartTimer = setTimeout(() => setPhase("chart"), 2000);
+      return () => {
+        clearTimeout(fadeTimer);
+        clearTimeout(chartTimer);
+      };
+    }
+  }, [isGenerating]);
 
   if (dimensions.length === 0) {
     return (
@@ -58,17 +128,29 @@ export function ChartPanel({
     );
   }
 
-  if (status === "generating") {
+  if (phase === "anim" || phase === "fading") {
     return (
-      <div className="flex h-full items-center justify-center p-8">
-        <div className="relative aspect-square w-full max-w-xs">
-          <Skeleton className="h-full w-full rounded-full" />
-          <Skeleton className="absolute inset-[15%] rounded-full" />
-          <Skeleton className="absolute inset-[30%] rounded-full" />
-          <Skeleton className="absolute inset-[45%] rounded-full" />
-        </div>
+      <div
+        className="relative flex h-full items-center justify-center transition-opacity duration-1000"
+        style={{ opacity: phase === "fading" ? 0 : 1 }}
+      >
+        <GeneratingAnimation />
+        {debugAnim && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDebugAnim(false)}
+            className="absolute bottom-2 right-2 text-xs text-muted-foreground"
+          >
+            Close
+          </Button>
+        )}
       </div>
     );
+  }
+
+  if (phase === "waiting") {
+    return <div className="flex h-full items-center justify-center" />;
   }
 
   // Extract numeric scores from EvaluationScore objects
@@ -90,19 +172,29 @@ export function ChartPanel({
           onDimensionClick={onDimensionClick}
         />
       </div>
-      {dimensions.length < MAX_DIMENSIONS && (
-        <div className="flex shrink-0 justify-center pb-2">
+      <div className="flex shrink-0 justify-center gap-2 pb-2">
+        {dimensions.length < MAX_DIMENSIONS && onAddDimension && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleAdd}
+            onClick={onAddDimension}
             className="text-xs text-muted-foreground"
           >
             <Plus className="mr-1 h-3.5 w-3.5" />
             Add Dimension
           </Button>
-        </div>
-      )}
+        )}
+        {import.meta.env.DEV && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setDebugAnim(true)}
+            className="text-xs text-muted-foreground/50"
+          >
+            Anim
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Textarea } from "./textarea";
 import { cn } from "@/lib/utils";
 
 interface InlineEditProps {
@@ -9,6 +8,8 @@ interface InlineEditProps {
   className?: string;
   inputClassName?: string;
   disabled?: boolean;
+  /** Tailwind max-height class, e.g. "max-h-20". Enables scroll on overflow. */
+  maxHeight?: string;
 }
 
 /**
@@ -24,6 +25,7 @@ export function InlineEdit({
   className,
   inputClassName,
   disabled = false,
+  maxHeight = "max-h-24",
 }: InlineEditProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
@@ -80,22 +82,26 @@ export function InlineEdit({
     );
   }
 
-  // Shared sizing classes for zero layout shift between read/edit modes
-  const sharedSizing =
-    "rounded px-1 -mx-1 py-0.5 text-sm leading-5 min-h-[1.5rem]";
+  // Shared classes for zero layout shift between read/edit modes.
+  // No w-full (callers use flex-1), ring-inset keeps ring inside the box.
+  const shared = cn(
+    "block rounded px-1 py-1 leading-snug overflow-y-auto",
+    maxHeight,
+    className,
+  );
 
   if (editing) {
     return (
-      <Textarea
-        ref={inputRef as React.Ref<HTMLTextAreaElement>}
+      <textarea
+        ref={inputRef}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         className={cn(
-          sharedSizing,
-          "block w-full resize-none border-0 bg-muted/30 shadow-none ring-1 ring-ring focus-visible:ring-2 field-sizing-content",
+          shared,
+          "resize-none border-0 bg-muted/30 shadow-none outline-none ring-inset ring-1 ring-ring/20 focus-visible:ring-1 focus-visible:ring-ring/30 [field-sizing:content] placeholder:text-muted-foreground",
           inputClassName,
         )}
       />
@@ -114,12 +120,11 @@ export function InlineEdit({
         }
       }}
       className={cn(
-        sharedSizing,
-        "inline-block cursor-text transition-colors",
+        shared,
+        "cursor-text transition-colors",
         "hover:bg-muted/50",
-        "focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none",
+        "focus-visible:ring-inset focus-visible:ring-1 focus-visible:ring-ring/20 focus-visible:outline-none",
         !value && "text-muted-foreground italic",
-        className,
       )}
     >
       {value || placeholder}
