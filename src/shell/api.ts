@@ -10,6 +10,22 @@ import type { OrchestratorResult } from "@/orchestrator";
 interface ModelConfig {
   provider?: string;
   modelId?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+/** Test connection to the configured provider */
+export async function apiTestConnection(
+  config: ModelConfig,
+): Promise<{ ok: boolean; model: string; error?: string }> {
+  const res = await fetch("/api/llm/test", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+  return res.json();
 }
 
 /** Generate evaluation dimensions from user intent */

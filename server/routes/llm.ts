@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { generateText, wrapLanguageModel, defaultSettingsMiddleware } from "ai";
 import { createModel } from "../model.js";
 import {
   generateDimensions,
@@ -19,13 +20,57 @@ import {
 
 export const llmRouter = Router();
 
-/** Extract provider/modelId from request body, defaulting from env */
+/** Extract provider/modelId/baseUrl from request body, defaulting from env.
+ *  Wraps model with user's temperature/maxOutputTokens as defaults via middleware. */
 function getModelConfig(body: Record<string, unknown>) {
   const provider =
     (body.provider as string) || process.env.AI_PROVIDER || "openai";
   const modelId = (body.modelId as string) || process.env.AI_MODEL || undefined;
-  return createModel(provider, modelId);
+  const baseUrl = (body.baseUrl as string) || undefined;
+  const apiKey = (body.apiKey as string) || undefined;
+  const temperature =
+    typeof body.temperature === "number" ? body.temperature : undefined;
+  const maxTokens =
+    typeof body.maxTokens === "number" ? body.maxTokens : undefined;
+  console.log(
+    `[LLM] provider=${provider} model=${modelId ?? "(default)"}${baseUrl ? ` baseUrl=${baseUrl}` : ""}${apiKey ? " apiKey=***" : ""}${temperature != null ? ` temp=${temperature}` : ""}${maxTokens ? ` maxTokens=${maxTokens}` : ""}`,
+  );
+  const base = createModel(provider, modelId, baseUrl, apiKey);
+  // Apply user defaults — domain functions that set their own temperature will override
+  if (temperature != null || maxTokens) {
+    return wrapLanguageModel({
+      model: base,
+      middleware: defaultSettingsMiddleware({
+        settings: {
+          ...(temperature != null ? { temperature } : {}),
+          ...(maxTokens ? { maxOutputTokens: maxTokens } : {}),
+        },
+      }),
+    });
+  }
+  return base;
 }
+
+// POST /api/llm/test
+// Body: { provider?, modelId?, baseUrl?, apiKey? }
+llmRouter.post("/test", async (req, res) => {
+  try {
+    const model = getModelConfig(req.body);
+    const { text } = await generateText({
+      model,
+      prompt: "Reply with exactly: ok",
+      maxOutputTokens: 5,
+    });
+    res.json({
+      ok: true,
+      model: model.modelId ?? "default",
+      response: text.trim(),
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    res.json({ ok: false, model: "unknown", error: message });
+  }
+});
 
 // POST /api/llm/dimensions/generate
 // Body: { intent: string, provider?, modelId? }
