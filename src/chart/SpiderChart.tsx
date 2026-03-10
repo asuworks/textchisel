@@ -24,6 +24,9 @@ ChartJS.register(
 );
 ChartJS.register(ChartJSDragDataPlugin);
 
+// Use Geist for all Chart.js text (canvas doesn't inherit CSS fonts)
+ChartJS.defaults.font.family = "'Geist Variable', sans-serif";
+
 /** Internal Chart.js type for rendered point label positions (includes bounding box) */
 interface PointLabelItem {
   x: number;
@@ -284,7 +287,7 @@ export function SpiderChart({
   const options = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: true,
       scales: {
         r: {
           min: 1,
@@ -293,7 +296,7 @@ export function SpiderChart({
             stepSize: 1,
             backdropColor: "transparent",
             color: "#666",
-            font: { size: 11 },
+            font: { family: "'Geist Variable', sans-serif", size: 11 },
             callback: (tickValue: string | number) => {
               const v =
                 typeof tickValue === "string"
@@ -304,7 +307,11 @@ export function SpiderChart({
           },
           pointLabels: {
             color: "#1a1a1a",
-            font: { size: 12, weight: "bold" as const },
+            font: {
+              family: "'Geist Variable', sans-serif",
+              size: 12,
+              weight: 600,
+            },
             padding: 24,
           },
           grid: {
@@ -325,17 +332,11 @@ export function SpiderChart({
         easing: "easeOutQuart" as const,
       },
       layout: {
-        padding: { top: 16, bottom: 16, left: 40, right: 40 },
+        padding: { top: 8, bottom: 8, left: 16, right: 16 },
       },
       plugins: {
         legend: {
-          display: true,
-          position: "top" as const,
-          labels: {
-            usePointStyle: true,
-            padding: 16,
-            font: { size: 12 },
-          },
+          display: false,
         },
         tooltip: {
           maxWidth: 240,
@@ -417,7 +418,13 @@ export function SpiderChart({
 
   return (
     <div
-      style={{ width: "100%", height: "100%" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
       onClick={
         handleClick as unknown as React.MouseEventHandler<HTMLDivElement>
       }

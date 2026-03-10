@@ -161,6 +161,16 @@ export function ChartPanel({
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex shrink-0 items-center justify-center gap-6 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />
+          <span className="text-xs text-muted-foreground">Target Score</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="inline-block h-2.5 w-2.5 rounded-full bg-slate-400/50" />
+          <span className="text-xs text-muted-foreground">Current Score</span>
+        </div>
+      </div>
       <div className="min-h-0 flex-1">
         <SpiderChart
           dimensions={dimensions}
