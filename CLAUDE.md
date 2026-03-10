@@ -13,6 +13,14 @@ A prompt engineering workbench that helps users iteratively refine LLM prompts t
 - Chart.js + chartjs-plugin-dragdata (spider chart)
 - qlty CLI (ESLint + Prettier + osv-scanner, pre-commit/pre-push hooks)
 
+## Quality Checks
+
+- **pre-commit hook**: `qlty fmt` — formatting only (Prettier). Fast, runs on every commit.
+- **pre-push hook**: `qlty check --no-formatters` — linting (ESLint). Runs on push only.
+- **Manual full check**: `qlty check --all --no-formatters --skip-errored-plugins` — run this before pushing to catch ESLint issues early. The `--all` flag is needed because without it qlty only checks files modified vs upstream (which may find nothing if upstream isn't set).
+- **Typecheck**: `npx tsc --noEmit`
+- **Tests**: `npx vitest run`
+
 ## Architecture Overview
 
 Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a React SPA with a spider chart as the central interaction. Users input intent → system generates evaluation dimensions → scores text → user drags chart points to set targets → system rewrites text to hit targets → loop until convergence. Data persists in PGlite (IndexedDB in browser, filesystem in Node).

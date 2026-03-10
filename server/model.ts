@@ -15,13 +15,12 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
  * Create a LanguageModel from provider name, model ID, and optional credentials.
  * When apiKey is provided (from browser settings), it takes precedence over env vars.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createModel(
   provider: string = "openai",
   modelId?: string,
   baseUrl?: string,
   apiKey?: string,
-): any {
+): ReturnType<typeof openai> {
   switch (provider) {
     case "openai": {
       if (apiKey || baseUrl) {

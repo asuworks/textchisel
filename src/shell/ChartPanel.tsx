@@ -96,29 +96,41 @@ export function ChartPanel({
   const toggleLock = useAppStore((s) => s.toggleLock);
   const status = useAppStore((s) => s.sessionStatus);
   const [debugAnim, setDebugAnim] = useState(false);
-  // Transition: "anim" → "fading" (1s fade) → "waiting" (1s blank) → "chart"
-  const [phase, setPhase] = useState<"anim" | "fading" | "waiting" | "chart">(
-    "chart",
-  );
+  // Transition after generating stops: "fading" (1s opacity) → "waiting" (1s blank) → "chart"
+  const [exitPhase, setExitPhase] = useState<"fading" | "waiting" | null>(null);
   const prevGenerating = useRef(false);
 
   const isGenerating = debugAnim || status === "generating";
 
+  // Track generating→idle transition to trigger exit animation
+  if (isGenerating) {
+    prevGenerating.current = true;
+    if (exitPhase !== null) setExitPhase(null);
+  } else if (prevGenerating.current) {
+    prevGenerating.current = false;
+    if (exitPhase === null) setExitPhase("fading");
+  }
+
+  // Timer chain for exit animation phases
   useEffect(() => {
-    if (isGenerating) {
-      setPhase("anim");
-      prevGenerating.current = true;
-    } else if (prevGenerating.current) {
-      prevGenerating.current = false;
-      setPhase("fading");
-      const fadeTimer = setTimeout(() => setPhase("waiting"), 1000);
-      const chartTimer = setTimeout(() => setPhase("chart"), 2000);
-      return () => {
-        clearTimeout(fadeTimer);
-        clearTimeout(chartTimer);
-      };
+    if (exitPhase === "fading") {
+      const t = setTimeout(() => setExitPhase("waiting"), 1000);
+      return () => clearTimeout(t);
     }
-  }, [isGenerating]);
+    if (exitPhase === "waiting") {
+      const t = setTimeout(() => setExitPhase(null), 1000);
+      return () => clearTimeout(t);
+    }
+  }, [exitPhase]);
+
+  // Derived phase for rendering
+  const phase = isGenerating
+    ? "anim"
+    : exitPhase === "fading"
+      ? "fading"
+      : exitPhase === "waiting"
+        ? "waiting"
+        : "chart";
 
   if (dimensions.length === 0) {
     return (

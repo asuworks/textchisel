@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   Settings,
   Eye,
@@ -59,15 +59,16 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
   const [testError, setTestError] = useState("");
 
   // Sync draft when dialog opens (§6.2 — user control: always start from saved state)
-  useEffect(() => {
-    if (open) {
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) {
       setDraft(settings);
       const models = getModelsForProvider(settings.provider);
       setCustomModel(settings.model !== "" && !models.includes(settings.model));
       setTestStatus("idle");
       setTestError("");
     }
-  }, [open, settings]);
+    setOpen(nextOpen);
+  }
 
   const handleTestConnection = useCallback(async () => {
     setTestStatus("testing");
@@ -132,7 +133,7 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {trigger ? (
         <DialogTrigger render={trigger as React.ReactElement} />
       ) : (

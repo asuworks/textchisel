@@ -1,0 +1,60 @@
+---
+session: general
+date: 2026-03-10
+status: complete
+outcome: PARTIAL_PLUS
+---
+goal: "Commit all changes, fix ESLint pre-push errors, widen popover, document quality checks"
+now: "Smoke test settings with real API key; push to remote; generate Tier 1 meta-prompts for dims added via modal"
+test: "npx tsc --noEmit && npx vitest run && qlty check --all --no-formatters --skip-errored-plugins"
+
+done_this_session:
+  - task: "4 commits: settings module, chart UX, UI polish, handoff"
+    files: []
+  - task: "Fix 4 ESLint pre-push errors: unused directive, any return type, 2x setState-in-effect"
+    files:
+      [server/model.ts, src/shell/ChartPanel.tsx, src/shell/SettingsDialog.tsx]
+  - task: "Widen dimension popover from w-80 → w-96 → w-110 (user adjusted)"
+    files: [src/shell/App.tsx]
+  - task: "Document quality checks in CLAUDE.md — pre-commit (fmt), pre-push (check), manual --all flag"
+    files: [CLAUDE.md]
+
+blockers: []
+
+questions:
+  - "Should settings be stored in PGlite instead of localStorage? (deferred — localStorage works for single-user)"
+
+decisions:
+  - return_type_fix: "createModel returns ReturnType<typeof openai> instead of any — proper typing without importing LanguageModelV1"
+  - setState_in_effect_fix: "ChartPanel: derive phase from isGenerating + exitPhase state instead of setState in useEffect. SettingsDialog: move sync into onOpenChange handler."
+  - qlty_all_flag: "Use qlty check --all for manual pre-push verification — without --all it diffs vs upstream and finds nothing locally"
+
+findings:
+  - pre_push_vs_manual: "qlty check finds nothing manually because it diffs vs upstream. Pre-push hook uses --upstream-from-pre-push which gets the actual ref from git. Use --all flag for manual checks."
+  - qlty_hook_split: "pre-commit = qlty fmt (formatting only, fast). pre-push = qlty check --no-formatters (linting, slower). This is qlty's intentional design."
+
+worked:
+  - "ReturnType<typeof openai> for createModel return type — avoids any while staying compatible"
+  - "Deriving phase from isGenerating + exitPhase state machine instead of setState in useEffect"
+  - "Moving dialog sync from useEffect into onOpenChange callback"
+
+failed:
+  - "qlty check without --all flag — finds nothing because no upstream diff available locally"
+
+next:
+  - "Push to remote (pre-push hook should pass now)"
+  - "Smoke test settings with real API key (connection test, generation, evaluation)"
+  - "Generate Tier 1 meta-prompts for dimensions added via AddDimensionDialog modal"
+  - "Persist manual example edits to DB"
+  - "Design taint/staleness queue for dimension edits"
+  - "Phase 2: State architecture refactor — move remaining App.tsx useState to Zustand"
+  - "Phase 5: Auto-evaluation + streaming display"
+  - "Phase 6: Version timeline + diffs"
+
+files:
+  modified:
+    - server/model.ts
+    - src/shell/ChartPanel.tsx
+    - src/shell/SettingsDialog.tsx
+    - src/shell/App.tsx
+    - CLAUDE.md
