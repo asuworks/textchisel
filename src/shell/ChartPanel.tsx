@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { SpiderChart } from "@/chart/SpiderChart";
 import { useAppStore } from "@/store";
 import { Button } from "@/components/ui/button";
@@ -98,16 +98,16 @@ export function ChartPanel({
   const [debugAnim, setDebugAnim] = useState(false);
   // Transition after generating stops: "fading" (1s opacity) → "waiting" (1s blank) → "chart"
   const [exitPhase, setExitPhase] = useState<"fading" | "waiting" | null>(null);
-  const prevGenerating = useRef(false);
+  const [prevGenerating, setPrevGenerating] = useState(false);
 
   const isGenerating = debugAnim || status === "generating";
 
-  // Track generating→idle transition to trigger exit animation
-  if (isGenerating) {
-    prevGenerating.current = true;
+  // Adjust state during render (React-recommended pattern for prop/state transitions)
+  if (isGenerating && !prevGenerating) {
+    setPrevGenerating(true);
     if (exitPhase !== null) setExitPhase(null);
-  } else if (prevGenerating.current) {
-    prevGenerating.current = false;
+  } else if (!isGenerating && prevGenerating) {
+    setPrevGenerating(false);
     if (exitPhase === null) setExitPhase("fading");
   }
 

@@ -59,7 +59,7 @@ llmRouter.post("/test", async (req, res) => {
     const { text } = await generateText({
       model,
       prompt: "Reply with exactly: ok",
-      maxOutputTokens: 5,
+      maxOutputTokens: 20,
     });
     res.json({
       ok: true,
