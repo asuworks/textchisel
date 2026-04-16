@@ -253,7 +253,8 @@ describe("rewriteTextFull", () => {
       model: fakeModel,
     });
 
-    expect(result).toBe(fullText);
+    expect(result.text).toBe(fullText);
+    expect(result.systemPrompt).toBeTruthy();
   });
 
   it("should propagate errors from streamText", async () => {

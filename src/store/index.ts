@@ -2,7 +2,18 @@ import { create } from "zustand";
 import { devtools, persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { temporal } from "zundo";
-import type { Dimension, EvaluationScore, SessionStatus } from "@shared/types";
+import { SESSION_STATUS } from "@shared/types";
+import type {
+  Dimension,
+  EvaluationScore,
+  SessionStatus,
+  SuggestedDimension,
+  GeneratedDimensions,
+} from "@shared/types";
+import {
+  createDimensions as dbCreateDimensions,
+  updateDimension as dbUpdateDimension,
+} from "@/dimensions/crud";
 
 // --- State shape ---
 
@@ -20,13 +31,6 @@ interface SessionState {
 interface EvaluationState {
   targetScores: Record<string, number>;
   lockedDimensions: Record<string, boolean>;
-}
-
-/** Suggested dimension (precomputed but not yet added to session) */
-export interface SuggestedDimension {
-  name: string;
-  description: string;
-  rubric: Record<string, string>;
 }
 
 interface UIState {
@@ -47,6 +51,10 @@ interface Actions {
   clearError: () => void;
 
   // Dimension CRUD actions
+  createAndPersistDimensions: (
+    sessionId: string,
+    dims: GeneratedDimensions["dimensions"],
+  ) => Promise<Dimension[] | null>;
   updateDimension: (
     id: string,
     updates: Partial<
@@ -92,7 +100,7 @@ export const useAppStore = create<AppState>()(
           currentScores: {},
           streamingText: "",
           error: null,
-          sessionStatus: "idle" as SessionStatus,
+          sessionStatus: SESSION_STATUS.IDLE as SessionStatus,
 
           setSessionId: (id) =>
             set((state) => {
@@ -129,11 +137,20 @@ export const useAppStore = create<AppState>()(
           clearError: () =>
             set((state) => {
               state.error = null;
-              state.sessionStatus = "idle";
+              state.sessionStatus = SESSION_STATUS.IDLE;
             }),
 
           // --- Dimension CRUD ---
-          updateDimension: (id, updates) =>
+          createAndPersistDimensions: async (sessionId, dims) => {
+            const created = await dbCreateDimensions(sessionId, dims);
+            if (created) {
+              set((state) => {
+                state.dimensions = created;
+              });
+            }
+            return created;
+          },
+          updateDimension: (id, updates) => {
             set((state) => {
               const dim = state.dimensions.find((d) => d.id === id);
               if (dim) {
@@ -153,7 +170,10 @@ export const useAppStore = create<AppState>()(
                 // Clear stale score — rubric/definition changed, old evaluation is invalid
                 delete state.currentScores[id];
               }
-            }),
+            });
+            // Fire-and-forget persistence
+            void dbUpdateDimension(id, updates);
+          },
           addDimension: (dim) =>
             set((state) => {
               state.dimensions.push(dim);

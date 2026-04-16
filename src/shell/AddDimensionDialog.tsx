@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { useAppStore, type SuggestedDimension } from "@/store";
+import { useAppStore } from "@/store";
+import type { SuggestedDimension } from "@shared/types";
 import {
   Dialog,
   DialogContent,

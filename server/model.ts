@@ -10,17 +10,20 @@ import { cerebras, createCerebras } from "@ai-sdk/cerebras";
 import { fireworks, createFireworks } from "@ai-sdk/fireworks";
 import { togetherai, createTogetherAI } from "@ai-sdk/togetherai";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import { DEFAULT_MODEL } from "@shared/providers";
+import type { Provider } from "@shared/providers";
 
 /**
  * Create a LanguageModel from provider name, model ID, and optional credentials.
  * When apiKey is provided (from browser settings), it takes precedence over env vars.
  */
 export function createModel(
-  provider: string = "openai",
+  provider: Provider = "openai",
   modelId?: string,
   baseUrl?: string,
   apiKey?: string,
 ): ReturnType<typeof openai> {
+  const fallback = DEFAULT_MODEL[provider];
   switch (provider) {
     case "openai": {
       if (apiKey || baseUrl) {
@@ -28,96 +31,82 @@ export function createModel(
           ...(apiKey ? { apiKey } : {}),
           ...(baseUrl ? { baseURL: baseUrl } : {}),
         });
-        return custom(modelId ?? "gpt-4o");
+        return custom(modelId ?? fallback);
       }
-      return openai(modelId ?? "gpt-4o");
+      return openai(modelId ?? fallback);
     }
     case "anthropic": {
       if (apiKey) {
-        return createAnthropic({ apiKey })(
-          modelId ?? "claude-sonnet-4-20250514",
-        );
+        return createAnthropic({ apiKey })(modelId ?? fallback);
       }
-      return anthropic(modelId ?? "claude-sonnet-4-20250514");
+      return anthropic(modelId ?? fallback);
     }
     case "google": {
       if (apiKey) {
-        return createGoogleGenerativeAI({ apiKey })(
-          modelId ?? "gemini-2.5-flash",
-        );
+        return createGoogleGenerativeAI({ apiKey })(modelId ?? fallback);
       }
-      return google(modelId ?? "gemini-2.5-flash");
+      return google(modelId ?? fallback);
     }
     case "mistral": {
       if (apiKey) {
-        return createMistral({ apiKey })(modelId ?? "mistral-large-latest");
+        return createMistral({ apiKey })(modelId ?? fallback);
       }
-      return mistral(modelId ?? "mistral-large-latest");
+      return mistral(modelId ?? fallback);
     }
     case "cohere": {
       if (apiKey) {
-        return createCohere({ apiKey })(modelId ?? "command-r-plus");
+        return createCohere({ apiKey })(modelId ?? fallback);
       }
-      return cohere(modelId ?? "command-r-plus");
+      return cohere(modelId ?? fallback);
     }
     case "xai": {
       if (apiKey) {
-        return createXai({ apiKey })(modelId ?? "grok-3-mini");
+        return createXai({ apiKey })(modelId ?? fallback);
       }
-      return xai(modelId ?? "grok-3-mini");
+      return xai(modelId ?? fallback);
     }
     case "groq": {
       if (apiKey) {
-        return createGroq({ apiKey })(modelId ?? "llama-3.3-70b-versatile");
+        return createGroq({ apiKey })(modelId ?? fallback);
       }
-      return groq(modelId ?? "llama-3.3-70b-versatile");
+      return groq(modelId ?? fallback);
     }
     case "deepseek": {
       if (apiKey) {
-        return createDeepSeek({ apiKey })(modelId ?? "deepseek-chat");
+        return createDeepSeek({ apiKey })(modelId ?? fallback);
       }
-      return deepseek(modelId ?? "deepseek-chat");
+      return deepseek(modelId ?? fallback);
     }
     case "cerebras": {
       if (apiKey) {
-        return createCerebras({ apiKey })(
-          modelId ?? "llama-4-scout-17b-16e-instruct",
-        );
+        return createCerebras({ apiKey })(modelId ?? fallback);
       }
-      return cerebras(modelId ?? "llama-4-scout-17b-16e-instruct");
+      return cerebras(modelId ?? fallback);
     }
     case "fireworks": {
       if (apiKey) {
-        return createFireworks({ apiKey })(
-          modelId ?? "accounts/fireworks/models/llama-v3p3-70b-instruct",
-        );
+        return createFireworks({ apiKey })(modelId ?? fallback);
       }
-      return fireworks(
-        modelId ?? "accounts/fireworks/models/llama-v3p3-70b-instruct",
-      );
+      return fireworks(modelId ?? fallback);
     }
     case "togetherai": {
       if (apiKey) {
-        return createTogetherAI({ apiKey })(
-          modelId ?? "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-        );
+        return createTogetherAI({ apiKey })(modelId ?? fallback);
       }
-      return togetherai(
-        modelId ?? "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
-      );
+      return togetherai(modelId ?? fallback);
     }
     case "openrouter": {
       const openrouter = createOpenRouter({
         apiKey: apiKey ?? process.env.OPENROUTER_API_KEY,
       });
-      return openrouter.chat(modelId ?? "anthropic/claude-sonnet-4");
+      return openrouter.chat(modelId ?? fallback);
     }
     case "openai-compatible": {
       const custom = createOpenAI({
         baseURL: baseUrl || "http://localhost:11434/v1",
         apiKey: apiKey || "ollama",
       });
-      return custom(modelId ?? "llama3");
+      return custom(modelId ?? fallback);
     }
     default:
       throw new Error(`Unknown provider: ${provider}`);

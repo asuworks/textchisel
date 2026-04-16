@@ -156,7 +156,13 @@ export async function generateSingleDimension(
     maxRetries: 3,
   });
 
-  return object.dimensions[0];
+  const dim = object.dimensions[0];
+  if (!dim) {
+    throw new Error(
+      `LLM returned no dimensions for name "${name}". Expected exactly 1.`,
+    );
+  }
+  return dim;
 }
 
 export async function generateDimensions(

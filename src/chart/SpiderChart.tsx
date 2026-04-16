@@ -1,6 +1,7 @@
-import { useMemo, useCallback, useRef } from "react";
+import React, { useMemo, useCallback, useRef } from "react";
 import {
   Chart as ChartJS,
+  Plugin,
   RadialLinearScale,
   PointElement,
   LineElement,
@@ -73,37 +74,37 @@ function labelIndexNear(
   return -1;
 }
 
-// Shared mutable ref for the currently hovered label index (-1 = none)
-let hoveredLabelIndex = -1;
+// Factory: creates a Chart.js plugin that highlights the hovered label,
+// reading the current index from the provided ref (avoids module-level mutable state).
+function createLabelHoverPlugin(hoveredRef: React.RefObject<number>): Plugin<"radar"> {
+  return {
+    id: "underlineLabels",
+    afterDraw(chart: ChartJS<"radar">) {
+      const idx = hoveredRef.current ?? -1;
+      if (idx < 0) return;
+      const scale = chart.scales.r as RadialLinearScale;
+      if (!scale) return;
+      const items = getLabelItems(scale);
+      if (!items || idx >= items.length) return;
+      const item = items[idx];
+      const ctx = chart.ctx;
+      const pad = 4;
 
-// Plugin: draws a rounded-rect highlight behind the hovered label text
-const labelHoverPlugin = {
-  id: "underlineLabels", // reuse id to override stale HMR registration
-  afterDraw(chart: ChartJS) {
-    if (hoveredLabelIndex < 0) return;
-    const scale = chart.scales.r as RadialLinearScale;
-    if (!scale) return;
-    const items = getLabelItems(scale);
-    if (!items || hoveredLabelIndex >= items.length) return;
-    const item = items[hoveredLabelIndex];
-    const ctx = chart.ctx;
-    const pad = 4;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(
-      item.left - pad,
-      item.top - pad,
-      item.right - item.left + pad * 2,
-      item.bottom - item.top + pad * 2,
-      4,
-    );
-    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
-    ctx.fill();
-    ctx.restore();
-  },
-};
-ChartJS.register(labelHoverPlugin);
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(
+        item.left - pad,
+        item.top - pad,
+        item.right - item.left + pad * 2,
+        item.bottom - item.top + pad * 2,
+        4,
+      );
+      ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+      ctx.fill();
+      ctx.restore();
+    },
+  };
+}
 
 // Target dataset index — target is datasets[0], current is datasets[1]
 const TARGET_DATASET = 0;
@@ -129,6 +130,13 @@ export function SpiderChart({
 }: SpiderChartProps) {
   // Ref to the underlying Chart.js instance for hit-testing on click
   const chartRef = useRef<ChartJS<"radar">>(null);
+
+  // Per-instance hover state (avoids module-level mutable variable)
+  const hoveredLabelRef = useRef<number>(-1);
+  const labelHoverPlugin = useMemo(
+    () => createLabelHoverPlugin(hoveredLabelRef),
+    [],
+  );
 
   // Sort dimensions by sortOrder for consistent axis ordering
   const sortedDimensions = useMemo(
@@ -399,8 +407,8 @@ export function SpiderChart({
       const chart = chartRef.current;
       const idx = labelIndexNear(chart, event.clientX, event.clientY);
       chart.canvas.style.cursor = idx >= 0 ? "pointer" : "";
-      if (idx !== hoveredLabelIndex) {
-        hoveredLabelIndex = idx;
+      if (idx !== hoveredLabelRef.current) {
+        hoveredLabelRef.current = idx;
         chart.draw();
       }
     },
@@ -409,8 +417,8 @@ export function SpiderChart({
 
   const handleMouseLeave = useCallback(() => {
     if (!chartRef.current) return;
-    if (hoveredLabelIndex >= 0) {
-      hoveredLabelIndex = -1;
+    if (hoveredLabelRef.current >= 0) {
+      hoveredLabelRef.current = -1;
       chartRef.current.draw();
     }
     chartRef.current.canvas.style.cursor = "";
@@ -431,7 +439,12 @@ export function SpiderChart({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <Radar ref={chartRef} data={data} options={options} />
+      <Radar
+        ref={chartRef}
+        data={data}
+        options={options}
+        plugins={[labelHoverPlugin]}
+      />
     </div>
   );
 }

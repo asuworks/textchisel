@@ -73,6 +73,13 @@ export const DimensionGenerationSchema = z.object({
 
 export type GeneratedDimensions = z.infer<typeof DimensionGenerationSchema>;
 
+/** Suggested dimension (precomputed but not yet added to session) */
+export interface SuggestedDimension {
+  name: string;
+  description: string;
+  rubric: Record<string, string>;
+}
+
 export const EvaluationScoreSchema = z.object({
   score: z
     .number()

@@ -19,8 +19,6 @@ export interface RewriteOptions extends RewriteContext {
 export function rewriteText(options: RewriteOptions) {
   const { model, rewritePlan, ...context } = options;
   const { system, user } = buildRewritePrompt(context, rewritePlan);
-  console.log("Rewrite system prompt:", system);
-  console.log("Rewrite user prompt:", user);
   return streamText({
     model,
     system,
@@ -29,17 +27,29 @@ export function rewriteText(options: RewriteOptions) {
   });
 }
 
+export interface RewriteFullResult {
+  text: string;
+  systemPrompt: string;
+}
+
 /**
- * Rewrite text and return the full result string.
+ * Rewrite text and return the full result string plus the system prompt used.
  * Convenience wrapper around rewriteText that awaits completion.
  */
 export async function rewriteTextFull(
   options: RewriteOptions,
-): Promise<string> {
-  const result = rewriteText(options);
+): Promise<RewriteFullResult> {
+  const { model, rewritePlan, ...context } = options;
+  const { system, user } = buildRewritePrompt(context, rewritePlan);
+  const result = streamText({
+    model,
+    system,
+    prompt: user,
+    temperature: 0.7,
+  });
   let text = "";
   for await (const chunk of result.textStream) {
     text += chunk;
   }
-  return text;
+  return { text, systemPrompt: system };
 }

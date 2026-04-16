@@ -4,6 +4,9 @@ import { live } from '@electric-sql/pglite/live'
 import { drizzle } from 'drizzle-orm/pglite'
 import * as schema from '@shared/schema'
 
+/** Current schema version. Bump when adding new migrations. */
+export const SCHEMA_VERSION = 2
+
 type AnyPGlite = PGlite | PGliteWorker
 let pglite: AnyPGlite | null = null
 let db: ReturnType<typeof drizzle> | null = null
@@ -82,12 +85,29 @@ async function doInit(): Promise<{ pglite: AnyPGlite; db: ReturnType<typeof driz
 
   await pglite.exec(MIGRATION_SQL)
 
-  // ADR-003: meta-prompt columns (nullable, safe to re-run)
+  // Schema version tracking — bootstrap for existing and new instances
   await pglite.exec(`
-    ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS eval_prompt TEXT;
-    ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS rewrite_hint TEXT;
-    ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS examples JSONB;
+    CREATE TABLE IF NOT EXISTS schema_version (
+      id INTEGER PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+      version INTEGER NOT NULL DEFAULT 1,
+      applied_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    INSERT INTO schema_version (id, version) VALUES (1, 1) ON CONFLICT (id) DO NOTHING;
   `)
+
+  // Run incremental migrations based on current version
+  const versionResult = await pglite.query<{ version: number }>('SELECT version FROM schema_version WHERE id = 1')
+  const currentVersion = versionResult.rows[0]?.version ?? 0
+
+  if (currentVersion < 2) {
+    // Migration 2: ADR-003 meta-prompt columns (nullable, safe to re-run)
+    await pglite.exec(`
+      ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS eval_prompt TEXT;
+      ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS rewrite_hint TEXT;
+      ALTER TABLE dimensions ADD COLUMN IF NOT EXISTS examples JSONB;
+    `)
+    await pglite.exec(`UPDATE schema_version SET version = 2, applied_at = NOW() WHERE id = 1`)
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   db = drizzle({ client: pglite as any, schema })
