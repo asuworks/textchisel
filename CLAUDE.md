@@ -18,8 +18,8 @@ A prompt engineering workbench that helps users iteratively refine LLM prompts t
 - **pre-commit hook**: `qlty fmt` — formatting only (Prettier). Fast, runs on every commit.
 - **pre-push hook**: `qlty check --no-formatters` — linting (ESLint). Runs on push only.
 - **Manual full check**: `qlty check --all --no-formatters --skip-errored-plugins` — run this before pushing to catch ESLint issues early. The `--all` flag is needed because without it qlty only checks files modified vs upstream (which may find nothing if upstream isn't set).
-- **Typecheck**: `npx tsc --noEmit`
-- **Tests**: `npx vitest run`
+- **Typecheck**: `pnpm tsc --noEmit`
+- **Tests**: `pnpm vitest run`
 
 ## Architecture Overview
 
@@ -32,8 +32,9 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 | `shared`       | Contracts: Zod schemas, Drizzle table defs, TypeScript types        | done   |
 | `db`           | PGlite lifecycle, Drizzle client, migrations, version snapshots     | done   |
 | `store`        | Zustand slices (prompt, eval, ui), middleware composition           | done   |
-| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD    | done   |
+| `dimensions`   | Generate dimensions from intent (generateObject), dimension CRUD, rubric helpers | done   |
 | `evaluation`   | G-Eval scoring per dimension, score normalization, caching          | done   |
+| `prompts`      | Tier 1/2 meta-prompt generation: evalPrompt, rewriteHint, examples, rewrite planner | done   |
 | `rewriter`     | Grammar layer meta-prompt, streaming text rewrite (streamText)      | done   |
 | `orchestrator` | Regeneration loop, convergence detection, step coordination         | done   |
 | `chart`        | SpiderChart component, drag/lock, target overlay                    | done   |
@@ -41,10 +42,8 @@ Single-process Node.js app: Express serves UI + proxies LLM calls. Frontend is a
 
 ## Current Phase
 
-**Phase 6 (Prompt Enhancement)** — COMPLETE
-Prompt quality improvements across all 5 LLM call sites. Few-shot examples per rubric level (auto-classified: only categorical/stylistic/qualitative rubrics get examples). Evidence-first evaluation. Target-prominent initial generation. User-specified dimensions via `#` lines in intent. Conflict resolution in rewrite planner. Remaining: manual LLM smoke test verification (requires API key).
-
-See `.devcontext/phase.md` for detailed progress.
+**Phase 8 (Evolution)** — COMPLETE
+8-session refactoring: module boundary fix, App.tsx decomposition (1057→231 lines), provider registry, test foundation (49+ unit tests), schema/migration cleanup, variable score levels 1-N (ADR-006), streaming rewrite end-to-end. See `thoughts/shared/plans/refactoring-plan.md` for plan and `.devcontext/phase.md` for progress.
 
 ## Invariants (NEVER violate these)
 
@@ -55,7 +54,7 @@ See `.devcontext/phase.md` for detailed progress.
 5. Contracts are frozen after Phase 2. Changing a contract requires a dedicated session and an ADR in `.devcontext/decisions/`.
 6. PGlite runs in-process (no external database). Schema changes use raw SQL on startup (not drizzle-kit CLI in browser).
 7. All LLM calls go through Vercel AI SDK. No direct HTTP to providers.
-8. Spider chart values are integers 1-5. Scores are normalized to this range.
+8. Spider chart values are integers 1-N, where N is the max rubric level for a dimension (2 ≤ N ≤ 7). Scores are normalized to this range. See ADR-006.
 9. PromptVersions are immutable. Never mutate a snapshot — create a new version.
 10. The orchestrator controls the evaluate→rewrite loop. No other module triggers LLM chains.
 11. Zustand middleware order: devtools → persist → temporal → immer (outside to inside).

@@ -9,6 +9,7 @@ shared/ (contracts — all modules depend on this)
   │     └── used by: store, dimensions, evaluation, orchestrator
   │
   ├── store (Zustand)
+  │     ├── imports: dimensions/crud (persistence bridge, ADR-004)
   │     └── used by: chart, shell
   │
   ├── dimensions (generateObject)
@@ -25,6 +26,9 @@ shared/ (contracts — all modules depend on this)
   │
   ├── chart (SpiderChart React component)
   │     └── used by: shell
+  │
+  ├── prompts (meta-prompt generation)
+  │     └── used by: server/routes/llm.ts
   │
   └── shell (app chrome)
        └── top-level, no dependents
@@ -66,15 +70,20 @@ shared/ (contracts — all modules depend on this)
 ### shared/
 
 - **Status:** done
-- **Files:** `shared/types.ts`, `shared/schemas.ts`
+- **Files:** `shared/types.ts`, `shared/schema.ts`, `shared/providers.ts` (ADR-005)
 - **Contracts:**
   - `Session` — { id, intent, status, createdAt }
-  - `Dimension` — { id, sessionId, name, description, weight, rubric }
-  - `DimensionScore` — { dimensionId, score, reasoning }
+  - `Dimension` — { id, sessionId, name, description, weight, rubric, evalPrompt, rewriteHint, examples }
+  - `EvaluationScore` — { score, reasoning }
+  - `DimensionPrompts` — { evalPrompt, rewriteHint }
+  - `RewritePlan` — { inferredIntent, instructions }
+  - `RewriteContext` — { intent, currentText, dimensions, currentScores, targetScores, lockedDimensionIds }
+  - `SuggestedDimension` — { name, description, rubric } (ADR-004)
   - `PromptVersion` — { id, sessionId, versionNum, systemPrompt, userTemplate, scores, text }
   - `EvalStepCache` — { versionId, dimensionId, score, reasoning, model, cached }
   - `TargetScores` — Record<dimensionId, number> (ADR-001)
   - `LockSet` — Set<dimensionId>
+  - `Provider`, `PROVIDER_MODELS`, `PROVIDER_LABELS`, `PROVIDER_KEY_HINTS` (ADR-005)
 
 ### db
 
@@ -97,7 +106,7 @@ shared/ (contracts — all modules depend on this)
 
 - **Status:** done
 - **Responsibility:** Generate evaluation dimensions from user intent via generateObject
-- **Key files:** `src/dimensions/generate.ts`, `src/dimensions/schema.ts`
+- **Key files:** `src/dimensions/generate.ts`, `src/dimensions/crud.ts`, `src/dimensions/rubric-helpers.ts`
 - **LLM pattern:** `generateObject` with Zod schema → Dimension[]
 - **Test strategy:** Mock generateObject → test prompt construction + Zod parsing
 - **Extension points:** New dimension sources (templates, presets)
@@ -106,7 +115,7 @@ shared/ (contracts — all modules depend on this)
 
 - **Status:** done
 - **Responsibility:** G-Eval style scoring per dimension, score normalization, eval caching
-- **Key files:** `src/evaluation/score.ts`, `src/evaluation/normalize.ts`, `src/evaluation/cache.ts`
+- **Key files:** `src/evaluation/score.ts`, `src/evaluation/normalize.ts`, `src/evaluation/cache.ts`, `src/evaluation/constants.ts`
 - **LLM pattern:** `generateObject` per dimension → DimensionScore
 - **Test strategy:** Mock generateObject → test G-Eval prompt + normalization logic
 - **Extension points:** New evaluation strategies, custom rubrics
@@ -137,11 +146,21 @@ shared/ (contracts — all modules depend on this)
 - **Test strategy:** Component tests with static data, visual regression
 - **Extension points:** New chart interactions, additional overlays
 
+### prompts
+
+- **Status:** done
+- **Responsibility:** Tier 1/2 meta-prompt generation — dimension evaluation prompts (evalPrompt), rewrite hints (rewriteHint), few-shot examples, and rewrite planner
+- **Key files:** `src/prompts/generate.ts`, `src/prompts/rewrite-planner.ts`, `src/prompts/index.ts`
+- **LLM pattern:** `generateObject` for Tier 1 (per-dimension meta-prompts) and Tier 2 (rewrite plan)
+- **Test strategy:** Mock generateObject → test prompt construction + schema validation
+- **Extension points:** New prompt tiers, custom rubric-type classifiers
+- **Added by:** ADR-003
+
 ### shell
 
 - **Status:** done
 - **Responsibility:** App layout, panels, intent input form, version timeline, provider config
-- **Key files:** `src/shell/App.tsx`, `src/shell/IntentPanel.tsx`, `src/shell/ChartPanel.tsx`, `src/shell/TextPanel.tsx`, `src/shell/DimensionList.tsx`, `src/shell/ControlBar.tsx`, `src/shell/api.ts`
+- **Key files:** `src/shell/App.tsx`, `src/shell/DimensionPopover.tsx`, `src/shell/useWorkflows.ts`, `src/shell/IntentPanel.tsx`, `src/shell/ChartPanel.tsx`, `src/shell/TextPanel.tsx`, `src/shell/SettingsDialog.tsx`, `src/shell/AddDimensionDialog.tsx`, `src/shell/api.ts`, `src/shell/useSettings.ts`
 - **Server routes:** `server/routes/llm.ts` (5 endpoints), `server/model.ts` (model factory)
 - **Test strategy:** Unit tests for components + API module (26 tests), integration tests with mock store
 - **Extension points:** New panels, layout configurations, provider config UI, version timeline

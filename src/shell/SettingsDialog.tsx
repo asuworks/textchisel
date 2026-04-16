@@ -128,7 +128,10 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
 
   function handleSave() {
     if (!canSave) return;
-    updateSettings(draft);
+    updateSettings({
+      ...draft,
+      maxTokens: Math.max(256, draft.maxTokens),
+    });
     setOpen(false);
   }
 
@@ -322,7 +325,7 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
                     maxTokens: Math.max(1, parseInt(e.target.value) || 1),
                   }))
                 }
-                min={1}
+                min={256}
                 max={128000}
               />
               <p className="text-xs text-muted-foreground">

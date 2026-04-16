@@ -206,7 +206,7 @@ export function ChartPanel({
             Add Dimension
           </Button>
         )}
-        {import.meta.env.DEV && (
+        {/* {import.meta.env.DEV && (
           <Button
             variant="ghost"
             size="sm"
@@ -215,7 +215,7 @@ export function ChartPanel({
           >
             Anim
           </Button>
-        )}
+        )} */}
       </div>
     </div>
   );

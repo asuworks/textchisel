@@ -47,13 +47,13 @@ flowchart TD
     subgraph contracts ["Shared Contracts"]
         J["shared/
         Zod schemas · Drizzle tables · TS types
-        RewriteContext · EvaluationScore"]
+        RewriteContext · EvaluationScore · providers"]
     end
 
     %% Initial flow: intent → dimensions → evaluation → chart
     A -->|"① intent"| C
     C -->|"② dimensions + text"| D
-    D -->|"③ scores 1–5"| B
+    D -->|"③ scores 1–N"| B
 
     %% Refinement loop: drag → orchestrator → chart update
     B -->|"④ drag targets"| G
@@ -171,9 +171,11 @@ flowchart TD
 | Call                  | Layer                             | When                   | Parallel?                  |
 | --------------------- | --------------------------------- | ---------------------- | -------------------------- |
 | `generateDimensions`  | Orchestration                     | User submits intent    | No — single call           |
-| `modifyPrompt`        | Grammar                           | User clicks Regenerate | No — single call, streamed |
-| `scorePrompt` × 3     | Evaluation                        | After prompt generated | Yes — all 3 in parallel    |
-| `scorePrompt` × 3 × 3 | Evaluation (with noise reduction) | After prompt generated | Yes — 9 calls in parallel  |
+| `generateDimensionPrompts` | Prompts (Tier 1)             | After dimensions generated | Yes — all dims in parallel |
+| `generateExamples`    | Prompts (Tier 1)                  | On demand per dimension | No — single call           |
+| `generateRewriteInstruction` | Prompts (Tier 2)            | Before each refine     | No — single call           |
+| `rewriteText`         | Grammar                           | Generate/Refine/Regenerate | No — single call, streamed |
+| `scoreDimension` × N  | Evaluation                        | After text generated   | Yes — all dims in parallel |
 
 ---
 
@@ -333,6 +335,9 @@ CREATE TABLE dimensions (
   target_score REAL,
   locked BOOLEAN DEFAULT false,
   display_order INT NOT NULL,
+  eval_prompt TEXT,          -- ADR-003: Tier 1 generated evaluation prompt
+  rewrite_hint TEXT,         -- ADR-003: Tier 1 generated rewrite hint
+  examples JSONB,            -- ADR-003: Few-shot examples per rubric level
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -355,6 +360,12 @@ CREATE TABLE eval_step_cache (
   evaluation_steps JSONB NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
   UNIQUE(rubric_hash)
+);
+
+CREATE TABLE schema_version (
+  id INTEGER PRIMARY KEY DEFAULT 1,
+  version INTEGER NOT NULL DEFAULT 1,
+  applied_at TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE INDEX idx_versions_session ON prompt_versions(session_id, version_number);

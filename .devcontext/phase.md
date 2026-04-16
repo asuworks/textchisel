@@ -1,8 +1,8 @@
 # Phase Tracker
 
-## Current Phase: 4 (Construction) — IN PROGRESS
+## Current Phase: 8 (Evolution) — COMPLETE
 
-Next action: Wave 3 — orchestrator module (evaluate→rewrite loop, convergence detection)
+All 8 refactoring sessions implemented and merged. See `thoughts/shared/plans/refactoring-plan.md`.
 
 ---
 
@@ -48,7 +48,7 @@ TODO:
 - [x] Set up linting + formatting (qlty CLI: ESLint + Prettier + pre-commit/pre-push hooks)
 - [x] Tag golden commit (v0.0.0-skeleton — cd57523)
 
-### Phase 4: Construction — IN PROGRESS
+### Phase 4: Construction — COMPLETE
 
 - [x] Wave 1: dimensions, evaluation, chart (parallel)
 - [x] Wave 1 integration: dimensions → evaluation pipeline
@@ -57,11 +57,26 @@ TODO:
 - [x] Wave 3: orchestrator
 - [x] Wave 4: shell
 
-See `.devcontext/modules.md` for per-module build plan and status.
+### Phase 5 (Prompt Tier 1) — COMPLETE
 
-### Phase 5-8: Future
+- [x] ADR-003: Generated meta-prompts (evalPrompt, rewriteHint, examples)
+- [x] `prompts` module created (generate.ts, rewrite-planner.ts)
 
-Not planned yet. Will be scoped after construction is underway.
+### Phase 6 (Prompt Enhancement) — COMPLETE
+
+- [x] Few-shot examples, evidence-first evaluation, target-prominent generation
+- [x] User-specified dimensions via `#` lines, conflict resolution in planner
+
+### Phase 8 (Evolution) — COMPLETE
+
+- [x] S1: Remove debug logs, fix shared mutable state, extract DEFAULT_SCORE
+- [x] S2: Module boundary fix — store-mediated dimension CRUD, ADR-004
+- [x] S3: App.tsx decomposition — DimensionPopover, useWorkflows, rubric helpers
+- [x] S4: Provider registry — shared/providers.ts, ADR-005
+- [x] S5: Test foundation — 49 unit tests for pure modules
+- [x] S6: Schema cleanup — migration runner, systemPrompt, SESSION_STATUS, guards
+- [x] S7: Variable score levels 1-N, ADR-006
+- [x] S8: Streaming rewrite end-to-end
 
 ---
 
