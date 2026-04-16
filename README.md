@@ -10,6 +10,10 @@ When you ask an AI to write something, you get one version. If it's not right, y
 
 textchisel gives you a map of that space — and lets you steer.
 
+
+![alt text](./assets/screenshot.png)
+
+![alt text](./assets/dimension-rubrics-examples.png)
 ## How It Works
 
 ### 1. Describe what you want
@@ -80,11 +84,17 @@ textchisel is most powerful when the same intent needs to produce different text
 
 The common pattern: **any writing task where quality is multi-dimensional and audience-dependent**.
 
-## Try it
+## Run it
 
-> Write a bedtime story for a 5-year-old about a penguin who wants to fly
+```bash
+git clone https://github.com/asuworks/textchisel
+cd textchisel
+pnpm install
+cp .env.example .env   # add your API key(s)
+pnpm dev
+```
 
-Enter this as your intent. Watch the dimensions appear. Drag the chart around. See how the same story transforms as you move through the space of possible versions.
+Open http://localhost:5173. You'll need at least one API key (OpenAI, Anthropic, etc.) — set it in `.env` or in the Settings dialog inside the app.
 
 ## License
 
