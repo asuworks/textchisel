@@ -2,12 +2,13 @@ import { generateObject } from "ai";
 import type { LanguageModel } from "ai";
 import { EvaluationScoreSchema } from "@shared/types";
 import type { Dimension, EvaluationScore } from "@shared/types";
+import { normalizeScore } from "./normalize";
 
 const SYSTEM_PROMPT = `You are a rigorous text evaluator. You will evaluate a piece of text on a single dimension.
 
 Your evaluation must:
 - Focus ONLY on the specified dimension
-- The rubric defines what each score (1-5) means for THIS dimension — follow it exactly
+- The rubric defines what each score means for THIS dimension — follow it exactly
 - Dimensions may measure quantity, quality, style, or any other property — do not assume "higher = better quality"
 - For example, if a rubric says "1=none, 5=many", score based on COUNT, not quality
 - Provide a brief, specific justification referencing concrete aspects of the text
@@ -31,12 +32,15 @@ interface ScoreDimensionInput {
  * @param input.text - The text to evaluate
  * @param input.dimension - The dimension to score against
  * @param input.model - The AI model to use
- * @returns EvaluationScore with integer score 1-5 and reasoning
+ * @returns EvaluationScore with integer score 1-N and reasoning (N = max rubric level)
  */
 export async function scoreDimension(
   input: ScoreDimensionInput,
 ): Promise<EvaluationScore> {
   const { text, dimension, model } = input;
+  const maxLevel = dimension.rubric
+    ? Math.max(5, ...Object.keys(dimension.rubric).map(Number).filter(Number.isFinite))
+    : 5;
 
   let prompt: string;
 
@@ -92,15 +96,17 @@ Apply the rubric literally — do not default to a generic quality judgment. Kee
     model,
     schema: EvaluationScoreSchema,
     schemaName: "EvaluationScore",
-    schemaDescription:
-      "A score from 1-5 with reasoning for a single evaluation dimension",
+    schemaDescription: `A score from 1 to ${maxLevel} with reasoning for a single evaluation dimension`,
     system: SYSTEM_PROMPT,
     prompt,
     temperature: 0,
     maxRetries: 3,
   });
 
-  return object;
+  return {
+    ...object,
+    score: normalizeScore(object.score, maxLevel),
+  };
 }
 
 interface ScoreAllDimensionsInput {

@@ -1,4 +1,5 @@
 import type { RewriteContext, RewritePrompt, RewritePlan } from "@shared/types";
+import { DEFAULT_SCORE } from "@/evaluation/constants";
 
 const SYSTEM_PROMPT = `You are a writing refinement engine. Your job is to write or rewrite text to match specific dimension targets while preserving the writer's original intent.
 
@@ -56,7 +57,7 @@ Apply the instructions above. Output only the rewritten text.`,
   const sorted = [...dimensions].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const dimensionLines = sorted.map((dim) => {
-    const current = currentScores[dim.id]?.score ?? 3;
+    const current = currentScores[dim.id]?.score ?? DEFAULT_SCORE;
     const locked = lockedDimensionIds.has(dim.id);
     const rawTarget = targetScores[dim.id] ?? current;
     const target = locked ? current : rawTarget;
@@ -114,13 +115,14 @@ Rewrite the text to move scores toward the targets. For locked dimensions, maint
     // Initial generation — target level is prominent, scale is context
     const initialLines = sorted.map((dim) => {
       const target = targetScores[dim.id] ?? 3;
+      const maxLevel = dim.rubric ? Object.keys(dim.rubric).length : 5;
       let line = `- **${dim.name}** (${dim.description})`;
       if (dim.rubric) {
         const rubricAtTarget = dim.rubric[String(target)];
         if (rubricAtTarget) {
-          line += `\n  → HIT THIS (${target}/5): "${rubricAtTarget}"`;
+          line += `\n  → HIT THIS (${target}/${maxLevel}): "${rubricAtTarget}"`;
         } else {
-          line += `\n  → Target: ${target}/5`;
+          line += `\n  → Target: ${target}/${maxLevel}`;
         }
         // Show scale as compact context
         const contextLevels = Object.entries(dim.rubric)
@@ -132,7 +134,7 @@ Rewrite the text to move scores toward the targets. For locked dimensions, maint
           line += `\n  Scale context: ${contextLevels}`;
         }
       } else {
-        line += `\n  → Target: ${target}/5`;
+        line += `\n  → Target: ${target}/${maxLevel}`;
       }
       // Include Tier 1 writing guide when available
       if (dim.rewriteHint) {

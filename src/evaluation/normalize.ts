@@ -1,18 +1,19 @@
 import type { Dimension, EvaluationScore } from "@shared/types";
 
 /**
- * Clamp and round a raw score to an integer in the 1-5 range.
+ * Clamp and round a raw score to an integer in the 1-max range.
  *
  * - Values below 1 are clamped to 1
- * - Values above 5 are clamped to 5
+ * - Values above max are clamped to max
  * - Fractional values are rounded to the nearest integer (0.5 rounds up)
  *
  * @param raw - The raw numeric score
- * @returns Integer between 1 and 5
+ * @param max - Upper bound of the score range (default 5)
+ * @returns Integer between 1 and max
  */
-export function normalizeScore(raw: number): number {
+export function normalizeScore(raw: number, max: number = 5): number {
   const rounded = Math.round(raw);
-  return Math.max(1, Math.min(5, rounded));
+  return Math.max(1, Math.min(max, rounded));
 }
 
 /**

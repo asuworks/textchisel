@@ -48,7 +48,7 @@ export function TextPanel({
   onRefine,
   onRefineLoop,
 }: TextPanelProps) {
-  const displayText = isStreaming ? streamingText : text;
+  const displayText = isStreaming ? streamingText + "▍" : text;
   const [copied, setCopied] = useState(false);
   const [loopIterations, setLoopIterations] = useState(3);
   const [loopOpen, setLoopOpen] = useState(false);
@@ -201,7 +201,7 @@ export function TextPanel({
             )}
           </div>
         </div>
-        {status === "refining" && !text.trim() ? (
+        {status === "refining" && !text.trim() && !streamingText ? (
           <div className="min-h-0 flex-1 space-y-3 p-4">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-11/12" />

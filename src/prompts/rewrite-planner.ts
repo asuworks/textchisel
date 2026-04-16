@@ -2,6 +2,7 @@ import { generateObject } from "ai";
 import type { LanguageModel } from "ai";
 import { RewritePlanSchema } from "@shared/types";
 import type { Dimension, EvaluationScore, RewritePlan } from "@shared/types";
+import { DEFAULT_SCORE } from "@/evaluation/constants";
 
 const SYSTEM_PROMPT = `You are a writing transition planner. You analyze the gap between a text's current scores and the user's target scores, then produce concrete writing instructions.
 
@@ -54,15 +55,16 @@ export async function generateRewriteInstruction(
   const sorted = [...dimensions].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const dimensionAnalysis = sorted.map((dim) => {
-    const current = currentScores[dim.id]?.score ?? 3;
+    const current = currentScores[dim.id]?.score ?? DEFAULT_SCORE;
     const target = targetScores[dim.id] ?? current;
     const locked = lockedDimensionIds.has(dim.id);
     const delta = target - current;
     const reasoning = currentScores[dim.id]?.reasoning ?? "not yet evaluated";
 
     let section = `**${dim.name}** (${dim.description})`;
-    section += `\n  Current: ${current}/5 — "${reasoning}"`;
-    section += `\n  Target: ${target}/5 (delta: ${delta >= 0 ? "+" : ""}${delta})`;
+    const maxLevel = dim.rubric ? Object.keys(dim.rubric).length : 5;
+    section += `\n  Current: ${current}/${maxLevel} — "${reasoning}"`;
+    section += `\n  Target: ${target}/${maxLevel} (delta: ${delta >= 0 ? "+" : ""}${delta})`;
 
     if (locked) {
       section += "\n  STATUS: LOCKED — must preserve at current level";
