@@ -12,7 +12,7 @@
 ```bash
 git clone https://github.com/asuworks/textchisel.git
 cd textchisel
-npm install
+pnpm install
 ```
 
 Create a `.env` file in the project root:
@@ -26,7 +26,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 ### Run
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Starts both the Vite dev server (frontend) and Express server (API proxy) concurrently. Open http://localhost:5173.
@@ -34,8 +34,8 @@ Starts both the Vite dev server (frontend) and Express server (API proxy) concur
 ### Build for Production
 
 ```bash
-npm run build
-npm start
+pnpm build
+pnpm start
 ```
 
 ## Tech Stack
@@ -80,12 +80,12 @@ See [`.devcontext/architecture.md`](.devcontext/architecture.md) for the full ar
 ## Development Commands
 
 ```bash
-npm run dev          # Start dev servers (client + API)
-npm run typecheck    # TypeScript check (client + server)
-npm run lint         # ESLint
-npm run lint:fix     # ESLint with auto-fix
-npm run test:run     # Run tests once
-npm test             # Watch mode
+pnpm dev          # Start dev servers (client + API)
+pnpm typecheck    # TypeScript check (client + server)
+pnpm lint         # ESLint
+pnpm lint:fix     # ESLint with auto-fix
+pnpm test:run     # Run tests once
+pnpm test         # Watch mode
 ```
 
 ## Conventions

@@ -4,14 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n client,server -c blue,green \"npm run dev:client\" \"npm run dev:server\"",
+    "dev": "concurrently -n client,server -c blue,green \"pnpm dev:client\" \"pnpm dev:server\"",
     "dev:client": "vite",
     "dev:server": "tsx watch server/index.ts",
-    "build": "npm run build:client && npm run build:server",
+    "build": "pnpm build:client && pnpm build:server",
     "build:client": "vite build",
     "build:server": "tsc -p server/tsconfig.json",
     "start": "NODE_ENV=production node server/dist/server/index.js",
-    "preview": "npm run build && npm run start",
+    "preview": "pnpm build && pnpm start",
     "typecheck": "tsc --noEmit && tsc -p server/tsconfig.json --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -83,5 +83,6 @@
     "typescript-eslint": "^8.56.1",
     "vite": "^6.1.0",
     "vitest": "^3.0.0"
-  }
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
 }

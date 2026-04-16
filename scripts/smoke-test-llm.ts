@@ -2,11 +2,11 @@
  * Smoke test for LLM API endpoints.
  *
  * Prerequisites:
- *   - Server running: npm run dev:server (port 3001)
+ *   - Server running: pnpm dev:server (port 3001)
  *   - .env with OPENAI_API_KEY or ANTHROPIC_API_KEY
  *   - Optionally set AI_PROVIDER=anthropic and AI_MODEL=claude-sonnet-4-5-20250514
  *
- * Usage: npx tsx scripts/smoke-test-llm.ts
+ * Usage: pnpm tsx scripts/smoke-test-llm.ts
  */
 
 const BASE = "http://localhost:3001/api/llm";

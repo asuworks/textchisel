@@ -87,7 +87,7 @@ The common pattern: **any writing task where quality is multi-dimensional and au
 ## Run it
 
 ```bash
-git clone https://github.com/asuworks/textchisel
+git clone https://github.com/asuworks/textchisel.git
 cd textchisel
 pnpm install
 cp .env.example .env   # add your API key(s)
